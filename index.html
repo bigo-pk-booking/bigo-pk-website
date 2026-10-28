@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#078f89">
+<title>BADASS • BIGO PK Slots</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%231f2328%22/%3E%3Cpath d=%22M32 7l5 11 12 2-9 8 2 12-10-6-10 6 2-12-9-8 12-2z%22 fill=%22white%22/%3E%3Ctext x=%2232%22 y=%2255%22 font-size=%2217%22 font-weight=%22900%22 text-anchor=%22middle%22 fill=%22white%22%3EB%3C/text%3E%3C/svg%3E">
+<style>
+ :root{--bg:#f5f6f7;--panel:#ffffff;--panel2:#f0f1f2;--line:#d9dde1;--text:#202428;--muted:#687078;--green:#e6f4eb;--red:#fbe9e9;--gold:#f8f0dc;--blue:#6b7280}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--text);min-height:100vh}
+header{padding:16px;border-bottom:1px solid var(--line);background:#fff;position:sticky;top:0;z-index:5}
+.head{max-width:1100px;margin:auto;display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap}.brand{display:flex;align-items:center;gap:12px}.logo{width:42px;height:42px;border-radius:10px;background:#252a30;color:white;display:grid;place-items:center;font-size:20px;font-weight:800}.brand h1{font-size:19px;line-height:1.15;margin:0}.brand p{margin:4px 0 0;color:var(--muted);font-size:12px}.nav{display:flex;gap:8px;flex-wrap:wrap}
+main{max-width:1100px;margin:0 auto;padding:20px 14px 56px}.hero{padding:12px 0 18px}.eyebrow{color:#626970;text-transform:uppercase;letter-spacing:.1em;font-size:11px;font-weight:800}.hero h2{font-size:clamp(25px,5vw,36px);line-height:1.1;margin:8px 0 10px;letter-spacing:-.03em}.hero p{color:var(--muted);max-width:680px;line-height:1.55;margin:0}
+.grid{display:grid;grid-template-columns:1fr;gap:14px}@media(min-width:800px){.grid{grid-template-columns:minmax(0,1.15fr) minmax(300px,.85fr)}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:17px;min-width:0}.card h3{margin:0 0 6px;font-size:18px}.sub{color:var(--muted);font-size:13px;line-height:1.5;margin:0 0 15px}
+label{display:block;font-size:12px;color:#41474d;font-weight:700;margin:12px 0 7px}input,select{width:100%;background:#fff;border:1px solid #cbd0d5;color:var(--text);padding:12px;border-radius:9px;font:inherit;min-width:0}input:focus,select:focus{outline:2px solid #aeb5bc;border-color:#858d95}
+button,.button{border:1px solid #252a30;border-radius:9px;padding:10px 13px;background:#252a30;color:white;font:inherit;font-weight:700;cursor:pointer;transition:opacity .12s;text-decoration:none;display:inline-flex;justify-content:center;align-items:center;gap:7px}button:hover,.button:hover{opacity:.88}button:disabled{opacity:.4;cursor:not-allowed}.secondary{background:#fff;color:#252a30;border:1px solid #cbd0d5}.success{background:#e6f4eb;color:#205c39;border:1px solid #b9dfc7}.danger{background:#fbe9e9;color:#8b2727;border:1px solid #efc4c4}.full{width:100%}.small{padding:7px 10px;font-size:12px;border-radius:8px}.muted{color:var(--muted)}.row{display:flex;gap:10px;align-items:end;flex-wrap:wrap}.row>*{flex:1;min-width:130px}
+.legend{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0 16px;font-size:12px;color:var(--muted)}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}.green-dot{background:#4b9667}.red-dot{background:#c85c5c}.gold-dot{background:#b28b3f}
+.slot-date{font-size:13px;font-weight:800;margin:18px 0 9px;color:#33383d}.slots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}@media(min-width:500px){.slots{grid-template-columns:repeat(4,minmax(0,1fr))}}@media(min-width:900px){.slots{grid-template-columns:repeat(5,minmax(0,1fr))}}
+.slot{border:1px solid #b9dfc7;background:var(--green);color:#205c39;min-height:58px;display:flex;flex-direction:column;gap:3px;padding:9px 4px;font-size:13px}.slot span{font-size:10px;font-weight:650;opacity:.9}.slot.full-slot{border-color:#efc4c4;background:var(--red);color:#8b2727}.slot.closed-slot{border-color:#e6d6aa;background:var(--gold);color:#765b1e}.slot.selected{outline:2px solid #252a30;outline-offset:1px}
+.notice{padding:12px 13px;border-radius:9px;background:#f0f1f2;color:#3f454b;border:1px solid #d9dde1;font-size:13px;line-height:1.5;margin-top:12px}.notice.ok{background:#e6f4eb;border-color:#b9dfc7;color:#205c39}.notice.err{background:#fbe9e9;border-color:#efc4c4;color:#8b2727}.notice.warn{background:#f8f0dc;border-color:#e6d6aa;color:#765b1e}
+.hidden{display:none!important}.refbox{margin-top:12px;padding:15px;border-radius:10px;background:#f4f8f5;border:1px solid #c9e3d1}.refcode{font-size:18px;font-weight:900;letter-spacing:.08em;overflow-wrap:anywhere;color:#205c39}.pill{display:inline-flex;align-items:center;border-radius:6px;padding:5px 8px;font-size:11px;font-weight:800;background:#f0f1f2;color:#454b51}.pill.available{background:var(--green);color:#205c39}.pill.full{background:var(--red);color:#8b2727}.pill.assigned{background:var(--gold);color:#765b1e}
+hr{border:0;border-top:1px solid var(--line);margin:18px 0}.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:9px;margin-top:12px}table{width:100%;border-collapse:collapse;min-width:650px;font-size:12px}th,td{text-align:left;padding:10px 11px;border-bottom:1px solid #e4e6e8;vertical-align:middle}th{background:#f0f1f2;color:#343a40;position:sticky;top:0}tr:last-child td{border-bottom:0}.table-input{min-width:150px;padding:8px}.footer{margin-top:28px;text-align:center;color:#687078;font-size:12px;line-height:1.6}.admin-head{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}.admin-grid{display:grid;grid-template-columns:1fr;gap:14px}@media(min-width:900px){.admin-grid{grid-template-columns:1fr 1fr}}.status{font-size:12px;color:var(--muted);margin-top:8px;min-height:18px}.spinner{display:inline-block;width:13px;height:13px;border:2px solid #7775;border-top-color:#252a30;border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.badge{font-size:10px;color:#555d64;border:1px solid #d9dde1;padding:4px 7px;border-radius:6px}
+
+/* BADASS spreadsheet-inspired OPK schedule theme */
+:root{--bg:#f4f7f7;--panel:#fff;--panel2:#e9f5f4;--line:#c8d8d7;--text:#1f292b;--muted:#5d6b6d;--green:#e6f4eb;--red:#fbe9e9;--gold:#fff2c4;--blue:#078f89}
+body{background:#f4f7f7;color:#1f292b}
+header{background:#078f89;border-bottom:3px solid #04736f;color:#fff}
+.brand h1{color:#fff;letter-spacing:.08em}.brand p{color:#e0fffc}.logo{background:#075e5a;color:#fff;border:1px solid #8bd8d3;border-radius:50%;font-size:23px}
+.nav .secondary{background:#fff;color:#075e5a;border-color:#b5e4e1}
+.sheet-title{background:#fff;border:1px solid #d5e1e0;border-top:12px solid #078f89;margin:0 0 18px;padding:20px 14px 14px;text-align:center;box-shadow:0 2px 7px #163b3a0b}
+.sheet-brand{display:flex;justify-content:center;align-items:center;gap:8px;color:#078f89;font-weight:900;letter-spacing:.16em;font-size:12px;margin-bottom:9px}.sheet-crown{display:inline-grid;place-items:center;width:27px;height:27px;background:#078f89;color:#fff;border-radius:7px;font-size:18px}
+.sheet-title h2{font-size:clamp(18px,3.4vw,28px);line-height:1.25;margin:0 0 10px;color:#252b2d;letter-spacing:.01em}.sheet-title p{margin:10px 0 0;font-size:12px;font-weight:700;color:#596668;text-transform:uppercase}
+.sheet-warning{color:#c34a54;font-weight:900;letter-spacing:.06em;font-size:clamp(12px,2vw,16px);padding:8px 0;border-top:1px solid #e5e9e9;border-bottom:1px solid #e5e9e9}
+.card{border-radius:3px;border-color:#cbd8d7;box-shadow:0 2px 8px #163b3a0a}.card h3{letter-spacing:.025em}
+button,.button{background:#078f89;border-color:#067b76;border-radius:4px}button.secondary{background:#fff;color:#075e5a;border-color:#b9cecd}button.success{background:#e2f3e8;color:#205c39;border-color:#b9dfc7}button.danger{background:#fbe9e9;color:#8b2727;border-color:#efc4c4}
+input,select{border-radius:3px;border-color:#c4d2d1}input:focus,select:focus{outline:2px solid #8bd8d3;border-color:#078f89}
+.slots{gap:0;border-top:1px solid #b8cecc;border-left:1px solid #b8cecc;grid-template-columns:repeat(2,minmax(0,1fr))}@media(min-width:500px){.slots{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(min-width:900px){.slots{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.slot{border-radius:0;border:0;border-right:1px solid #b8cecc;border-bottom:1px solid #b8cecc;min-height:56px;background:#e7f5f3;color:#075e5a}.slot.full-slot{background:#fbe9e9;color:#8b2727}.slot.closed-slot{background:#fff2c4;color:#765b1e}.slot.selected{outline:3px solid #078f89;outline-offset:-3px}
+.slot-date{background:#078f89;color:#fff;padding:9px 10px;margin:16px 0 0;border:1px solid #078078}
+.legend{background:#f1f8f7;padding:9px;border:1px solid #d2e2e0;margin:0 0 14px}
+.table-wrap{border-radius:2px;border-color:#b8cecc}table{border-collapse:separate;border-spacing:0;min-width:780px;font-size:12px}th{background:#078f89;color:#fff;border-right:1px solid #42aaa5;border-bottom:1px solid #05736f;padding:10px 8px;text-transform:uppercase;font-size:10px;letter-spacing:.035em}td{padding:8px;border-right:1px solid #e0e8e7;border-bottom:1px solid #d8e2e1;background:#fff}tr:nth-child(even) td{background:#f6fbfa}tr:last-child td{border-bottom:0}.vs-head,.vs-cell{background:#ffe84d!important;color:#302b00!important;text-align:center!important;font-weight:900;min-width:38px}.table-input{border-radius:2px;padding:7px}.footer{color:#61706f}
+@media(max-width:600px){main{padding:12px 8px 36px}.sheet-title{padding:16px 9px 12px}.sheet-title p{font-size:10px}.card{padding:13px}.nav{width:100%}.nav button{flex:1}}
+
+</style>
+</head>
+<body>
+<header><div class="head">
+  <div class="brand"><div class="logo" aria-label="BADASS icon">♛</div><div><h1>BADASS</h1><p>BIGO PK SLOTS</p></div></div>
+  <div class="nav"><button class="secondary small" id="showBookingBtn">Book OPK</button><button class="secondary small" id="showLookupBtn">My OPK</button><button class="secondary small" id="showAdminBtn">Admin</button></div>
+</div></header>
+<main>
+<section class="sheet-title">
+  <div class="sheet-brand"><span class="sheet-crown">♛</span><span>BADASS</span></div>
+  <h2>OPK MATCHED FOR THE MONTH OF <span id="scheduleMonth">OCTOBER 2026</span></h2>
+  <div class="sheet-warning">*SAME PK EVENT ONLY. NO PM NO DEAL.</div>
+  <p>Make sure the host level and OPK event are properly matched based on the information provided.</p>
+</section>
+<div id="configWarning" class="notice warn hidden">Firebase setup is incomplete. Open <b>README-SETUP.txt</b> in the project folder and add your Firebase web configuration before publishing.</div>
+<div class="grid" id="bookingView">
+  <section class="card">
+    <h3>OPK MATCH SCHEDULE</h3><p class="sub">Choose a date, then tap an available time. All times are Philippine time (UTC+8).</p>
+    <div class="row"><div><label for="filterDate">PK date</label><input id="filterDate" type="date"></div><div style="flex:0 0 auto"><button id="refreshSlots" class="secondary">Refresh</button></div></div>
+    <div class="legend"><span><i class="dot green-dot"></i>Available</span><span><i class="dot red-dot"></i>Booked</span><span><i class="dot gold-dot"></i>Closed</span></div>
+    <div id="slotsArea"><div class="notice">Connect Firebase and add a schedule from the admin panel to show slots here.</div></div>
+    <div id="slotStatus" class="status" aria-live="polite"></div>
+  </section>
+  <section class="card">
+    <h3>BOOK YOUR PK SLOT</h3><p class="sub">Enter your BIGO ID and name, then select a date and available time.</p>
+    <label for="bigoId">BIGO ID</label><input id="bigoId" maxlength="40" autocomplete="off" placeholder="Enter BIGO ID">
+    <label for="userName">Name</label><input id="userName" maxlength="80" autocomplete="name" placeholder="Enter your name">
+    <label for="chosenSlot">Date and time</label><input id="chosenSlot" readonly placeholder="Choose date and time above">
+    <button id="bookBtn" class="full" disabled>Book OPK slot</button>
+    <div id="bookingMessage" class="status" aria-live="polite"></div>
+    <div id="bookingResult" class="refbox hidden"></div>
+    <div class="notice">Please check your BIGO ID, name, date, and time before booking.</div>
+  </section>
+</div>
+
+<section id="lookupView" class="card hidden" style="max-width:700px;margin:0 auto">
+  <h3>My OPK</h3><p class="sub">Paste your BIGO ID to check your booking name, opponent, date, and time.</p>
+  <label for="lookupCode">Your BIGO ID</label><input id="lookupCode" autocomplete="off" maxlength="40" placeholder="Paste your BIGO ID">
+  <button id="lookupBtn" class="full">Find my booking</button>
+  <div id="lookupResult" class="status" aria-live="polite"></div>
+</section>
+
+<section id="adminView" class="hidden">
+  <div class="card" id="adminLogin">
+    <h3>Admin sign in</h3><p class="sub">Only approved admin accounts can manage schedules, bookings, opponent IDs, and exports.</p>
+    <label for="adminEmail">Admin email</label><input id="adminEmail" type="email" autocomplete="username" placeholder="admin@example.com">
+    <label for="adminPassword">Password</label><input id="adminPassword" type="password" autocomplete="current-password" placeholder="Password">
+    <button id="loginBtn" class="full">Sign in as admin</button><div id="loginMessage" class="status"></div>
+    <p class="muted" style="font-size:12px">Create an Email/Password user in Firebase Authentication, then add a document in Firestore at <code>admins/USER_UID</code> with <code>{"enabled": true}</code>.</p>
+  </div>
+  <div class="card hidden" id="adminDashboard">
+    <div class="admin-head"><div><h3>Admin dashboard</h3><p class="sub" style="margin:5px 0 0">Manage schedule, assign opponents, and download the report.</p></div><button id="logoutBtn" class="secondary small">Sign out</button></div>
+    <div class="admin-grid" style="margin-top:14px">
+      <div class="card" style="padding:14px;background:#11182b">
+        <h3>Automatic OPK schedule</h3><p class="sub">The system automatically creates all time slots for the month shown in the OPK header. Existing OPKs are never overwritten. You do not need to open slots manually.</p>
+        <p><strong>Schedule month:</strong> <span id="autoScheduleMonth">Loading…</span></p><div id="scheduleMessage" class="status" aria-live="polite">Monthly schedule will be generated automatically when the Admin dashboard loads.</div>
+      </div>
+      <div class="card" style="padding:14px;background:#11182b">
+        <h3>Manual PK booking</h3><p class="sub">Admin can create and approve a booking for a user. Select an existing available slot first.</p>
+        <label for="manualBigoId">User BIGO ID</label><input id="manualBigoId" maxlength="40" placeholder="User BIGO ID">
+        <label for="manualName">User name</label><input id="manualName" maxlength="80" placeholder="User name">
+        <label for="manualDate">PK date</label><input type="date" id="manualDate">
+        <label for="manualTime">Available PK time</label><select id="manualTime"><option value="">Choose date first</option></select>
+        <label for="manualOpponentName">Opponent name (optional)</label><input id="manualOpponentName" maxlength="80" placeholder="Opponent name">
+        <label for="manualOpponentId">Opponent BIGO ID (optional)</label><input id="manualOpponentId" maxlength="40" placeholder="Opponent BIGO ID">
+        <button id="manualCreateBtn" class="full">Create & approve PK</button><div id="manualMessage" class="status"></div>
+      </div>
+      <div class="card" style="padding:14px;background:#11182b">
+        <h3>Export bookings</h3><p class="sub">Download the booking report as an Excel workbook. If the Excel library cannot load, use CSV export.</p>
+        <div class="row"><button id="exportExcelBtn" class="success">Download Excel (.xlsx)</button><button id="exportCsvBtn" class="secondary">Download CSV</button></div><div id="exportMessage" class="status"></div>
+      </div>
+    </div>
+    <hr>
+    <div class="admin-head"><div><h3>Bookings & opponent IDs</h3><p class="sub" style="margin:5px 0 0">Enter an opponent BIGO ID and save it to show it to the user.</p></div><input id="adminSearch" style="max-width:300px" placeholder="Search BIGO ID / name / date / time"></div>
+    <div class="row month-filter-row" style="margin-top:12px"><div><label for="bookingMonthFilter">Select month for bookings</label><select id="bookingMonthFilter" aria-label="Filter bookings by month"></select></div><div style="flex:0 0 auto;min-width:auto"><button id="downloadMonthExcelBtn" class="success" type="button">Download selected month Excel</button></div></div>
+    <div id="adminBookings" class="table-wrap"><div class="notice">Loading bookings…</div></div>
+    <hr><h3>Slot management</h3><p class="sub">Close an available slot or reopen a closed slot. Booked slots must be cancelled before reopening.</p>
+    <div class="row month-filter-row" style="margin-top:12px"><div><label for="slotMonthFilter">Select month for slots</label><select id="slotMonthFilter" aria-label="Filter slots by month"></select></div></div>
+    <div id="adminSlots" class="table-wrap"><div class="notice">Loading slots…</div></div>
+    <div id="adminMessage" class="status"></div>
+  </div>
+</section>
+<div class="footer">BIGO PK Slot Booking • Times shown in Philippine time • Keep your booking reference private.</div>
+</main>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInAnonymously, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, collection, doc, getDoc, getDocs, onSnapshot, query, orderBy, runTransaction, setDoc, updateDoc, deleteDoc, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyC4wcnp9FmyL8Api2kvcLcV68gCpnn09xE",
+  authDomain: "bigo-pk-booking.firebaseapp.com",
+  projectId: "bigo-pk-booking",
+  storageBucket: "bigo-pk-booking.firebasestorage.app",
+  messagingSenderId: "622308378048",
+  appId: "1:622308378048:web:bf9f5a5e253445d8d2f425",
+  measurementId: "G-F4QH6QR2W0"
+};
+const TIMES = ["20:00","20:15","20:30","20:45","21:00","21:15","21:30","21:45","22:00"];
+const $ = id => document.getElementById(id);
+const configured = FIREBASE_CONFIG.apiKey && !FIREBASE_CONFIG.apiKey.includes("PASTE_") && FIREBASE_CONFIG.projectId && !FIREBASE_CONFIG.projectId.includes("PASTE_");
+let app, auth, db, currentUser=null, isAdmin=false, slots=[], bookings=[], selectedSlot=null, stopSlots=null, stopBookings=null;
+const escapeHtml = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const dateToday = () => {const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;};
+// Default all schedule date pickers to one month ahead, handling year rollover.
+const dateOneMonthAhead = () => {const d=new Date(); d.setDate(1); d.setMonth(d.getMonth()+1); const lastDay=new Date(d.getFullYear(),d.getMonth()+1,0).getDate(); const originalDay=new Date().getDate(); d.setDate(Math.min(originalDay,lastDay)); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;};
+const defaultScheduleDate=dateOneMonthAhead();
+$("filterDate").value=defaultScheduleDate; $("adminDate").value=defaultScheduleDate; $("manualDate").value=defaultScheduleDate;
+const defaultScheduleMonth=new Date(defaultScheduleDate+"T12:00:00"); $("scheduleMonth").textContent=defaultScheduleMonth.toLocaleDateString("en-US",{month:"long",year:"numeric"}).toUpperCase(); if($("autoScheduleMonth"))$("autoScheduleMonth").textContent=defaultScheduleMonth.toLocaleDateString("en-US",{month:"long",year:"numeric"});
+function setStatus(id,msg,kind=""){const el=$(id);if(!el)return;el.className="status"+(kind?" "+kind:"");el.textContent=msg;}
+function showView(name){$("bookingView").classList.toggle("hidden",name!=="booking");$("lookupView").classList.toggle("hidden",name!=="lookup");$("adminView").classList.toggle("hidden",name!=="admin");}
+$("showBookingBtn").onclick=()=>showView("booking");$("showLookupBtn").onclick=()=>showView("lookup");$("showAdminBtn").onclick=()=>showView("admin");
+function slotId(date,time){return `${date}_${time.replace(":","")}`;}
+function selectedHeaderMonth(){const d=$("filterDate").value||defaultScheduleDate;return d.slice(0,7);}
+function monthTitle(key){const d=new Date(key+"-01T12:00:00");return d.toLocaleDateString("en-US",{month:"long",year:"numeric"});}
+async function ensureMonthSlots(monthKeyValue){
+ if(!isAdmin||!db||!/^\d{4}-\d{2}$/.test(monthKeyValue))return;
+ const title=monthTitle(monthKeyValue);const label=$("autoScheduleMonth");if(label)label.textContent=title;
+ setStatus("scheduleMessage",`Automatically preparing available OPK slots for ${title}…`);
+ try{
+  const [year,month]=monthKeyValue.split("-").map(Number);const days=new Date(year,month,0).getDate();let created=0;
+  for(let day=1;day<=days;day++){
+   const date=`${year}-${String(month).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+   for(const time of TIMES){
+    const id=slotId(date,time);const ref=doc(db,"slots",id);const snap=await getDoc(ref);
+    if(!snap.exists()){await setDoc(ref,{date,time,status:"available",bookingId:null,createdAt:serverTimestamp(),autoGenerated:true});created++;}
+   }
+  }
+  setStatus("scheduleMessage",`Automatic schedule ready for ${title}. ${created} new slots opened; existing OPKs and slot settings were preserved.`,"ok");
+ }catch(e){console.error(e);setStatus("scheduleMessage","Could not auto-create monthly slots. Check Firestore rules allow the admin to create documents in the slots collection.","err");}
+}
+function prettyDate(date){const d=new Date(date+"T12:00:00");return d.toLocaleDateString("en-PH",{year:"numeric",month:"short",day:"numeric",weekday:"short"});}
+function slotStatus(s){return s.status==="full"?"Already set this date to another host":s.status==="closed"?"Closed":"Available";}
+function renderSlots(){
+ const date=$("filterDate").value;
+ if(date){const d=new Date(date+"T12:00:00");$("scheduleMonth").textContent=d.toLocaleDateString("en-PH",{month:"long",year:"numeric"}).toUpperCase();}const list=slots.filter(s=>s.date===date).sort((a,b)=>a.time.localeCompare(b.time));
+ if(!list.length){$("slotsArea").innerHTML='<div class="notice err">Sorry, the date you selected is not available. Choose another date and time. Thank you.</div>';return;}
+ $("slotsArea").innerHTML=`<div class="slot-date">${escapeHtml(prettyDate(date))}</div><div class="slots">${list.map(s=>{const state=s.status||"available";const disabled=state!=="available";return `<button class="slot ${state==="full"?"full-slot":state==="closed"?"closed-slot":""} ${selectedSlot===s.id?"selected":""}" data-slot="${escapeHtml(s.id)}" ${disabled?"disabled":""}>${escapeHtml(s.time)}<span>${slotStatus(s)}</span></button>`}).join("")}</div>`;
+ $("slotsArea").querySelectorAll("[data-slot]").forEach(b=>b.onclick=()=>{selectedSlot=b.dataset.slot;const s=slots.find(x=>x.id===selectedSlot);$("chosenSlot").value=s?`${prettyDate(s.date)} • ${s.time}`:"";$("bookBtn").disabled=!s;$("slotStatus").textContent="Selected slot: "+(s?`${s.date} ${s.time}`:"");renderSlots();});
+}
+function refreshManualTimes(){
+ const date=$("manualDate")?.value;
+ if(!$("manualTime"))return;
+ const available=slots.filter(s=>s.date===date&&s.status==="available").sort((a,b)=>a.time.localeCompare(b.time));
+ $("manualTime").innerHTML=available.length?'<option value="">Choose time</option>'+available.map(s=>`<option value="${escapeHtml(s.id)}">${escapeHtml(s.time)}</option>`).join(""):'<option value="">No available slots for this date</option>';
+}
+function monthKey(date){return String(date||"").slice(0,7);}
+function monthLabel(key){if(!/^\d{4}-\d{2}$/.test(key))return key;return new Date(Number(key.slice(0,4)),Number(key.slice(5,7))-1,1).toLocaleDateString("en-US",{month:"long",year:"numeric"});}
+function updateMonthPicker(id,records){
+ const el=$(id);if(!el)return "";
+ const current=el.value;const keys=[...new Set([dateToday().slice(0,7),...records.map(x=>monthKey(x.date)).filter(x=>/^\d{4}-\d{2}$/.test(x))])].sort();
+ let selected=current&&keys.includes(current)?current:(keys.includes(dateToday().slice(0,7))?dateToday().slice(0,7):keys[keys.length-1]);
+ el.innerHTML=keys.slice().sort((a,b)=>b.localeCompare(a)).map(k=>`<option value="${k}">${escapeHtml(monthLabel(k))}</option>`).join("");
+ if(selected)el.value=selected;return el.value;
+}
+function renderAdmin(){
+ if(!isAdmin)return;
+ refreshManualTimes();
+ const bookingMonth=updateMonthPicker("bookingMonthFilter",bookings);
+ const slotMonth=updateMonthPicker("slotMonthFilter",slots);
+ const term=$("adminSearch").value.trim().toLowerCase();
+ const filtered=bookings.filter(b=>monthKey(b.date)===bookingMonth&&[b.bigoId,b.name,b.opponentBigoId,b.date,b.time,b.status].some(v=>String(v||"").toLowerCase().includes(term))).sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time));
+ $("adminBookings").innerHTML=filtered.length?`<table><thead><tr><th>Date / time</th><th>Name</th><th>User BIGO ID</th><th class="vs-head">VS</th><th>Opponent name</th><th>Opponent BIGO ID</th><th>Status</th><th>Actions</th></tr></thead><tbody>${filtered.map(b=>`<tr><td>${escapeHtml(b.date)}<br><b>${escapeHtml(b.time)}</b></td><td>${escapeHtml(b.name||"—")}</td><td>${escapeHtml(b.bigoId)}</td><td class="vs-cell">VS</td><td><input class="table-input" data-opponent-name="${escapeHtml(b.id)}" value="${escapeHtml(b.opponentName||"")}" placeholder="Opponent name"></td><td><input class="table-input" data-opponent="${escapeHtml(b.id)}" value="${escapeHtml(b.opponentBigoId||"")}" placeholder="Opponent BIGO ID"></td><td><span class="pill ${b.opponentBigoId?"assigned":"full"}">${escapeHtml(b.opponentBigoId?"Opponent assigned":b.status||"Reserved")}</span></td><td><button class="small" data-approve="${escapeHtml(b.id)}" ${b.status==="Approved"||b.status==="Opponent assigned"?"disabled":""}>Approve</button> <button class="small" data-save="${escapeHtml(b.id)}">Save opponent</button> <button class="small danger" data-cancel="${escapeHtml(b.id)}">Reject / cancel</button></td></tr>`).join("")}</tbody></table>`:'<div class="notice">No bookings for this month match your search.</div>';
+ $("adminBookings").querySelectorAll("[data-save]").forEach(btn=>btn.onclick=()=>saveOpponent(btn.dataset.save));
+ $("adminBookings").querySelectorAll("[data-approve]").forEach(btn=>btn.onclick=()=>approveBooking(btn.dataset.approve));
+ $("adminBookings").querySelectorAll("[data-cancel]").forEach(btn=>btn.onclick=()=>cancelBooking(btn.dataset.cancel));
+ const sorted=slots.filter(s=>monthKey(s.date)===slotMonth).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+ $("adminSlots").innerHTML=sorted.length?`<table><thead><tr><th>Date / time</th><th>Status</th><th>Action</th></tr></thead><tbody>${sorted.map(s=>`<tr><td>${escapeHtml(s.date)}<br><b>${escapeHtml(s.time)}</b></td><td><span class="pill ${s.status==="available"?"available":s.status==="full"?"full":""}">${escapeHtml(slotStatus(s))}</span></td><td>${s.status==="full"?'<span class="muted">Cancel booking first</span>':`<button class="small secondary" data-toggle="${escapeHtml(s.id)}">${s.status==="closed"?"Reopen":"Close slot"}</button>`}</td></tr>`).join("")}</tbody></table>`:'<div class="notice">No slots created for this month.</div>';
+ $("adminSlots").querySelectorAll("[data-toggle]").forEach(btn=>btn.onclick=()=>toggleSlot(btn.dataset.toggle));
+}
+async function startApp(){
+ if(!configured){$("configWarning").classList.remove("hidden");return;}
+ try{
+  app=initializeApp(FIREBASE_CONFIG);auth=getAuth(app);db=getFirestore(app);
+  onAuthStateChanged(auth,async user=>{
+   currentUser=user;
+   if(!user){isAdmin=false;try{await signInAnonymously(auth)}catch(e){console.error(e);setStatus("bookingMessage","Could not start a session. Check Firebase Anonymous Authentication settings.","err");}return;}
+   isAdmin=false;
+   if(!user.isAnonymous){try{const a=await getDoc(doc(db,"admins",user.uid));isAdmin=a.exists()&&a.data().enabled===true;}catch(e){console.error(e)}}
+   $("adminLogin").classList.toggle("hidden",isAdmin);$("adminDashboard").classList.toggle("hidden",!isAdmin);
+   if(isAdmin){await ensureMonthSlots(selectedHeaderMonth());}
+   if(stopSlots)stopSlots();stopSlots=onSnapshot(collection(db,"slots"),snap=>{slots=snap.docs.map(d=>({id:d.id,...d.data()}));renderSlots();if(isAdmin)renderAdmin();},e=>{console.error(e);setStatus("slotStatus","Could not load slots. Check Firestore rules.","err");});
+   if(stopBookings)stopBookings();if(isAdmin){stopBookings=onSnapshot(collection(db,"bookings"),snap=>{bookings=snap.docs.map(d=>({id:d.id,...d.data()}));renderAdmin();},e=>{console.error(e);setStatus("adminMessage","Could not load bookings. Check admin access.","err");});}else{bookings=[];}
+  });
+ }catch(e){console.error(e);$("configWarning").classList.remove("hidden");}
+}
+$("filterDate").addEventListener("change",()=>{selectedSlot=null;$("chosenSlot").value="";$("bookBtn").disabled=true;renderSlots();if(isAdmin)ensureMonthSlots(selectedHeaderMonth());});
+$("refreshSlots").onclick=()=>renderSlots();
+$("bookBtn").onclick=async()=>{
+ const bigoId=$("bigoId").value.trim();const name=$("userName").value.trim();const s=slots.find(x=>x.id===selectedSlot);
+ if(!bigoId){setStatus("bookingMessage","Ilagay muna ang BIGO ID mo.","err");return;}
+ if(!name){setStatus("bookingMessage","Please enter your name.","err");return;}
+ if(!/^[A-Za-z0-9._-]{3,40}$/.test(bigoId)){setStatus("bookingMessage","Check your BIGO ID. Use 3–40 letters, numbers, dot, underscore, or dash.","err");return;}
+ if(!s||s.status!=="available"){setStatus("bookingMessage","Already set this date to another host. Please choose another time.","err");return;}
+ $("bookBtn").disabled=true;setStatus("bookingMessage","Reserving slot…");
+ try{
+  const bookingRef=doc(collection(db,"bookings"));const lookupCode=Array.from(crypto.getRandomValues(new Uint8Array(18))).map(x=>x.toString(16).padStart(2,"0")).join("");
+  const publicRef=doc(db,"publicBookings",lookupCode);const slotRef=doc(db,"slots",s.id);
+  await runTransaction(db,async tx=>{
+   const snap=await tx.get(slotRef);if(!snap.exists()||snap.data().status!=="available")throw new Error("SLOT_TAKEN");
+   tx.set(bookingRef,{bigoId,name,date:s.date,time:s.time,slotId:s.id,lookupCode,status:"Pending approval",opponentBigoId:"",opponentName:"",createdAt:serverTimestamp()});
+   tx.set(publicRef,{bookingId:bookingRef.id,bigoId,name,date:s.date,time:s.time,lookupCode,status:"Pending approval",opponentBigoId:"",opponentName:"",createdAt:serverTimestamp()});
+   tx.set(doc(db,"publicBigoLookup",bigoId),{bookingId:bookingRef.id,bigoId,name,date:s.date,time:s.time,lookupCode,status:"Pending approval",opponentBigoId:"",opponentName:"",createdAt:serverTimestamp()});
+   tx.update(slotRef,{status:"full",bookingId:bookingRef.id,updatedAt:serverTimestamp()});
+  });
+  $("bookingResult").classList.remove("hidden");$("bookingResult").innerHTML=`<b>Request submitted!</b><p class="muted">Your booking is pending admin approval. Check the status later by pasting your BIGO ID in My OPK.</p><div class="row" style="margin-top:12px"><button class="secondary" id="viewNewBooking">View booking</button><button class="success" id="copyNewCode">Copy reference (backup)</button></div>`;
+  localStorage.setItem("bigoPkLastCode",bigoId);$("copyNewCode").onclick=()=>copyText(lookupCode);$("viewNewBooking").onclick=()=>{$("lookupCode").value=bigoId;showView("lookup");lookupBooking();};
+  setStatus("bookingMessage","Booking request sent. Waiting for admin approval.","ok");selectedSlot=null;$("chosenSlot").value="";$("bigoId").value="";$("userName").value="";renderSlots();
+ }catch(e){console.error(e);setStatus("bookingMessage",e.message==="SLOT_TAKEN"?"Already set this date to another host. Please choose another time.":"Booking failed. Check connection and Firebase rules, then try again.","err");}
+ finally{$("bookBtn").disabled=true;}
+};
+async function lookupBooking(){
+ const bigoId=$("lookupCode").value.trim();
+ if(!/^[A-Za-z0-9._-]{3,40}$/.test(bigoId)){setStatus("lookupResult","Ilagay ang tamang BIGO ID at subukan ulit.","err");return;}
+ setStatus("lookupResult","Searching…");
+ try{
+  const snap=await getDoc(doc(db,"publicBigoLookup",bigoId));
+  if(!snap.exists()){setStatus("lookupResult","Walang booking na nakita para sa BIGO ID na ito.","err");return;}
+  const b=snap.data();
+  $("lookupResult").innerHTML=`<div class="card" style="margin-top:12px"><h3>Booking details</h3><p><span class="muted">Name:</span> <b>${escapeHtml(b.name||"—")}</b></p><p><span class="muted">BIGO ID:</span> <b>${escapeHtml(b.bigoId||bigoId)}</b></p><p><span class="muted">Opponent name:</span> <b>${escapeHtml(b.opponentName||"Not assigned yet")}</b></p><p><span class="muted">Opponent BIGO ID:</span> <b id="oppValue">${escapeHtml(b.opponentBigoId||"Not assigned yet")}</b></p><p><span class="muted">PK date:</span> <b>${escapeHtml(b.date||"—")}</b></p><p><span class="muted">PK time:</span> <b>${escapeHtml(b.time||"—")}</b></p><p><span class="muted">Status:</span> <span class="pill ${b.opponentBigoId?"assigned":""}">${escapeHtml(b.opponentBigoId?"Opponent assigned":b.status||"Reserved")}</span></p>${b.opponentBigoId?'<button id="copyOpponent" class="success">Copy opponent BIGO ID</button>':""}</div>`;
+  if(b.opponentBigoId)$("copyOpponent").onclick=()=>copyText(b.opponentBigoId);
+ }catch(e){console.error(e);setStatus("lookupResult","Lookup failed. Check Firebase rules and try again.","err");}
+}
+$("lookupBtn").onclick=lookupBooking;
+$("lookupCode").value=localStorage.getItem("bigoPkLastCode")||"";
+$("loginBtn").onclick=async()=>{setStatus("loginMessage","Signing in…");try{await signInWithEmailAndPassword(auth,$("adminEmail").value.trim(),$("adminPassword").value);setStatus("loginMessage","Signed in.");}catch(e){console.error(e);setStatus("loginMessage","Sign-in failed. Check email/password and confirm this account is in the admins collection.","err");}};
+$("logoutBtn").onclick=async()=>{await signOut(auth);};
+// Monthly slots are generated automatically by ensureMonthSlots(); manual slot creation is intentionally disabled.
+$("manualDate").addEventListener("change",refreshManualTimes);
+$("manualCreateBtn").onclick=async()=>{
+ const bigoId=$("manualBigoId").value.trim(),name=$("manualName").value.trim(),slotKey=$("manualTime").value;
+ const opponentName=$("manualOpponentName").value.trim(),opponentBigoId=$("manualOpponentId").value.trim();
+ const slot=slots.find(x=>x.id===slotKey);
+ if(!/^[A-Za-z0-9._-]{3,40}$/.test(bigoId)){setStatus("manualMessage","Enter a valid user BIGO ID.","err");return;}
+ if(!name){setStatus("manualMessage","Enter the user's name.","err");return;}
+ if(!slot||slot.status!=="available"){setStatus("manualMessage","Already set this date to another host. Please choose another time.","err");return;}
+ if(opponentBigoId&&!/^[A-Za-z0-9._-]{3,40}$/.test(opponentBigoId)){setStatus("manualMessage","Check the opponent BIGO ID format.","err");return;}
+ $("manualCreateBtn").disabled=true;setStatus("manualMessage","Creating approved booking…");
+ try{
+  const bookingRef=doc(collection(db,"bookings")),lookupCode=Array.from(crypto.getRandomValues(new Uint8Array(18))).map(x=>x.toString(16).padStart(2,"0")).join("");
+  const publicRef=doc(db,"publicBookings",lookupCode),slotRef=doc(db,"slots",slot.id),lookupRef=doc(db,"publicBigoLookup",bigoId);
+  const status=opponentBigoId?"Opponent assigned":"Approved";
+  await runTransaction(db,async tx=>{
+   const snap=await tx.get(slotRef);if(!snap.exists()||snap.data().status!=="available")throw new Error("SLOT_TAKEN");
+   const data={bigoId,name,date:slot.date,time:slot.time,slotId:slot.id,lookupCode,status,opponentBigoId,opponentName,createdAt:serverTimestamp(),approvedAt:serverTimestamp(),approvedBy:currentUser.uid,createdByAdmin:true};
+   tx.set(bookingRef,data);
+   tx.set(publicRef,{bookingId:bookingRef.id,bigoId,name,date:slot.date,time:slot.time,lookupCode,status,opponentBigoId,opponentName,createdAt:serverTimestamp()});
+   tx.set(lookupRef,{bookingId:bookingRef.id,bigoId,name,date:slot.date,time:slot.time,lookupCode,status,opponentBigoId,opponentName,createdAt:serverTimestamp()});
+   tx.update(slotRef,{status:"full",bookingId:bookingRef.id,updatedAt:serverTimestamp()});
+  });
+  ["manualBigoId","manualName","manualOpponentName","manualOpponentId"].forEach(id=>$(id).value="");
+  setStatus("manualMessage","Manual PK booking created and approved.","ok");
+ }catch(e){console.error(e);setStatus("manualMessage",e.message==="SLOT_TAKEN"?"Already set this date to another host. Please choose another time.":"Could not create manual booking. Check Firestore rules and try again.","err");}
+ finally{$("manualCreateBtn").disabled=false;refreshManualTimes();}
+};
+async function approveBooking(id){
+ const b=bookings.find(x=>x.id===id);if(!b)return;
+ try{const batch=writeBatch(db);batch.update(doc(db,"bookings",id),{status:"Approved",approvedAt:serverTimestamp(),approvedBy:currentUser.uid});
+  if(b.lookupCode)batch.set(doc(db,"publicBookings",b.lookupCode),{status:"Approved",approvedAt:serverTimestamp()},{merge:true});
+  const lookupSnap=await getDoc(doc(db,"publicBigoLookup",b.bigoId));if(lookupSnap.exists()&&lookupSnap.data().bookingId===id)batch.set(doc(db,"publicBigoLookup",b.bigoId),{status:"Approved",approvedAt:serverTimestamp()},{merge:true});
+  await batch.commit();setStatus("adminMessage","Booking approved.","ok");
+ }catch(e){console.error(e);setStatus("adminMessage","Could not approve booking. Check Firestore rules.","err");}
+}
+async function saveOpponent(id){
+ const input=$("adminBookings").querySelector(`[data-opponent="${CSS.escape(id)}"]`);const opponentBigoId=input?.value.trim()||"";
+ const nameInput=$("adminBookings").querySelector(`[data-opponent-name="${CSS.escape(id)}"]`);const opponentName=nameInput?.value.trim()||"";
+ if(opponentBigoId&&!/^[A-Za-z0-9._-]{3,40}$/.test(opponentBigoId)){setStatus("adminMessage","Check the opponent BIGO ID format.","err");return;}
+ const b=bookings.find(x=>x.id===id);if(!b)return;
+ try{
+  const batch=writeBatch(db);const status=opponentBigoId?"Opponent assigned":(b.status==="Approved"?"Approved":"Pending approval");
+  batch.update(doc(db,"bookings",id),{opponentName,opponentBigoId,status,assignedAt:opponentBigoId?serverTimestamp():null,assignedBy:currentUser.uid});
+  if(b.lookupCode)batch.set(doc(db,"publicBookings",b.lookupCode),{opponentName,opponentBigoId,status,assignedAt:opponentBigoId?serverTimestamp():null},{merge:true});
+  const lookupSnap=await getDoc(doc(db,"publicBigoLookup",b.bigoId));
+  if(lookupSnap.exists()&&lookupSnap.data().bookingId===id)batch.set(doc(db,"publicBigoLookup",b.bigoId),{opponentName,opponentBigoId,status,assignedAt:opponentBigoId?serverTimestamp():null},{merge:true});
+  await batch.commit();setStatus("adminMessage","Opponent name and BIGO ID saved.","ok");
+ }catch(e){console.error(e);setStatus("adminMessage","Could not save opponent details. Check rules and try again.","err");}
+}
+async function cancelBooking(id){
+ const b=bookings.find(x=>x.id===id);if(!b||!confirm(`Cancel booking for ${b.bigoId} on ${b.date} ${b.time}?`))return;
+ try{const batch=writeBatch(db);batch.delete(doc(db,"bookings",id));if(b.lookupCode)batch.delete(doc(db,"publicBookings",b.lookupCode));const lookupSnap=await getDoc(doc(db,"publicBigoLookup",b.bigoId));if(lookupSnap.exists()&&lookupSnap.data().bookingId===id)batch.delete(doc(db,"publicBigoLookup",b.bigoId));batch.update(doc(db,"slots",b.slotId),{status:"available",bookingId:null,updatedAt:serverTimestamp()});await batch.commit();setStatus("adminMessage","Booking cancelled and slot reopened.","ok");}catch(e){console.error(e);setStatus("adminMessage","Could not cancel booking. Check admin permissions.","err");}
+}
+async function toggleSlot(id){
+ const s=slots.find(x=>x.id===id);if(!s||s.status==="full")return;
+ try{await updateDoc(doc(db,"slots",id),{status:s.status==="closed"?"available":"closed",updatedAt:serverTimestamp()});setStatus("adminMessage","Slot status updated.","ok");}catch(e){console.error(e);setStatus("adminMessage","Could not update slot status.","err");}
+}
+$("adminSearch").addEventListener("input",renderAdmin);
+$("bookingMonthFilter").addEventListener("change",renderAdmin);
+$("slotMonthFilter").addEventListener("change",renderAdmin);
+$("downloadMonthExcelBtn").addEventListener("click",()=>$("exportExcelBtn").click());
+function exportRows(){const selectedMonth=$("bookingMonthFilter")?.value||dateToday().slice(0,7);return bookings.filter(b=>monthKey(b.date)===selectedMonth).map(b=>({"DATE":b.date||"","TIME":b.time||"","BIGO NAME":b.name||"","BIGO ID":b.bigoId||"","HOST LEVEL":"","AGENCY NAME":"","AGENCY TELEGRAM":"","OPK EVENT":"","VS":"VS","OPPONENT NAME":b.opponentName||"","OPPONENT BIGO ID":b.opponentBigoId||"","LEVEL":"","OPPONENT AGENCY NAME":"","OPPONENT AGENCY TELEGRAM":"","REMARKS (WIN/LOSE)":b.status||""})).sort((a,b)=>(a.DATE+a.TIME).localeCompare(b.DATE+b.TIME));}
+function downloadBlob(content,type,name){const blob=new Blob([content],{type});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+$("exportExcelBtn").onclick=async()=>{if(!isAdmin)return;const rows=exportRows();if(!window.ExcelJS){setStatus("exportMessage","Excel formatting library did not load. Check your internet connection, then try again.","err");return;}try{
+ const ExcelJS=window.ExcelJS;const wb=new ExcelJS.Workbook();wb.creator="BADASS";wb.subject="BIGO OPK Match Schedule";wb.title="BADASS OPK Match Report";wb.created=new Date();
+ const ws=wb.addWorksheet("OPK Match Report",{views:[{state:"frozen",ySplit:6,xSplit:2,showGridLines:false}]});
+ const headers=["DATE","TIME","BIGO NAME","BIGO ID","HOST LEVEL","AGENCY NAME","AGENCY TELEGRAM","OPK EVENT","VS","OPPONENT NAME","OPPONENT BIGO ID","LEVEL","OPPONENT AGENCY NAME","OPPONENT AGENCY TELEGRAM","REMARKS (WIN/LOSE)"];
+ const widths=[19,13,20,18,12,20,22,18,6,21,21,12,23,25,20];headers.forEach((h,i)=>ws.getColumn(i+1).width=widths[i]);
+ ws.mergeCells(1,1,1,15);ws.getCell("A1").value="♛ BADASS  |  BIGO PK MATCH SCHEDULER";ws.getCell("A1").font={name:"Arial",size:16,bold:true,color:{argb:"FFFFFFFF"}};ws.getCell("A1").alignment={vertical:"middle",horizontal:"center"};ws.getRow(1).height=30;ws.getRow(1).eachCell(c=>c.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FF078F89"}});
+ const selectedMonth=$("bookingMonthFilter")?.value||dateToday().slice(0,7);const reportMonth=monthLabel(selectedMonth).toUpperCase();ws.mergeCells(2,1,2,15);ws.getCell("A2").value=`OPK MATCHED FOR THE MONTH OF ${reportMonth}`;ws.getCell("A2").font={name:"Arial",size:15,bold:true,color:{argb:"FF20252B"}};ws.getCell("A2").alignment={horizontal:"center",vertical:"middle"};ws.getRow(2).height=29;
+ ws.mergeCells(3,1,3,15);ws.getCell("A3").value="SAME PK EVENT ONLY. NO PM NO DEAL.";ws.getCell("A3").font={name:"Arial",size:12,bold:true,color:{argb:"FFC04452"}};ws.getCell("A3").alignment={horizontal:"center",vertical:"middle"};ws.getRow(3).height=23;
+ ws.mergeCells(4,1,4,15);ws.getCell("A4").value="NOTE: MATCH HOST LEVEL / OPK EVENT WITH THE INFORMATION PROVIDED. VERIFY OPPONENT DETAILS BEFORE THE MATCH.";ws.getCell("A4").font={name:"Arial",size:10,bold:true,color:{argb:"FF374151"}};ws.getCell("A4").alignment={horizontal:"center",vertical:"middle",wrapText:true};ws.getRow(4).height=28;
+ ws.mergeCells(5,1,5,15);ws.getCell("A5").value="BADASS ADMIN REPORT  •  TIMES IN PHILIPPINE TIME (UTC+8)";ws.getCell("A5").font={name:"Arial",size:9,italic:true,color:{argb:"FF667085"}};ws.getCell("A5").alignment={horizontal:"center",vertical:"middle"};ws.getRow(5).height=20;
+ const hr=ws.getRow(6);headers.forEach((h,i)=>{const c=hr.getCell(i+1);c.value=h;c.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FF078F89"}};c.font={name:"Arial",size:10,bold:true,color:{argb:"FFFFFFFF"}};c.alignment={horizontal:"center",vertical:"middle",wrapText:true};c.border={top:{style:"thin",color:{argb:"FF056D68"}},bottom:{style:"thin",color:{argb:"FF056D68"}},left:{style:"thin",color:{argb:"FF056D68"}},right:{style:"thin",color:{argb:"FF056D68"}}};});hr.height=34;
+ if(!rows.length){const r=ws.addRow(["No bookings recorded yet."]);ws.mergeCells(7,1,7,15);r.height=24;r.getCell(1).font={italic:true,color:{argb:"FF667085"}};}
+ rows.forEach((obj,idx)=>{const row=ws.addRow(headers.map(h=>obj[h]??""));row.height=22;row.eachCell({includeEmpty:true},(c,col)=>{c.font={name:"Arial",size:10,color:{argb:"FF20252B"}};c.alignment={vertical:"middle",horizontal:col===2||col===9?"center":"left",wrapText:true};c.border={top:{style:"hair",color:{argb:"FFD5DADD"}},bottom:{style:"thin",color:{argb:"FFD5DADD"}},left:{style:"thin",color:{argb:"FFE3E6E8"}},right:{style:"thin",color:{argb:"FFE3E6E8"}}};if(idx%2===1)c.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FFF2F8F7"}};});const vs=row.getCell(9);vs.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FFFFE45C"}};vs.font={name:"Arial",size:10,bold:true,color:{argb:"FF282000"}};vs.alignment={horizontal:"center",vertical:"middle"};});
+ ws.autoFilter={from:{row:6,column:1},to:{row:6+Math.max(rows.length,1),column:15}};ws.pageSetup={orientation:"landscape",fitToPage:true,fitToWidth:1,fitToHeight:0,paperSize:ws.PAPER_LETTER,printTitlesRow:"1:6",margins:{left:0.2,right:0.2,top:0.4,bottom:0.4,header:0.2,footer:0.2}};ws.headerFooter.oddFooter="&CBADASS OPK Match Report&RPage &P of &N";
+ const buffer=await wb.xlsx.writeBuffer();downloadBlob(buffer,"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",`BADASS-OPK-Match-Report-${selectedMonth}.xlsx`);setStatus("exportMessage",`Styled Excel report downloaded for ${monthLabel(selectedMonth)}.`,"ok");
+ }catch(e){console.error(e);setStatus("exportMessage","Could not create the Excel report. Please try again or use CSV export.","err");}};
+$("exportCsvBtn").onclick=()=>{if(!isAdmin)return;const rows=exportRows();const headers=rows.length?Object.keys(rows[0]):["DATE","TIME","BIGO NAME","BIGO ID","HOST LEVEL","AGENCY NAME","AGENCY TELEGRAM","OPK EVENT","VS","OPPONENT NAME","OPPONENT BIGO ID","LEVEL","OPPONENT AGENCY NAME","OPPONENT AGENCY TELEGRAM","REMARKS (WIN/LOSE)"];const quote=v=>`"${String(v??"").replace(/"/g,'""')}"`;const csv=[headers.map(quote).join(","),...rows.map(r=>headers.map(h=>quote(r[h])).join(","))].join("\r\n");const selectedMonth=$("bookingMonthFilter")?.value||dateToday().slice(0,7);downloadBlob("\ufeff"+csv,"text/csv;charset=utf-8",`BADASS-OPK-Match-Report-${selectedMonth}.csv`);setStatus("exportMessage",`CSV report downloaded for ${monthLabel(selectedMonth)}.`,"ok");};
+async function copyText(text){try{await navigator.clipboard.writeText(text);alert("Copied!");}catch{const t=document.createElement("textarea");t.value=text;document.body.appendChild(t);t.select();document.execCommand("copy");t.remove();alert("Copied!");}}
+startApp();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+</body></html>
