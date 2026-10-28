@@ -63,7 +63,7 @@ input,select{border-radius:3px;border-color:#c4d2d1}input:focus,select:focus{out
     <h3>OPK MATCH SCHEDULE</h3><p class="sub">Choose a date, then tap an available time. All times are Philippine time (UTC+8).</p>
     <div class="row"><div><label for="filterDate">PK date</label><input id="filterDate" type="date"></div><div style="flex:0 0 auto"><button id="refreshSlots" class="secondary">Refresh</button></div></div>
     <div class="legend"><span><i class="dot green-dot"></i>Available</span><span><i class="dot red-dot"></i>Booked</span><span><i class="dot gold-dot"></i>Closed</span></div>
-    <div id="slotsArea"><div class="notice">Connect Firebase and add a schedule from the admin panel to show slots here.</div></div>
+    <div id="slotsArea"><div class="notice">Loading available OPK slots…</div></div>
     <div id="slotStatus" class="status" aria-live="polite"></div>
   </section>
   <section class="card">
@@ -197,7 +197,7 @@ const dateToday = () => {const d=new Date();return `${d.getFullYear()}-${String(
 // Default all schedule date pickers to one month ahead, handling year rollover.
 const dateOneMonthAhead = () => {const d=new Date(); d.setDate(1); d.setMonth(d.getMonth()+1); const lastDay=new Date(d.getFullYear(),d.getMonth()+1,0).getDate(); const originalDay=new Date().getDate(); d.setDate(Math.min(originalDay,lastDay)); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;};
 const defaultScheduleDate=dateOneMonthAhead();
-$("filterDate").value=defaultScheduleDate; $("adminDate").value=defaultScheduleDate; $("manualDate").value=defaultScheduleDate;
+$("filterDate").value=defaultScheduleDate; $("manualDate").value=defaultScheduleDate;
 const defaultScheduleMonth=new Date(defaultScheduleDate+"T12:00:00"); $("scheduleMonth").textContent=defaultScheduleMonth.toLocaleDateString("en-US",{month:"long",year:"numeric"}).toUpperCase(); if($("autoScheduleMonth"))$("autoScheduleMonth").textContent=defaultScheduleMonth.toLocaleDateString("en-US",{month:"long",year:"numeric"});
 function setStatus(id,msg,kind=""){const el=$(id);if(!el)return;el.className="status"+(kind?" "+kind:"");el.textContent=msg;}
 function showView(name){$("bookingView").classList.toggle("hidden",name!=="booking");$("lookupView").classList.toggle("hidden",name!=="lookup");$("adminView").classList.toggle("hidden",name!=="admin");}
@@ -226,7 +226,7 @@ function slotStatus(s){return s.status==="full"?"Already set this date to anothe
 function renderSlots(){
  const date=$("filterDate").value;
  if(date){const d=new Date(date+"T12:00:00");$("scheduleMonth").textContent=d.toLocaleDateString("en-PH",{month:"long",year:"numeric"}).toUpperCase();}const list=slots.filter(s=>s.date===date).sort((a,b)=>a.time.localeCompare(b.time));
- if(!list.length){$("slotsArea").innerHTML='<div class="notice err">Sorry, the date you selected is not available. Choose another date and time. Thank you.</div>';return;}
+ if(!list.length){$("slotsArea").innerHTML='<div class="notice">No slots are set for this date yet. Please try another date or contact the admin.</div>';return;}
  $("slotsArea").innerHTML=`<div class="slot-date">${escapeHtml(prettyDate(date))}</div><div class="slots">${list.map(s=>{const state=s.status||"available";const disabled=state!=="available";return `<button class="slot ${state==="full"?"full-slot":state==="closed"?"closed-slot":""} ${selectedSlot===s.id?"selected":""}" data-slot="${escapeHtml(s.id)}" ${disabled?"disabled":""}>${escapeHtml(s.time)}<span>${slotStatus(s)}</span></button>`}).join("")}</div>`;
  $("slotsArea").querySelectorAll("[data-slot]").forEach(b=>b.onclick=()=>{selectedSlot=b.dataset.slot;const s=slots.find(x=>x.id===selectedSlot);$("chosenSlot").value=s?`${prettyDate(s.date)} • ${s.time}`:"";$("bookBtn").disabled=!s;$("slotStatus").textContent="Selected slot: "+(s?`${s.date} ${s.time}`:"");renderSlots();});
 }
@@ -274,7 +274,7 @@ async function startApp(){
    if(stopSlots)stopSlots();stopSlots=onSnapshot(collection(db,"slots"),snap=>{slots=snap.docs.map(d=>({id:d.id,...d.data()}));renderSlots();if(isAdmin)renderAdmin();},e=>{console.error(e);setStatus("slotStatus","Could not load slots. Check Firestore rules.","err");});
    if(stopBookings)stopBookings();if(isAdmin){stopBookings=onSnapshot(collection(db,"bookings"),snap=>{bookings=snap.docs.map(d=>({id:d.id,...d.data()}));renderAdmin();},e=>{console.error(e);setStatus("adminMessage","Could not load bookings. Check admin access.","err");});}else{bookings=[];}
   });
- }catch(e){console.error(e);$("configWarning").classList.remove("hidden");}
+ }catch(e){console.error(e);setStatus("slotStatus","Firebase failed to initialize: "+(e?.message||String(e)),"err");setStatus("loginMessage","Firebase failed to initialize. Check the Firebase config and Authentication settings.","err");}
 }
 $("filterDate").addEventListener("change",()=>{selectedSlot=null;$("chosenSlot").value="";$("bookBtn").disabled=true;renderSlots();if(isAdmin)ensureMonthSlots(selectedHeaderMonth());});
 $("refreshSlots").onclick=()=>renderSlots();

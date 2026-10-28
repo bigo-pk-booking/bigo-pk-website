@@ -1,12 +1,16 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function signedIn() { return request.auth != null; }
+    function signedIn() {
+      return request.auth != null;
+    }
+
     function isAdmin() {
       return signedIn()
         && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
         && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.enabled == true;
     }
+
     function validBookingForSlot(slotId) {
       return signedIn()
         && request.resource.data.status == "full"
@@ -14,16 +18,19 @@ service cloud.firestore {
         && getAfter(/databases/$(database)/documents/bookings/$(request.resource.data.bookingId)).data.slotId == slotId
         && getAfter(/databases/$(database)/documents/bookings/$(request.resource.data.bookingId)).data.bigoId is string;
     }
+
     match /admins/{uid} {
       allow read: if signedIn() && request.auth.uid == uid;
       allow write: if false;
     }
+
     match /slots/{slotId} {
       allow read: if true;
       allow create, delete: if isAdmin();
       allow update: if isAdmin()
         || (resource.data.status == "available" && validBookingForSlot(slotId));
     }
+
     match /bookings/{bookingId} {
       allow read: if isAdmin();
       allow create: if signedIn()
@@ -34,11 +41,12 @@ service cloud.firestore {
         && request.resource.data.time is string
         && request.resource.data.slotId is string
         && request.resource.data.lookupCode is string
-        && request.resource.data.status == "Reserved"
+        && request.resource.data.status in ["Reserved", "Pending approval"]
         && getAfter(/databases/$(database)/documents/slots/$(request.resource.data.slotId)).data.bookingId == bookingId
         && getAfter(/databases/$(database)/documents/slots/$(request.resource.data.slotId)).data.status == "full";
       allow update, delete: if isAdmin();
     }
+
     match /publicBookings/{lookupCode} {
       allow get: if signedIn();
       allow list: if false;
@@ -49,6 +57,17 @@ service cloud.firestore {
         && request.resource.data.date is string
         && request.resource.data.time is string
         && getAfter(/databases/$(database)/documents/bookings/$(request.resource.data.bookingId)).data.lookupCode == lookupCode;
+      allow update, delete: if isAdmin();
+    }
+
+    match /publicBigoLookup/{bigoId} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if isAdmin()
+        || (signedIn()
+          && request.resource.data.bigoId == bigoId
+          && request.resource.data.bookingId is string
+          && getAfter(/databases/$(database)/documents/bookings/$(request.resource.data.bookingId)).data.bigoId == bigoId);
       allow update, delete: if isAdmin();
     }
   }
