@@ -612,7 +612,40 @@ async function lookupBooking(){
   setStatus("lookupResult",`Found ${items.length} PK schedule${items.length===1?"":"s"}.` ,"ok");openPkScheduleModal(items);
  }catch(e){console.error(e);setStatus("lookupResult","Lookup failed. Check Firebase rules and try again.","err");}
 }
+
 $("lookupBtn").onclick=lookupBooking;
+// Autofill a previously recorded host name when a known BIGO ID is entered.
+// The name input remains editable so the user can correct/update it before booking.
+let lastAutofilledBigoId="";
+async function autofillKnownBigoName(){
+ const id=$("bigoId").value.trim();
+ if(!/^[A-Za-z0-9._-]{3,40}$/.test(id))return;
+ setStatus("bookingMessage","Checking saved BIGO ID…");
+ try{
+  const snap=await getDoc(doc(db,"publicBigoLookup",id));
+  if(!snap.exists()){
+   lastAutofilledBigoId="";
+   setStatus("bookingMessage","BIGO ID not found in previous bookings. You can enter your name manually.");
+   return;
+  }
+  const data=snap.data();
+  const savedName=String(data.name||data.hostName||"").trim();
+  if(savedName){
+   $("userName").value=savedName;
+   lastAutofilledBigoId=id;
+   setStatus("bookingMessage","Saved name found and filled in. You can still edit the name before booking.","ok");
+  }else{
+   setStatus("bookingMessage","BIGO ID found, but no saved name is available. Please enter your name.");
+  }
+ }catch(e){
+  console.error("BIGO name autofill failed:",e);
+  setStatus("bookingMessage","Could not check the saved name. You can enter your name manually.","err");
+ }
+}
+$("bigoId").addEventListener("change",autofillKnownBigoName);
+$("bigoId").addEventListener("blur",()=>{
+ if($("bigoId").value.trim()!==lastAutofilledBigoId)autofillKnownBigoName();
+});
 $("lookupCode").value=localStorage.getItem("bigoPkLastCode")||"";
 window.__badassLoginHandlerAttached = true;
 $("loginBtn").addEventListener("click", async (event)=>{
