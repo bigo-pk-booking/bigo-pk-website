@@ -577,32 +577,45 @@ window.saveBookingEdit=saveReportDetails;
 async function saveReportDetails(id){
  const b=bookings.find(x=>x.id===id);if(!b)return;
  const modal=$("bookingEditModal");if(!modal||modal.dataset.bookingId!==id)return;
- const values={};modal.querySelectorAll("[data-report-field]").forEach(input=>values[input.dataset.reportField]=input.value.trim());
- if(!values.name){$("bookingEditMessage").textContent="Host name is required.";return;}
- if(!values.bigoId||!/^[A-Za-z0-9._-]{3,40}$/.test(values.bigoId)){$("bookingEditMessage").textContent="Check the host BIGO ID format.";return;}
- if(values.opponentBigoId&&!/^[A-Za-z0-9._-]{3,40}$/.test(values.opponentBigoId)){$("bookingEditMessage").textContent="Check the opponent BIGO ID format.";return;}
- if(!values.date||!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(values.date)){$("bookingEditMessage").textContent="Choose a valid date.";return;}
- if(!values.time||!/^[0-9]{2}:[0-9]{2}$/.test(values.time)){$("bookingEditMessage").textContent="Choose a valid time.";return;}
+ const message=$("bookingEditMessage");
+ const saveButton=$("bookingEditSave");
+ const values={};
+ modal.querySelectorAll("[data-report-field]").forEach(input=>values[input.dataset.reportField]=input.value.trim());
+ if(!values.name){message.textContent="Host name is required.";return;}
+ if(!values.bigoId||!/^[A-Za-z0-9._-]{3,40}$/.test(values.bigoId)){message.textContent="Check the host BIGO ID format.";return;}
+ if(values.opponentBigoId&&!/^[A-Za-z0-9._-]{3,40}$/.test(values.opponentBigoId)){message.textContent="Check the opponent BIGO ID format.";return;}
+ if(!values.date||!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(values.date)){message.textContent="Choose a valid date.";return;}
+ if(!values.time||!/^[0-9]{2}:[0-9]{2}$/.test(values.time)){message.textContent="Choose a valid time.";return;}
+ if(!TIMES.includes(values.time)){message.textContent="Choose one of the available PK times.";return;}
  const oldSlotId=b.slotId||slotId(b.date,b.time),newSlotId=slotId(values.date,values.time);
- values.slotId=newSlotId;values.status=values.opponentBigoId?"Opponent assigned":(b.status||"Approved");values.updatedAt=serverTimestamp();values.updatedBy=currentUser.uid;
+ saveButton.disabled=true;
+ message.textContent="Saving booking details to Cloudflare D1…";
  try{
-  const batch=writeBatch(db);
-  if(newSlotId!==oldSlotId){
-   const newSlotSnap=await getDoc(doc(db,"slots",newSlotId));
-   if(!newSlotSnap.exists()||newSlotSnap.data().status!=="available"){$("bookingEditMessage").textContent="That date/time slot is not available. Choose another available slot.";return;}
-   batch.update(doc(db,"slots",oldSlotId),{status:"available",bookingId:null,hostName:null,hostBigoId:null,updatedAt:serverTimestamp()});
-   batch.update(doc(db,"slots",newSlotId),{status:"full",bookingId:id,hostName:values.name,hostBigoId:values.bigoId,updatedAt:serverTimestamp()});
-  }else batch.set(doc(db,"slots",newSlotId),{status:"full",bookingId:id,hostName:values.name,hostBigoId:values.bigoId,updatedAt:serverTimestamp()},{merge:true});
-  batch.update(doc(db,"bookings",id),values);
-  if(b.lookupCode)batch.set(doc(db,"publicBookings",b.lookupCode),{...values},{merge:true});
-  const oldLookupRef=doc(db,"publicBigoLookup",b.bigoId),oldLookupSnap=await getDoc(oldLookupRef);
-  if(oldLookupSnap.exists()&&oldLookupSnap.data().bookingId===id){
-   if(values.bigoId!==b.bigoId){batch.delete(oldLookupRef);batch.set(doc(db,"publicBigoLookup",values.bigoId),{...oldLookupSnap.data(),...values,bookingId:id},{merge:true});}
-   else batch.set(oldLookupRef,{...values,bookingId:id},{merge:true});
+  await cloudflareAdminRequest("/api/admin/bookings/"+encodeURIComponent(id),{
+   method:"PATCH",
+   body:JSON.stringify(values)
+  });
+  const nextStatus=values.opponentBigoId?"Opponent assigned":(b.status||"Approved");
+  if(nextStatus!==b.status){
+   await cloudflareAdminRequest("/api/admin/bookings/"+encodeURIComponent(id)+"/status",{
+    method:"PATCH",
+    body:JSON.stringify({status:nextStatus})
+   });
   }
-  await batch.commit();$("bookingEditMessage").textContent="Booking details saved successfully.";setStatus("adminMessage","Booking details saved successfully.","ok");
+  message.textContent="Booking details saved successfully.";
+  setStatus("adminMessage","Booking details saved to Cloudflare D1. Refreshing slots…","ok");
+  await loadCloudflareAdminBookings();
+  const month=$("slotMonthFilter")?.value||values.date.slice(0,7);
+  await loadCloudflareAdminSlots(month);
+  await loadCloudflareSlots($("filterDate")?.value||values.date);
   setTimeout(()=>{closeBookingEdit();renderAdmin();},450);
- }catch(e){console.error(e);$("bookingEditMessage").textContent="Could not save. Check Firestore permissions and connection.";setStatus("adminMessage","Could not save booking details. Check Firestore rules and connection.","err");}
+ }catch(e){
+  console.error("Cloudflare booking edit failed:",e);
+  message.textContent="Could not save to Cloudflare: "+String(e.message||e);
+  setStatus("adminMessage","Could not save booking details to Cloudflare D1.","err");
+ }finally{
+  saveButton.disabled=false;
+ }
 }
 function renderAdmin(){
  if(!isAdmin)return;
