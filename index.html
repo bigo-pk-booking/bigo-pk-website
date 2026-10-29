@@ -128,6 +128,13 @@ input,select{border-radius:3px;border-color:#c4d2d1}input:focus,select:focus{out
  .admin-pagination{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:12px;background:#fff;border-top:1px solid #d8e2e1;color:#344044;font-size:13px}
 .admin-pagination button:disabled{opacity:.4;cursor:not-allowed}
 #slotStatusFilter{min-width:0}
+
+/* Admin-only cleanup: hide the large monthly BADASS banner and PK battle banner in Admin view. */
+body.admin-panel-open .monthly-sheet,
+body.admin-panel-open .pk-battle {
+  display: none !important;
+}
+
 </style>
 </head>
 <body>
@@ -192,21 +199,6 @@ input,select{border-radius:3px;border-color:#c4d2d1}input:focus,select:focus{out
   </div>
   <div class="card hidden" id="adminDashboard">
     <div class="admin-head"><div><h3>Admin dashboard</h3><p class="sub" style="margin:5px 0 0">Manage schedule, assign opponents, and download the report.</p></div><button id="logoutBtn" class="secondary small">Sign out</button></div>
-    <section id="announcementManager" class="card" style="margin-top:14px;border:2px solid #d40000;background:#fff8f8">
-      <h3>📢 Announcement Manager</h3>
-      <p class="sub">Create an announcement here. Published announcements appear as a popup for website visitors. Uses Firestore; no Cloud Functions required.</p>
-      <label for="announcementTitleInput">Announcement title</label>
-      <input id="announcementTitleInput" maxlength="100" placeholder="e.g. Important PK Schedule Update">
-      <label for="announcementMessageInput">Announcement message</label>
-      <textarea id="announcementMessageInput" maxlength="1500" rows="4" style="width:100%;padding:12px;border:1px solid #c4d2d1;border-radius:4px;font:inherit" placeholder="Type your announcement here..."></textarea>
-      <label style="display:flex;align-items:center;gap:8px"><input id="announcementActiveInput" type="checkbox" checked style="width:auto"> Publish announcement popup</label>
-      <div class="row" style="margin-top:12px">
-        <button id="saveAnnouncementBtn" type="button">Publish / Save</button>
-        <button id="clearAnnouncementBtn" type="button" class="secondary">Clear form</button>
-      </div>
-      <div id="announcementManagerStatus" class="status" aria-live="polite">Loading announcement status…</div>
-    </section>
-
     <div class="admin-grid" style="margin-top:14px">
       <div class="card manual-pk-card" style="padding:14px">
         <h3>Manual PK booking</h3>
@@ -627,235 +619,24 @@ startApp();
 </script>
 
 
-<!-- BADASS STATIC ANNOUNCEMENT POPUP: edit the title/message below to update it. -->
-<style>
-  #badassAnnouncementOverlay{position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.82);display:flex;align-items:center;justify-content:center;padding:18px}
-  #badassAnnouncementOverlay.badass-announcement-hidden{display:none!important}
-  #badassAnnouncementDialog{width:min(100%,460px);position:relative;overflow:hidden;border:2px solid #d40000;border-radius:14px;padding:24px 18px 18px;background:radial-gradient(circle at top,#410909,#090909 70%);color:#fff;text-align:center;box-shadow:0 0 35px #d4000055;animation:badassAnnouncementIn .35s ease-out both}
-  #badassAnnouncementDialog:before{content:"";position:absolute;left:-20%;top:0;width:140%;height:4px;background:linear-gradient(90deg,transparent,#ff3030,#ffd84d,#ff3030,transparent);animation:badassAnnouncementSweep 2s linear infinite}
-  #badassAnnouncementDialog>*{position:relative}
-  #badassAnnouncementIcon{font-size:42px;line-height:1.2}
-  #badassAnnouncementTitle{margin:10px 0;color:#fff;font-size:clamp(21px,5vw,28px);text-shadow:0 0 12px #ff2020}
-  #badassAnnouncementMessage{white-space:pre-wrap;overflow-wrap:anywhere;color:#ffe6e6;line-height:1.6;font-size:14px;margin:12px 0 20px}
-  #badassAnnouncementOkay{width:100%;min-height:46px;background:#d40000;color:#fff;border:1px solid #ff5656;border-radius:6px;font-weight:800}
-  @keyframes badassAnnouncementIn{from{opacity:0;transform:translateY(12px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
-  @keyframes badassAnnouncementSweep{to{transform:translateX(25%)}}
-  @media(prefers-reduced-motion:reduce){#badassAnnouncementDialog,#badassAnnouncementDialog:before{animation:none!important}}
-</style>
-<div id="badassAnnouncementOverlay" class="badass-announcement-hidden" role="dialog" aria-modal="true" aria-labelledby="badassAnnouncementTitle">
-  <div id="badassAnnouncementDialog">
-    <div id="badassAnnouncementIcon" aria-hidden="true">📢</div>
-    <h2 id="badassAnnouncementTitle"></h2>
-    <p id="badassAnnouncementMessage"></p>
-    <button id="badassAnnouncementOkay" type="button">GOT IT</button>
-  </div>
-</div>
 <script>
-/* The Firestore announcement listener calls this function when an active announcement exists. */
-window.showBadassAnnouncement = function(titleText, messageText) {
-  var overlay = document.getElementById('badassAnnouncementOverlay');
-  var title = document.getElementById('badassAnnouncementTitle');
-  var message = document.getElementById('badassAnnouncementMessage');
-  if (!overlay || !title || !message) return;
-  title.textContent = String(titleText || 'Announcement');
-  message.textContent = String(messageText || '');
-  overlay.classList.remove('badass-announcement-hidden');
-};
-window.closeBadassAnnouncement = function() {
-  var overlay = document.getElementById('badassAnnouncementOverlay');
-  if (overlay) overlay.classList.add('badass-announcement-hidden');
-};
-(function(){
-  var overlay = document.getElementById('badassAnnouncementOverlay');
-  var okay = document.getElementById('badassAnnouncementOkay');
-  if (okay) okay.addEventListener('click', window.closeBadassAnnouncement);
-  if (overlay) overlay.addEventListener('click', function(event) {
-    if (event.target === overlay) window.closeBadassAnnouncement();
-  });
-  document.addEventListener('keydown', function(event) {
-    if (event.key === 'Escape') window.closeBadassAnnouncement();
+(function () {
+  function syncAdminPanelClass() {
+    var adminView = document.getElementById('adminView');
+    var isAdminVisible = !!adminView && !adminView.classList.contains('hidden');
+    document.body.classList.toggle('admin-panel-open', isAdminVisible);
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var adminView = document.getElementById('adminView');
+    if (!adminView) return;
+    syncAdminPanelClass();
+    new MutationObserver(syncAdminPanelClass).observe(adminView, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
   });
 })();
 </script>
-<!-- END BADASS STATIC ANNOUNCEMENT POPUP -->
-
-
-<!-- BADASS FIRESTORE ANNOUNCEMENT MANAGER -->
-<script type="module">
-import { getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, doc, getDoc, onSnapshot, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-(function(){
-  const $a = id => document.getElementById(id);
-  const titleInput = $a("announcementTitleInput");
-  const messageInput = $a("announcementMessageInput");
-  const activeInput = $a("announcementActiveInput");
-  const saveBtn = $a("saveAnnouncementBtn");
-  const clearBtn = $a("clearAnnouncementBtn");
-  const statusEl = $a("announcementManagerStatus");
-  if (!titleInput || !messageInput || !activeInput || !saveBtn || !statusEl) return;
-
-  let announcementDocRef = null;
-  let latestAnnouncement = null;
-  let formDirty = false;
-  let isSaving = false;
-  let preserveSaveStatus = false;
-  let lastShownKey = "";
-
-  function status(message, error=false) {
-    statusEl.textContent = message;
-    statusEl.className = "status" + (error ? " err" : " ok");
-    statusEl.setAttribute("role", error ? "alert" : "status");
-  }
-  const originalSaveLabel = saveBtn.textContent;
-  function setSaving(saving) {
-    isSaving = saving;
-    saveBtn.disabled = saving;
-    saveBtn.innerHTML = saving ? '<span class="spinner" aria-hidden="true"></span> Saving…' : originalSaveLabel;
-  }
-  [titleInput, messageInput, activeInput].forEach(el => {
-    const markDirty = () => { formDirty = true; preserveSaveStatus = false; };
-    el.addEventListener("input", markDirty);
-    el.addEventListener("change", markDirty);
-  });
-  if (clearBtn) clearBtn.addEventListener("click", () => {
-    titleInput.value = "";
-    messageInput.value = "";
-    activeInput.checked = true;
-    formDirty = true;
-    status("Form cleared. Publish / Save to replace the current announcement.");
-  });
-
-  function showIfActive(data) {
-    if (!data || data.active !== true || !String(data.title || "").trim() || !String(data.message || "").trim()) return;
-    // Do not interrupt an authenticated admin while editing; visitor/anonymous sessions still see it.
-    const currentUser = getAuth().currentUser;
-    if (currentUser && !currentUser.isAnonymous) return;
-    const key = String(data.updatedAt?.seconds || "") + "|" + data.title + "|" + data.message;
-    if (key === lastShownKey) return;
-    lastShownKey = key;
-    if (typeof window.showBadassAnnouncement === "function") {
-      window.showBadassAnnouncement(data.title, data.message);
-    }
-  }
-
-  async function waitForFirebaseApp() {
-    // Firebase is initialized by the main page module. Module scripts can start
-    // in an order that briefly leaves getApps() empty, so wait instead of failing.
-    for (let attempt = 0; attempt < 100; attempt++) {
-      if (getApps().length) return getApp();
-      await new Promise(resolve => setTimeout(resolve, 100));
-    }
-    throw new Error("Firebase app did not initialize within 10 seconds.");
-  }
-
-  async function initialize() {
-    saveBtn.disabled = true;
-    statusEl.innerHTML = '<span class="spinner" aria-hidden="true"></span> Connecting to Firebase…';
-    const app = await waitForFirebaseApp();
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    announcementDocRef = doc(db, "announcements", "current");
-
-    onSnapshot(announcementDocRef, { includeMetadataChanges: true }, snap => {
-      latestAnnouncement = snap.exists() ? snap.data() : null;
-      if (!formDirty) {
-        titleInput.value = latestAnnouncement?.title || "";
-        messageInput.value = latestAnnouncement?.message || "";
-        activeInput.checked = latestAnnouncement?.active === true;
-      }
-      if (latestAnnouncement?.active === true) showIfActive(latestAnnouncement);
-      else lastShownKey = "";
-      // Snapshot events can arrive before the server confirms a write. Never report
-      // a successful save while the Save button is still waiting for server acknowledgement.
-      if (!isSaving && !preserveSaveStatus) {
-        if (snap.metadata.hasPendingWrites) {
-          status("Syncing announcement with Firebase…");
-        } else if (latestAnnouncement) {
-          status(latestAnnouncement.active ? "✓ Announcement is published and synced from Firestore." : "Announcement is saved but currently disabled.");
-        } else {
-          status("No announcement saved yet in announcements/current. Enter a title and message, then publish.");
-        }
-      }
-    }, error => {
-      console.error("Announcement read failed", error);
-      status("Could not load announcement. Check the Firestore announcements rule.", true);
-    });
-
-    onAuthStateChanged(auth, async user => {
-      if (!user || user.isAnonymous) {
-        saveBtn.disabled = true;
-        status("Sign in with an approved admin account to publish announcements.", true);
-        return;
-      }
-      try {
-        const adminSnap = await getDoc(doc(db, "admins", user.uid));
-        const allowed = adminSnap.exists() && adminSnap.data().enabled === true;
-        saveBtn.disabled = !allowed;
-        if (!allowed) status("This account is not enabled as an admin.", true);
-        else if (!isSaving && !preserveSaveStatus && !statusEl.textContent.includes("published") && !statusEl.textContent.includes("saved")) status("Admin access ready. You can publish announcements.");
-      } catch (error) {
-        console.error("Announcement admin check failed", error);
-        saveBtn.disabled = true;
-        status("Could not verify admin permission. Check the admins document and Firestore rules.", true);
-      }
-    });
-
-    saveBtn.addEventListener("click", async () => {
-      const user = auth.currentUser;
-      if (!user || user.isAnonymous) {
-        status("Please sign in as an admin first.", true);
-        return;
-      }
-      const title = titleInput.value.trim();
-      const message = messageInput.value.trim();
-      if (!title || !message) {
-        status("Enter both an announcement title and message.", true);
-        return;
-      }
-      if (title.length > 100 || message.length > 1500) {
-        status("Title limit is 100 characters; message limit is 1,500 characters.", true);
-        return;
-      }
-      preserveSaveStatus = false;
-      setSaving(true);
-      statusEl.innerHTML = '<span class="spinner" aria-hidden="true"></span> Saving announcement to Firestore…';
-      try {
-        const adminSnap = await getDoc(doc(db, "admins", user.uid));
-        if (!adminSnap.exists() || adminSnap.data().enabled !== true) {
-          throw new Error("Your account is not enabled as an admin.");
-        }
-        await setDoc(announcementDocRef, {
-          title,
-          message,
-          active: activeInput.checked,
-          updatedAt: serverTimestamp(),
-          updatedBy: user.uid
-        });
-        formDirty = false;
-        status(activeInput.checked ? "✓ SUCCESS! Announcement published and confirmed by Firestore." : "✓ SUCCESS! Announcement saved and confirmed by Firestore, but popup is disabled.");
-      } catch (error) {
-        console.error("Announcement save failed", error);
-        preserveSaveStatus = true;
-        const reason = error?.code === "permission-denied"
-          ? "Permission denied. Check that this admin has enabled=true and role=superadmin, and that the Firestore rules are published."
-          : (error?.message || error?.code || "Unknown Firebase error.");
-        status("✖ SAVE FAILED: " + reason, true);
-      } finally {
-        setSaving(false);
-      }
-    });
-  }
-
-  // This module appears after the main app module, so the Firebase app should already exist.
-  initialize().catch(error => {
-    console.error("Announcement manager initialization failed", error);
-    saveBtn.disabled = true;
-    status("ERROR: Announcement manager could not connect to Firebase. " + (error?.message || "Check Firebase setup and refresh."), true);
-  });
-})();
-</script>
-<!-- END BADASS FIRESTORE ANNOUNCEMENT MANAGER -->
 
 </body></html>
