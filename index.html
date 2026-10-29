@@ -384,6 +384,48 @@ const FIREBASE_CONFIG = {
 };
 const TIMES = ["20:00","20:15","20:30","20:45","21:00","21:15","21:30","21:45","22:00"];
 const BIGO_API_BASE = "https://bigo-pk-api.wandering-forest-74e9.workers.dev";
+async function cloudflareAdminRequest(path, options={}){
+ if(!currentUser||currentUser.isAnonymous)throw new Error("Please sign in as admin first.");
+ const token=await currentUser.getIdToken();
+ const response=await fetch(BIGO_API_BASE+path,{
+  ...options,
+  headers:{"Authorization":"Bearer "+token,"Content-Type":"application/json",...(options.headers||{})},
+  cache:"no-store"
+ });
+ const result=await response.json();
+ if(!response.ok||!result.ok)throw new Error(result.error||"Cloudflare admin request failed");
+ return result;
+}
+async function loadCloudflareAdminBookings(){
+ try{
+  const result=await cloudflareAdminRequest("/api/admin/bookings");
+  bookings=(result.bookings||[]).map(b=>({
+   ...b,
+   id:b.id,
+   slotId:b.slot_id||b.slotId||"",
+   date:b.date||"",
+   time:b.time||"",
+   name:b.bigo_name||b.name||"",
+   bigoId:b.bigo_id||b.bigoId||"",
+   hostLevel:b.host_level||b.hostLevel||"",
+   agencyName:b.agency_name||b.agencyName||"",
+   agencyTelegram:b.agency_telegram||b.agencyTelegram||"",
+   opkEvent:b.opk_event||b.opkEvent||"",
+   opponentName:b.opponent_name||b.opponentName||"",
+   opponentBigoId:b.opponent_bigo_id||b.opponentBigoId||"",
+   opponentLevel:b.opponent_level||b.opponentLevel||"",
+   opponentAgencyName:b.opponent_agency_name||b.opponentAgencyName||"",
+   opponentAgencyTelegram:b.opponent_agency_telegram||b.opponentAgencyTelegram||"",
+   remarks:b.remarks||"",
+   bookingCode:b.booking_code||b.bookingCode||""
+  }));
+  renderAdmin();
+  setStatus("adminMessage","Loaded bookings from Cloudflare D1.","ok");
+ }catch(e){
+  console.error("Cloudflare admin bookings failed:",e);
+  setStatus("adminMessage","Could not load D1 bookings: "+String(e.message||e),"err");
+ }
+}
 async function loadCloudflareSlots(date){
  if(!date)return;
  setStatus("slotStatus","Loading slots…");
@@ -587,7 +629,7 @@ async function startApp(){
     stopSlots=null;
     await loadCloudflareSlots($("filterDate").value||defaultScheduleDate);
    }
-   if(stopBookings)stopBookings();if(isAdmin){stopBookings=onSnapshot(collection(db,"bookings"),snap=>{bookings=snap.docs.map(d=>({id:d.id,...d.data()}));renderAdmin();syncBookedSlotHostDetails(bookings);},e=>{console.error(e);setStatus("adminMessage","Could not load bookings. Check admin access.","err");});}else{bookings=[];}
+   if(stopBookings)stopBookings();stopBookings=null;if(isAdmin){await loadCloudflareAdminBookings();}else{bookings=[];}
   });
  }catch(e){console.error(e);$("configWarning").classList.remove("hidden");}
 }
@@ -624,7 +666,13 @@ $("bookBtn").onclick=async()=>{
  }catch(e){
   console.error("Cloudflare OPK booking failed:",e);
   const msg=String(e.message||e);
-  setStatus("bookingMessage",msg==="SLOT_TAKEN"?"That slot was just booked. Please choose another time.":"Booking failed: "+msg,"err");
+  if(msg==="SLOT_TAKEN"){
+   setStatus("bookingMessage","That slot is already booked. The slot list is refreshing; please choose another time.","err");
+   await loadCloudflareSlots(s.date);
+   selectedSlot=null;$("chosenSlot").value="";$("bookBtn").disabled=true;
+  }else{
+   setStatus("bookingMessage","Booking failed: "+msg,"err");
+  }
  }finally{$("bookBtn").disabled=false;}
 };;
 let pkScheduleItems=[];let pkScheduleIndex=0;
@@ -783,11 +831,11 @@ $("manualCreateBtn").onclick=async()=>{
 };
 async function approveBooking(id){
  const b=bookings.find(x=>x.id===id);if(!b)return;
- try{const batch=writeBatch(db);batch.update(doc(db,"bookings",id),{status:"Approved",approvedAt:serverTimestamp(),approvedBy:currentUser.uid});
-  if(b.lookupCode)batch.set(doc(db,"publicBookings",b.lookupCode),{status:"Approved",approvedAt:serverTimestamp()},{merge:true});
-  const lookupSnap=await getDoc(doc(db,"publicBigoLookup",b.bigoId));if(lookupSnap.exists()&&lookupSnap.data().bookingId===id)batch.set(doc(db,"publicBigoLookup",b.bigoId),{status:"Approved",approvedAt:serverTimestamp()},{merge:true});
-  await batch.commit();setStatus("adminMessage","Booking approved.","ok");
- }catch(e){console.error(e);setStatus("adminMessage","Could not approve booking. Check Firestore rules.","err");}
+ try{
+  await cloudflareAdminRequest("/api/admin/bookings/"+encodeURIComponent(id)+"/status",{method:"PATCH",body:JSON.stringify({status:"Approved"})});
+  b.status="Approved";renderAdmin();
+  setStatus("adminMessage","D1 booking approved.","ok");
+ }catch(e){console.error(e);setStatus("adminMessage","Could not approve D1 booking: "+String(e.message||e),"err");}
 }
 async function saveOpponent(id){
  const hostNameInput=$("adminBookings").querySelector(`[data-host-name="${CSS.escape(id)}"]`);const hostIdInput=$("adminBookings").querySelector(`[data-host-id="${CSS.escape(id)}"]`);
@@ -814,15 +862,11 @@ async function saveOpponent(id){
 async function cancelBooking(id){
  const b=bookings.find(x=>x.id===id);if(!b||!confirm(`Cancel booking for ${b.bigoId} on ${b.date} ${b.time}?`))return;
  try{
-  const batch=writeBatch(db);batch.delete(doc(db,"bookings",id));if(b.lookupCode)batch.delete(doc(db,"publicBookings",b.lookupCode));
-  const lookupRef=doc(db,"publicBigoLookup",b.bigoId),lookupSnap=await getDoc(lookupRef);
-  if(lookupSnap.exists()){
-   const index=lookupSnap.data();const codes=Array.isArray(index.lookupCodes)?index.lookupCodes:(index.lookupCode?[index.lookupCode]:[]);const remaining=codes.filter(code=>code!==b.lookupCode);
-   if(remaining.length){const latestSnap=await getDoc(doc(db,"publicBookings",remaining[remaining.length-1]));const latest=latestSnap.exists()?latestSnap.data():{};batch.set(lookupRef,{...latest,bigoId:b.bigoId,lookupCodes:remaining,lookupCode:remaining[remaining.length-1]}, {merge:true});}
-   else if(index.bookingId===id||index.lookupCode===b.lookupCode)batch.delete(lookupRef);
-  }
-  batch.update(doc(db,"slots",b.slotId),{status:"available",bookingId:null,hostName:null,hostBigoId:null,updatedAt:serverTimestamp()});await batch.commit();setStatus("adminMessage","Booking cancelled and slot reopened.","ok");
- }catch(e){console.error(e);setStatus("adminMessage","Could not cancel booking. Check admin permissions.","err");}
+  await cloudflareAdminRequest("/api/admin/bookings/"+encodeURIComponent(id)+"/status",{method:"PATCH",body:JSON.stringify({status:"Cancelled"})});
+  bookings=bookings.filter(x=>x.id!==id);renderAdmin();
+  await loadCloudflareSlots(b.date);
+  setStatus("adminMessage","D1 booking cancelled and slot reopened.","ok");
+ }catch(e){console.error(e);setStatus("adminMessage","Could not cancel D1 booking: "+String(e.message||e),"err");}
 }
 async function toggleSlot(id){
  const s=slots.find(x=>x.id===id);if(!s||s.status==="full")return;
