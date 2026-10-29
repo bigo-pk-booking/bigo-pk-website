@@ -631,19 +631,15 @@ async function startApp(){
    isAdmin=false;
    if(!user.isAnonymous){try{const a=await getDoc(doc(db,"admins",user.uid));isAdmin=a.exists()&&a.data().enabled===true;}catch(e){console.error(e)}}
    $("adminLogin").classList.toggle("hidden",isAdmin);$("adminDashboard").classList.toggle("hidden",!isAdmin);
-   if(isAdmin){await ensureMonthSlots(selectedHeaderMonth());}
-   if(stopSlots)stopSlots();
-   if(isAdmin){
-    stopSlots=onSnapshot(collection(db,"slots"),snap=>{slots=snap.docs.map(d=>({id:d.id,...d.data()}));renderSlots();renderAdmin();},e=>{console.error(e);setStatus("slotStatus","Admin slot listener failed.","err");});
-   }else{
-    stopSlots=null;
-    await loadCloudflareSlots($("filterDate").value||defaultScheduleDate);
-   }
+   if(isAdmin){await loadCloudflareSlots($("filterDate").value||defaultScheduleDate);}
+   if(stopSlots)stopSlots();stopSlots=null;
+   // Cloudflare D1 is the single source of truth for slot availability.
+   await loadCloudflareSlots($("filterDate").value||defaultScheduleDate);
    if(stopBookings)stopBookings();stopBookings=null;if(isAdmin){await loadCloudflareAdminBookings();}else{bookings=[];}
   });
  }catch(e){console.error(e);$("configWarning").classList.remove("hidden");}
 }
-$("filterDate").addEventListener("change",()=>{selectedSlot=null;$("chosenSlot").value="";$("bookBtn").disabled=true;loadCloudflareSlots($("filterDate").value);if(isAdmin)ensureMonthSlots(selectedHeaderMonth());});
+$("filterDate").addEventListener("change",()=>{selectedSlot=null;$("chosenSlot").value="";$("bookBtn").disabled=true;loadCloudflareSlots($("filterDate").value);});
 $("refreshSlots").onclick=()=>loadCloudflareSlots($("filterDate").value||defaultScheduleDate);
 $("bookBtn").onclick=async()=>{
  const bigoId=$("bigoId").value.trim();const name=$("userName").value.trim();const s=slots.find(x=>x.id===selectedSlot);
