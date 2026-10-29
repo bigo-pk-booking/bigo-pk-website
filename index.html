@@ -173,6 +173,7 @@ body.admin-panel-open .pk-battle { display:none !important; }
 @media(max-width:380px){.pk-schedule-dialog{padding:18px 12px 13px}.pk-schedule-row{grid-template-columns:18px minmax(75px,.8fr) 8px minmax(0,1.2fr);gap:5px;font-size:12px}.pk-schedule-card{padding:12px}}
 @media(prefers-reduced-motion:reduce){.pk-schedule-dialog{animation:none!important}}
 
+.report-editor{margin-top:16px;padding:16px;border:1px solid #d9caca;border-radius:8px;background:#fff;color:#202428}.report-edit-row{padding:14px 0;border-bottom:1px solid #e2e5e8}.report-edit-title{display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap;margin-bottom:10px}.report-edit-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:10px}.report-edit-grid label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:700;color:#343a40}.report-edit-grid input{min-width:0;width:100%;padding:9px;border:1px solid #c4d2d1;border-radius:3px;background:#fff;color:#202428}@media(min-width:900px){.report-edit-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:480px){.report-edit-grid{grid-template-columns:1fr}.report-editor{padding:10px}}
 </style>
 </head>
 <body>
@@ -249,6 +250,14 @@ body.admin-panel-open .pk-battle { display:none !important; }
           <label for="manualTime">Available PK time</label><select id="manualTime"><option value="">Choose date first</option></select>
           <label for="manualOpponentName">Opponent name (optional)</label><input id="manualOpponentName" maxlength="80" placeholder="Opponent name">
           <label for="manualOpponentId">Opponent BIGO ID (optional)</label><input id="manualOpponentId" maxlength="40" placeholder="Opponent BIGO ID">
+          <label for="manualHostLevel">Host Level</label><input id="manualHostLevel" placeholder="Host level">
+          <label for="manualAgencyName">Agency Name</label><input id="manualAgencyName" placeholder="Host agency name">
+          <label for="manualAgencyTelegram">Agency Telegram</label><input id="manualAgencyTelegram" placeholder="@telegram">
+          <label for="manualOpkEvent">OPK Event</label><input id="manualOpkEvent" placeholder="OPK event">
+          <label for="manualOpponentLevel">Opponent Level</label><input id="manualOpponentLevel" placeholder="Opponent level">
+          <label for="manualOpponentAgencyName">Opponent Agency Name</label><input id="manualOpponentAgencyName" placeholder="Opponent agency">
+          <label for="manualOpponentAgencyTelegram">Opponent Agency Telegram</label><input id="manualOpponentAgencyTelegram" placeholder="@telegram">
+          <label for="manualRemarks">Remarks (Win/Lose)</label><select id="manualRemarks"><option value="">Choose remarks</option><option>Win</option><option>Lose</option><option>Pending</option><option>Confirmed</option></select>
           <button id="manualCreateBtn" class="full" type="button" style="margin-top:14px">Create &amp; approve PK</button><div id="manualMessage" class="status" aria-live="polite"></div>
         </div>
       </div>
@@ -397,6 +406,27 @@ function updateMonthPicker(id,records){
  el.innerHTML=keys.slice().sort((a,b)=>b.localeCompare(a)).map(k=>`<option value="${k}">${escapeHtml(monthLabel(k))}</option>`).join("");
  if(selected)el.value=selected;return el.value;
 }
+function renderReportEditor(records){
+ if(!records.length)return "";
+ const fields=[["hostLevel","HOST LEVEL"],["agencyName","AGENCY NAME"],["agencyTelegram","AGENCY TELEGRAM"],["opkEvent","OPK EVENT"],["opponentName","OPPONENT NAME"],["opponentBigoId","OPPONENT BIGO ID"],["opponentLevel","LEVEL"],["opponentAgencyName","OPPONENT AGENCY NAME"],["opponentAgencyTelegram","OPPONENT AGENCY TELEGRAM"],["remarks","REMARKS (WIN/LOSE)"]];
+ return `<div class="report-editor"><h3>Full Excel fields &amp; opponent management</h3><p class="sub">Edit host/opponent agency details and match result, then tap Save details. Booking date, time, name and BIGO ID remain linked to the original booking.</p>${records.map(b=>`<div class="report-edit-row" data-report-row="${escapeHtml(b.id)}"><div class="report-edit-title"><b>${escapeHtml(b.date||"")} · ${escapeHtml(b.time||"")}</b><span>${escapeHtml(b.name||"")} (${escapeHtml(b.bigoId||"")})</span></div><div class="report-edit-grid">${fields.map(([key,label])=>`<label>${label}<input data-report-field="${key}" value="${escapeHtml(b[key]||"")}" placeholder="${label}"></label>`).join("")}</div><button class="small" type="button" data-save-report="${escapeHtml(b.id)}">Save details</button></div>`).join("")}</div>`;
+}
+async function saveReportDetails(id){
+ const b=bookings.find(x=>x.id===id);if(!b)return;
+ const row=$("adminBookings").querySelector(`[data-report-row="${CSS.escape(id)}"]`);if(!row)return;
+ const values={};row.querySelectorAll("[data-report-field]").forEach(input=>values[input.dataset.reportField]=input.value.trim());
+ if(values.opponentBigoId&&!/^[A-Za-z0-9._-]{3,40}$/.test(values.opponentBigoId)){setStatus("adminMessage","Check the opponent BIGO ID format.","err");return;}
+ values.status=values.opponentBigoId?"Opponent assigned":(b.status||"Approved");
+ values.updatedAt=serverTimestamp();values.updatedBy=currentUser.uid;
+ try{
+  const batch=writeBatch(db);
+  batch.update(doc(db,"bookings",id),values);
+  if(b.lookupCode)batch.set(doc(db,"publicBookings",b.lookupCode),{...values},{merge:true});
+  const lookupSnap=await getDoc(doc(db,"publicBigoLookup",b.bigoId));
+  if(lookupSnap.exists()&&lookupSnap.data().bookingId===id)batch.set(doc(db,"publicBigoLookup",b.bigoId),{...values},{merge:true});
+  await batch.commit();setStatus("adminMessage","Excel report details saved.","ok");
+ }catch(e){console.error(e);setStatus("adminMessage","Could not save details. Check Firestore rules and connection.","err");}
+}
 function renderAdmin(){
  if(!isAdmin)return;
  refreshManualTimes();
@@ -412,8 +442,9 @@ function renderAdmin(){
  const visibleBookings=filteredBookings.slice(bookingPage*ADMIN_PAGE_SIZE,(bookingPage+1)*ADMIN_PAGE_SIZE);
  const bookingTable=visibleBookings.length?`<table><thead><tr><th>Date / time</th><th>Name</th><th>User BIGO ID</th><th class="vs-head">VS</th><th>Opponent name</th><th>Opponent BIGO ID</th><th>Status</th><th>Actions</th></tr></thead><tbody>${visibleBookings.map(b=>`<tr><td>${escapeHtml(b.date)}<br><b>${escapeHtml(b.time)}</b></td><td>${escapeHtml(b.name||"—")}</td><td>${escapeHtml(b.bigoId)}</td><td class="vs-cell">VS</td><td><input class="table-input" data-opponent-name="${escapeHtml(b.id)}" value="${escapeHtml(b.opponentName||"")}" placeholder="Opponent name"></td><td><input class="table-input" data-opponent="${escapeHtml(b.id)}" value="${escapeHtml(b.opponentBigoId||"")}" placeholder="Opponent BIGO ID"></td><td><span class="pill ${b.opponentBigoId?"assigned":"full"}">${escapeHtml(b.opponentBigoId?"Opponent assigned":b.status||"Reserved")}</span></td><td><button class="small" data-approve="${escapeHtml(b.id)}" ${b.status==="Approved"||b.status==="Opponent assigned"?"disabled":""}>Approve</button> <button class="small" data-save="${escapeHtml(b.id)}">Save opponent</button> <button class="small danger" data-cancel="${escapeHtml(b.id)}">Reject / cancel</button></td></tr>`).join("")}</tbody></table>`:'<div class="notice">No bookings for this month match your search.</div>';
  const bookingPager=filteredBookings.length?`<div class="admin-pagination"><span>Showing ${bookingPage*ADMIN_PAGE_SIZE+1}–${Math.min((bookingPage+1)*ADMIN_PAGE_SIZE,filteredBookings.length)} of ${filteredBookings.length}</span><div><button class="secondary small" type="button" data-booking-prev ${bookingPage===0?"disabled":""}>Previous</button> <button class="secondary small" type="button" data-booking-next ${bookingPage>=bookingPages-1?"disabled":""}>Next</button></div></div>`:"";
- $("adminBookings").innerHTML=bookingTable+bookingPager;
+ $("adminBookings").innerHTML=bookingTable+bookingPager+renderReportEditor(visibleBookings);
  $("adminBookings").querySelectorAll("[data-save]").forEach(btn=>btn.onclick=()=>saveOpponent(btn.dataset.save));
+ $("adminBookings").querySelectorAll("[data-save-report]").forEach(btn=>btn.onclick=()=>saveReportDetails(btn.dataset.saveReport));
  $("adminBookings").querySelectorAll("[data-approve]").forEach(btn=>btn.onclick=()=>approveBooking(btn.dataset.approve));
  $("adminBookings").querySelectorAll("[data-cancel]").forEach(btn=>btn.onclick=()=>cancelBooking(btn.dataset.cancel));
  $("adminBookings").querySelector("[data-booking-prev]")?.addEventListener("click",()=>{bookingPage=Math.max(0,bookingPage-1);renderAdmin();});
@@ -569,6 +600,8 @@ $("manualDate").addEventListener("change",refreshManualTimes);
 $("manualCreateBtn").onclick=async()=>{
  const bigoId=$("manualBigoId").value.trim(),name=$("manualName").value.trim(),slotKey=$("manualTime").value;
  const opponentName=$("manualOpponentName").value.trim(),opponentBigoId=$("manualOpponentId").value.trim();
+ const hostLevel=$("manualHostLevel").value.trim(),agencyName=$("manualAgencyName").value.trim(),agencyTelegram=$("manualAgencyTelegram").value.trim(),opkEvent=$("manualOpkEvent").value.trim();
+ const opponentLevel=$("manualOpponentLevel").value.trim(),opponentAgencyName=$("manualOpponentAgencyName").value.trim(),opponentAgencyTelegram=$("manualOpponentAgencyTelegram").value.trim(),remarks=$("manualRemarks").value.trim();
  const slot=slots.find(x=>x.id===slotKey);
  if(!/^[A-Za-z0-9._-]{3,40}$/.test(bigoId)){setStatus("manualMessage","Enter a valid user BIGO ID.","err");return;}
  if(!name){setStatus("manualMessage","Enter the user's name.","err");return;}
@@ -588,13 +621,13 @@ $("manualCreateBtn").onclick=async()=>{
    const oldLookup=lookupSnap.exists()?lookupSnap.data():{};
    const oldCodes=Array.isArray(oldLookup.lookupCodes)?oldLookup.lookupCodes:(oldLookup.lookupCode?[oldLookup.lookupCode]:[]);
    const lookupCodes=Array.from(new Set([...oldCodes,lookupCode]));
-   const data={bigoId,name,date:slot.date,time:slot.time,slotId:slot.id,lookupCode,status,opponentBigoId,opponentName,createdAt:serverTimestamp(),approvedAt:serverTimestamp(),approvedBy:currentUser.uid,createdByAdmin:true};
+   const data={bigoId,name,date:slot.date,time:slot.time,slotId:slot.id,lookupCode,status,opponentBigoId,opponentName,hostLevel,agencyName,agencyTelegram,opkEvent,opponentLevel,opponentAgencyName,opponentAgencyTelegram,remarks,createdAt:serverTimestamp(),approvedAt:serverTimestamp(),approvedBy:currentUser.uid,createdByAdmin:true};
    tx.set(bookingRef,data);
-   tx.set(publicRef,{bookingId:bookingRef.id,bigoId,name,date:slot.date,time:slot.time,lookupCode,status,opponentBigoId,opponentName,createdAt:serverTimestamp()});
-   tx.set(lookupRef,{bookingId:bookingRef.id,bigoId,name,date:slot.date,time:slot.time,lookupCode,lookupCodes,status,opponentBigoId,opponentName,createdAt:serverTimestamp()});
+   tx.set(publicRef,{bookingId:bookingRef.id,bigoId,name,date:slot.date,time:slot.time,lookupCode,status,opponentBigoId,opponentName,hostLevel,agencyName,agencyTelegram,opkEvent,opponentLevel,opponentAgencyName,opponentAgencyTelegram,remarks,createdAt:serverTimestamp()});
+   tx.set(lookupRef,{bookingId:bookingRef.id,bigoId,name,date:slot.date,time:slot.time,lookupCode,lookupCodes,status,opponentBigoId,opponentName,hostLevel,agencyName,agencyTelegram,opkEvent,opponentLevel,opponentAgencyName,opponentAgencyTelegram,remarks,createdAt:serverTimestamp()});
    tx.update(slotRef,{status:"full",bookingId:bookingRef.id,updatedAt:serverTimestamp()});
   });
-  ["manualBigoId","manualName","manualOpponentName","manualOpponentId"].forEach(id=>$(id).value="");
+  ["manualBigoId","manualName","manualOpponentName","manualOpponentId","manualHostLevel","manualAgencyName","manualAgencyTelegram","manualOpkEvent","manualOpponentLevel","manualOpponentAgencyName","manualOpponentAgencyTelegram","manualRemarks"].forEach(id=>$(id).value="");
   setStatus("manualMessage","Manual PK booking created and approved successfully!","ok");
   if(typeof window.showManualPkSuccess==="function")window.showManualPkSuccess({bigoId,name,date:slot.date,time:slot.time});
  }catch(e){console.error(e);setStatus("manualMessage",e.message==="SLOT_TAKEN"?"That slot was just taken. Please choose another time.":"Could not create manual PK. Check connection and Firestore rules, then try again.","err");}
@@ -644,7 +677,7 @@ $("bookingMonthFilter").addEventListener("change",()=>{bookingPage=0;renderAdmin
 $("slotMonthFilter").addEventListener("change",()=>{slotPage=0;renderAdmin();});
 $("slotStatusFilter").addEventListener("change",()=>{slotPage=0;renderAdmin();});
 $("downloadMonthExcelBtn").addEventListener("click",()=>$("exportExcelBtn").click());
-function exportRows(){const selectedMonth=$("bookingMonthFilter")?.value||dateToday().slice(0,7);return bookings.filter(b=>monthKey(b.date)===selectedMonth).map(b=>({"DATE":b.date||"","TIME":b.time||"","BIGO NAME":b.name||"","BIGO ID":b.bigoId||"","HOST LEVEL":"","AGENCY NAME":"","AGENCY TELEGRAM":"","OPK EVENT":"","VS":"VS","OPPONENT NAME":b.opponentName||"","OPPONENT BIGO ID":b.opponentBigoId||"","LEVEL":"","OPPONENT AGENCY NAME":"","OPPONENT AGENCY TELEGRAM":"","REMARKS (WIN/LOSE)":b.status||""})).sort((a,b)=>(a.DATE+a.TIME).localeCompare(b.DATE+b.TIME));}
+function exportRows(){const selectedMonth=$("bookingMonthFilter")?.value||dateToday().slice(0,7);return bookings.filter(b=>monthKey(b.date)===selectedMonth).map(b=>({"DATE":b.date||"","TIME":b.time||"","BIGO NAME":b.name||"","BIGO ID":b.bigoId||"","HOST LEVEL":b.hostLevel||"","AGENCY NAME":b.agencyName||"","AGENCY TELEGRAM":b.agencyTelegram||"","OPK EVENT":b.opkEvent||"","VS":"VS","OPPONENT NAME":b.opponentName||"","OPPONENT BIGO ID":b.opponentBigoId||"","LEVEL":b.opponentLevel||"","OPPONENT AGENCY NAME":b.opponentAgencyName||"","OPPONENT AGENCY TELEGRAM":b.opponentAgencyTelegram||"","REMARKS (WIN/LOSE)":b.remarks||b.status||""})).sort((a,b)=>(a.DATE+a.TIME).localeCompare(b.DATE+b.TIME));}
 function downloadBlob(content,type,name){const blob=new Blob([content],{type});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 $("exportExcelBtn").onclick=async()=>{if(!isAdmin)return;const rows=exportRows();if(!window.ExcelJS){setStatus("exportMessage","Excel formatting library did not load. Check your internet connection, then try again.","err");return;}try{
  const ExcelJS=window.ExcelJS;const wb=new ExcelJS.Workbook();wb.creator="BADASS";wb.subject="BIGO OPK Match Schedule";wb.title="BADASS OPK Match Report";wb.created=new Date();
