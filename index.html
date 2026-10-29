@@ -550,9 +550,18 @@ function monthKey(date){return String(date||"").slice(0,7);}
 function monthLabel(key){if(!/^\d{4}-\d{2}$/.test(key))return key;return new Date(Number(key.slice(0,4)),Number(key.slice(5,7))-1,1).toLocaleDateString("en-US",{month:"long",year:"numeric"});}
 function updateMonthPicker(id,records){
  const el=$(id);if(!el)return "";
- const current=el.value;const keys=[...new Set([dateToday().slice(0,7),...records.map(x=>monthKey(x.date)).filter(x=>/^\d{4}-\d{2}$/.test(x))])].sort();
- let selected=current&&keys.includes(current)?current:(keys.includes(dateToday().slice(0,7))?dateToday().slice(0,7):keys[keys.length-1]);
- el.innerHTML=keys.slice().sort((a,b)=>b.localeCompare(a)).map(k=>`<option value="${k}">${escapeHtml(monthLabel(k))}</option>`).join("");
+ const current=el.value;
+ const now=new Date();now.setDate(1);
+ const range=[];
+ // Always show 12 months before and after the current month, even when a month has no records yet.
+ for(let offset=-12;offset<=12;offset++){
+  const d=new Date(now.getFullYear(),now.getMonth()+offset,1);
+  range.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`);
+ }
+ const keys=[...new Set([...range,...records.map(x=>monthKey(x.date)).filter(x=>/^\d{4}-\d{2}$/.test(x))])].sort((a,b)=>b.localeCompare(a));
+ const todayKey=dateToday().slice(0,7);
+ const selected=current&&keys.includes(current)?current:todayKey;
+ el.innerHTML=keys.map(k=>`<option value="${k}">${escapeHtml(monthLabel(k))}</option>`).join("");
  if(selected)el.value=selected;return el.value;
 }
 function renderReportEditor(records){return "";}
