@@ -725,6 +725,9 @@ import { getFirestore, doc, getDoc, onSnapshot, setDoc, serverTimestamp } from "
 
   function showIfActive(data) {
     if (!data || data.active !== true || !String(data.title || "").trim() || !String(data.message || "").trim()) return;
+    // Keep the editor usable: show announcement popups to visitors, not while an admin is editing.
+    const currentUser = getAuth().currentUser;
+    if (currentUser && !currentUser.isAnonymous) return;
     const key = String(data.updatedAt?.seconds || "") + "|" + data.title + "|" + data.message;
     if (key === lastShownKey) return;
     lastShownKey = key;
@@ -761,9 +764,10 @@ import { getFirestore, doc, getDoc, onSnapshot, setDoc, serverTimestamp } from "
       if (latestAnnouncement?.active === true) showIfActive(latestAnnouncement);
       else lastShownKey = "";
       if (latestAnnouncement) {
-        status(latestAnnouncement.active ? "Announcement is published." : "Announcement is saved but currently disabled.");
+        status(latestAnnouncement.active ? "✓ Announcement is published and synced from Firestore." : "Announcement is saved but currently disabled.");
       } else {
-        status("No announcement saved yet. Enter a title and message, then publish.");
+        lastShownKey = "";
+        status("No announcement saved yet in announcements/current. Enter a title and message, then publish.");
       }
     }, error => {
       console.error("Announcement read failed", error);
@@ -820,10 +824,13 @@ import { getFirestore, doc, getDoc, onSnapshot, setDoc, serverTimestamp } from "
           updatedBy: user.uid
         });
         formDirty = false;
-        status(activeInput.checked ? "✓ SUCCESS! Announcement published and saved." : "✓ SUCCESS! Announcement saved but popup is disabled.");
+        status(activeInput.checked ? "✓ SUCCESS! Announcement published and saved to Firestore." : "✓ SUCCESS! Announcement saved to Firestore, but the popup is disabled.");
       } catch (error) {
         console.error("Announcement save failed", error);
-        status("Could not save. Check that the Firestore announcements rule is published. " + (error?.message || ""), true);
+        const reason = error?.code === "permission-denied"
+          ? "Permission denied. Confirm this admin document has enabled=true AND role=superadmin, and that the updated Firestore rules are published."
+          : (error?.message || "Unknown Firebase error.");
+        status("✖ SAVE FAILED: " + reason, true);
       } finally {
         setSaving(false);
       }
