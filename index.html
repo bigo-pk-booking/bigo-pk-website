@@ -874,65 +874,137 @@ $("loginBtn").addEventListener("click", async (event)=>{
 $("logoutBtn").onclick=async()=>{await signOut(auth);};
 // Monthly slots are generated automatically by ensureMonthSlots(); manual slot creation is intentionally disabled.
 $("manualDate").addEventListener("change",refreshManualTimes);
-$("manualCreateBtn").onclick=async()=>{
- const bigoId=$("manualBigoId").value.trim(),name=$("manualName").value.trim(),slotKey=$("manualTime").value;
- const opponentName=$("manualOpponentName").value.trim(),opponentBigoId=$("manualOpponentId").value.trim();
- const hostLevel=$("manualHostLevel").value.trim(),agencyName=$("manualAgencyName").value.trim(),agencyTelegram=$("manualAgencyTelegram").value.trim(),opkEvent=$("manualOpkEvent").value.trim();
- const opponentLevel=$("manualOpponentLevel").value.trim(),opponentAgencyName=$("manualOpponentAgencyName").value.trim(),opponentAgencyTelegram=$("manualOpponentAgencyTelegram").value.trim(),remarks=$("manualRemarks").value.trim();
- const slot=slots.find(x=>x.id===slotKey);
- if(!/^[A-Za-z0-9._-]{3,40}$/.test(bigoId)){setStatus("manualMessage","Enter a valid user BIGO ID.","err");return;}
- if(!name){setStatus("manualMessage","Enter the user's name.","err");return;}
- if(!slot||slot.status!=="available"){setStatus("manualMessage","Already set this date to another host. Please choose another time.","err");return;}
- if(opponentBigoId&&!/^[A-Za-z0-9._-]{3,40}$/.test(opponentBigoId)){setStatus("manualMessage","Check the opponent BIGO ID format.","err");return;}
- const createBtn=$("manualCreateBtn");
- createBtn.disabled=true;createBtn.classList.add("is-loading");createBtn.dataset.originalText=createBtn.textContent;
- createBtn.innerHTML='<span class="manual-loading-spinner" aria-hidden="true"></span>Creating PK…';
- setStatus("manualMessage","Creating and approving the manual PK in Cloudflare D1. Please wait…");
- let createdBookingId="";
- try{
-  // Create the booking in D1 first; the API checks that the slot is still available.
-  const created=await cloudflareAdminRequest("/api/bookings",{
-   method:"POST",
-   body:JSON.stringify({date:slot.date,time:slot.time,name,bigoId})
-  });
-  createdBookingId=created.booking?.id||"";
-  if(!createdBookingId)throw new Error("Booking was created but no booking ID was returned.");
-
-  // Save every manual form field to the D1 booking.
-  await cloudflareAdminRequest("/api/admin/bookings/"+encodeURIComponent(createdBookingId),{
-   method:"PATCH",
-   body:JSON.stringify({
-    date:slot.date,time:slot.time,name,bigoId,
-    hostLevel,agencyName,agencyTelegram,opkEvent,
-    opponentName,opponentBigoId,opponentLevel,
-    opponentAgencyName,opponentAgencyTelegram,remarks
-   })
-  });
-
-  // Manual entries are immediately approved, or assigned if opponent details were supplied.
-  const finalStatus=opponentBigoId?"Opponent assigned":"Approved";
-  await cloudflareAdminRequest("/api/admin/bookings/"+encodeURIComponent(createdBookingId)+"/status",{
-   method:"PATCH",
-   body:JSON.stringify({status:finalStatus})
-  });
-
-  ["manualBigoId","manualName","manualOpponentName","manualOpponentId","manualHostLevel","manualAgencyName","manualAgencyTelegram","manualOpkEvent","manualOpponentLevel","manualOpponentAgencyName","manualOpponentAgencyTelegram","manualRemarks"].forEach(id=>$(id).value="");
-  setStatus("manualMessage","Manual PK booking created in Cloudflare D1 and "+finalStatus.toLowerCase()+" successfully!","ok");
-  if(typeof window.showManualPkSuccess==="function")window.showManualPkSuccess({bigoId,name,date:slot.date,time:slot.time});
-  await loadCloudflareAdminBookings();
-  await loadCloudflareAdminSlots($("slotMonthFilter")?.value||slot.date.slice(0,7));
-  await loadCloudflareSlots($("filterDate")?.value||slot.date);
- }catch(e){
-  console.error("Manual D1 booking failed:",e);
-  const message=String(e.message||e);
-  setStatus("manualMessage",message==="SLOT_TAKEN"||message.includes("SLOT_TAKEN")?"That slot was just taken. Please choose another time.":"Could not create manual PK in Cloudflare D1: "+message,"err");
-  if(createdBookingId){
-   setStatus("manualMessage","A booking was created, but a later update failed. Refresh the admin bookings and check booking ID "+createdBookingId+". Error: "+message,"err");
-  }
- }finally{
-  createBtn.disabled=false;createBtn.classList.remove("is-loading");createBtn.textContent=createBtn.dataset.originalText||"Create & approve PK";
-  refreshManualTimes();
+function openManualPkReview(initial){
+ let modal=document.getElementById("manualPkReviewModal");
+ if(!modal){
+  modal=document.createElement("div");
+  modal.id="manualPkReviewModal";
+  modal.style.cssText="position:fixed;inset:0;z-index:25000;background:rgba(0,0,0,.78);display:none;align-items:center;justify-content:center;padding:14px;";
+  document.body.appendChild(modal);
  }
+ const fields=[
+  ["date","DATE","date",initial.date],
+  ["time","TIME","time",initial.time],
+  ["bigoId","BIGO ID","text",initial.bigoId],
+  ["name","BIGO NAME","text",initial.name],
+  ["hostLevel","HOST LEVEL","text",initial.hostLevel],
+  ["agencyName","AGENCY NAME","text",initial.agencyName],
+  ["agencyTelegram","AGENCY TELEGRAM","text",initial.agencyTelegram],
+  ["opkEvent","OPK EVENT","text",initial.opkEvent],
+  ["opponentName","OPPONENT NAME","text",initial.opponentName],
+  ["opponentBigoId","OPPONENT BIGO ID","text",initial.opponentBigoId],
+  ["opponentLevel","OPPONENT LEVEL","text",initial.opponentLevel],
+  ["opponentAgencyName","OPPONENT AGENCY NAME","text",initial.opponentAgencyName],
+  ["opponentAgencyTelegram","OPPONENT AGENCY TELEGRAM","text",initial.opponentAgencyTelegram],
+  ["remarks","REMARKS (WIN/LOSE)","select",initial.remarks]
+ ];
+ const inputHtml=fields.map(([key,label,type,value])=>{
+  let control="";
+  if(type==="time"){
+   control='<select data-manual-review="'+key+'" style="box-sizing:border-box;width:100%;padding:12px;border:1px solid #bbc5c5;border-radius:8px;font-size:16px">'+TIMES.map(t=>'<option value="'+t+'" '+(t===value?'selected':'')+'>'+t+'</option>').join("")+'</select>';
+  }else if(type==="select"){
+   const opts=["","Win","Lose","Pending","Confirmed"];
+   control='<select data-manual-review="'+key+'" style="box-sizing:border-box;width:100%;padding:12px;border:1px solid #bbc5c5;border-radius:8px;font-size:16px">'+opts.map(v=>'<option value="'+escapeHtml(v)+'" '+(v===value?'selected':'')+'>'+(v||"Choose remarks")+'</option>').join("")+'</select>';
+  }else{
+   control='<input data-manual-review="'+key+'" type="'+type+'" value="'+escapeHtml(value||"")+'" '+(key==="date"?'required':'')+' style="box-sizing:border-box;width:100%;padding:12px;border:1px solid #bbc5c5;border-radius:8px;font-size:16px">';
+  }
+  return '<label style="display:block;margin:11px 0 5px;font-weight:700;font-size:13px;color:#394044">'+label+'</label>'+control;
+ }).join("");
+ modal.innerHTML='<div style="width:min(100%,520px);max-height:90vh;overflow:auto;background:#fff;border:2px solid #c90012;border-radius:18px;padding:18px;color:#202428;box-shadow:0 20px 60px #0008">'+
+  '<h2 style="margin:0 0 8px;color:#b90012">Review Manual PK Details</h2>'+
+  '<p style="margin:0 0 12px;color:#555">Please confirm all details before creating this PK. You can edit every row below.</p>'+
+  '<div>'+inputHtml+'</div><div id="manualPkReviewMessage" role="status" style="margin-top:12px;color:#b00020;overflow-wrap:anywhere"></div>'+
+  '<div style="display:flex;gap:10px;margin-top:16px"><button type="button" id="manualPkReviewCancel" style="flex:1;padding:13px;border:1px solid #bd9b9b;border-radius:8px;background:#fff;color:#8b0000;font-weight:700">Go Back</button><button type="button" id="manualPkReviewConfirm" style="flex:1;padding:13px;border:0;border-radius:8px;background:#c90012;color:#fff;font-weight:700">Confirm & Create PK</button></div></div>';
+ modal.style.display="flex";
+ const close=()=>{modal.style.display="none";};
+ document.getElementById("manualPkReviewCancel").onclick=close;
+ document.getElementById("manualPkReviewConfirm").onclick=async()=>{
+  const data={};
+  modal.querySelectorAll("[data-manual-review]").forEach(el=>data[el.dataset.manualReview]=el.value.trim());
+  const msg=document.getElementById("manualPkReviewMessage");
+  const confirm=document.getElementById("manualPkReviewConfirm");
+  if(!data.date||!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(data.date)){msg.textContent="Choose a valid date.";return;}
+  if(!TIMES.includes(data.time)){msg.textContent="Choose a valid time.";return;}
+  if(!/^[A-Za-z0-9._-]{3,40}$/.test(data.bigoId)){msg.textContent="Check the host BIGO ID (3–40 letters, numbers, dot, underscore, or dash).";return;}
+  if(!data.name){msg.textContent="BIGO name is required.";return;}
+  if(data.opponentBigoId&&!/^[A-Za-z0-9._-]{3,40}$/.test(data.opponentBigoId)){msg.textContent="Check the opponent BIGO ID.";return;}
+  confirm.disabled=true;confirm.textContent="Checking slot…";msg.textContent="Checking that the selected slot is available…";
+  const createBtn=$("manualCreateBtn");
+  let createdBookingId="";
+  try{
+   const checkResponse=await fetch(BIGO_API_BASE+"/api/slots?date="+encodeURIComponent(data.date),{cache:"no-store"});
+   const check=await checkResponse.json();
+   if(!checkResponse.ok||!check.ok)throw new Error(check.error||"Could not check slot availability.");
+   const target=(check.slots||[]).find(x=>x.time===data.time);
+   if(!target||target.status!=="available"){
+    msg.textContent="That date/time slot is already booked or closed. Please edit the date/time and try again.";
+    confirm.disabled=false;confirm.textContent="Confirm & Create PK";return;
+   }
+   createBtn.disabled=true;createBtn.classList.add("is-loading");
+   confirm.textContent="Creating PK…";msg.textContent="Creating manual PK in Cloudflare D1…";
+   const created=await cloudflareAdminRequest("/api/bookings",{
+    method:"POST",
+    body:JSON.stringify({date:data.date,time:data.time,name:data.name,bigoId:data.bigoId})
+   });
+   createdBookingId=created.booking?.id||"";
+   if(!createdBookingId)throw new Error("Booking was created but no booking ID was returned.");
+   await cloudflareAdminRequest("/api/admin/bookings/"+encodeURIComponent(createdBookingId),{
+    method:"PATCH",
+    body:JSON.stringify({
+     date:data.date,time:data.time,name:data.name,bigoId:data.bigoId,
+     hostLevel:data.hostLevel,agencyName:data.agencyName,agencyTelegram:data.agencyTelegram,
+     opkEvent:data.opkEvent,opponentName:data.opponentName,opponentBigoId:data.opponentBigoId,
+     opponentLevel:data.opponentLevel,opponentAgencyName:data.opponentAgencyName,
+     opponentAgencyTelegram:data.opponentAgencyTelegram,remarks:data.remarks
+    })
+   });
+   const status=data.opponentBigoId?"Opponent assigned":"Approved";
+   await cloudflareAdminRequest("/api/admin/bookings/"+encodeURIComponent(createdBookingId)+"/status",{
+    method:"PATCH",body:JSON.stringify({status})
+   });
+   ["manualBigoId","manualName","manualOpponentName","manualOpponentId","manualHostLevel","manualAgencyName","manualAgencyTelegram","manualOpkEvent","manualOpponentLevel","manualOpponentAgencyName","manualOpponentAgencyTelegram","manualRemarks"].forEach(id=>$(id).value="");
+   setStatus("manualMessage","Manual PK created successfully in Cloudflare D1.","ok");
+   close();
+   if(typeof window.showManualPkSuccess==="function")window.showManualPkSuccess({bigoId:data.bigoId,name:data.name,date:data.date,time:data.time});
+   await loadCloudflareAdminBookings();
+   await loadCloudflareAdminSlots($("slotMonthFilter")?.value||data.date.slice(0,7));
+   await loadCloudflareSlots($("filterDate")?.value||data.date);
+  }catch(e){
+   console.error("Manual PK review/create failed:",e);
+   msg.textContent=(createdBookingId?"Booking was created but a later step failed. Check admin bookings. ":"Could not create manual PK: ")+String(e.message||e);
+   setStatus("manualMessage",msg.textContent,"err");
+  }finally{
+   confirm.disabled=false;confirm.textContent="Confirm & Create PK";
+   createBtn.disabled=false;createBtn.classList.remove("is-loading");
+   refreshManualTimes();
+  }
+ };
+}
+$("manualCreateBtn").onclick=()=>{
+ const slotKey=$("manualTime").value;
+ const slot=slots.find(x=>x.id===slotKey);
+ const initial={
+  date:slot?.date||$("manualDate").value||"",
+  time:slot?.time||"",
+  bigoId:$("manualBigoId").value.trim(),
+  name:$("manualName").value.trim(),
+  hostLevel:$("manualHostLevel").value.trim(),
+  agencyName:$("manualAgencyName").value.trim(),
+  agencyTelegram:$("manualAgencyTelegram").value.trim(),
+  opkEvent:$("manualOpkEvent").value.trim(),
+  opponentName:$("manualOpponentName").value.trim(),
+  opponentBigoId:$("manualOpponentId").value.trim(),
+  opponentLevel:$("manualOpponentLevel").value.trim(),
+  opponentAgencyName:$("manualOpponentAgencyName").value.trim(),
+  opponentAgencyTelegram:$("manualOpponentAgencyTelegram").value.trim(),
+  remarks:$("manualRemarks").value.trim()
+ };
+ if(!initial.date){setStatus("manualMessage","Choose a date first.","err");return;}
+ if(!initial.time){setStatus("manualMessage","Choose a time first.","err");return;}
+ if(!/^[A-Za-z0-9._-]{3,40}$/.test(initial.bigoId)){setStatus("manualMessage","Enter a valid user BIGO ID.","err");return;}
+ if(!initial.name){setStatus("manualMessage","Enter the user's name.","err");return;}
+ if(initial.opponentBigoId&&!/^[A-Za-z0-9._-]{3,40}$/.test(initial.opponentBigoId)){setStatus("manualMessage","Check the opponent BIGO ID format.","err");return;}
+ openManualPkReview(initial);
 };
 async function approveBooking(id){
  const b=bookings.find(x=>x.id===id);if(!b)return;
