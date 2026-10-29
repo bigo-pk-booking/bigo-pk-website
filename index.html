@@ -251,6 +251,18 @@ body.admin-panel-open .pk-battle { display:none !important; }
   </div>
   <div class="card hidden" id="adminDashboard">
     <div class="admin-head"><div><h3>Admin dashboard</h3><p class="sub" style="margin:5px 0 0">Manage schedule, assign opponents, and download the report.</p></div><button id="logoutBtn" class="secondary small">Sign out</button></div>
+    <div class="card" id="telegramLinkCard" style="margin-top:14px;padding:14px">
+      <h3>🔗 Link Telegram Account</h3>
+      <p class="sub">Generate a short-lived code while signed in to the website, then send <code>/link YOUR_CODE</code> to @BadassBigoPKNotifyBot. Never send your website password to Telegram.</p>
+      <button id="telegramLinkGenerate" class="full" type="button">Generate Telegram Linking Code</button>
+      <div id="telegramLinkMessage" class="status" aria-live="polite"></div>
+      <div id="telegramLinkCodeWrap" class="hidden" style="margin-top:10px">
+        <label for="telegramLinkCode">Temporary code</label>
+        <input id="telegramLinkCode" readonly autocomplete="off" style="font-size:20px;font-weight:800;letter-spacing:2px;text-align:center">
+        <p id="telegramLinkExpiry" class="sub"></p>
+        <button id="telegramLinkCopy" class="secondary full" type="button">Copy Code</button>
+      </div>
+    </div>
     <div class="admin-grid" style="margin-top:14px">
       <div class="card manual-pk-card" style="padding:14px">
         <h3>Manual PK booking</h3>
@@ -871,6 +883,32 @@ $("loginBtn").addEventListener("click", async (event)=>{
   loginButton.textContent=originalLoginLabel;
  }
 });
+
+$("telegramLinkGenerate").addEventListener("click",async()=>{
+ const button=$("telegramLinkGenerate"),wrap=$("telegramLinkCodeWrap");
+ button.disabled=true;wrap.classList.add("hidden");
+ setStatus("telegramLinkMessage","Generating a secure one-time code…");
+ try{
+  const result=await cloudflareAdminRequest("/api/admin/telegram/link-code",{method:"POST",body:JSON.stringify({})});
+  if(!result.code)throw new Error("The API did not return a linking code.");
+  $("telegramLinkCode").value=result.code;
+  $("telegramLinkExpiry").textContent=result.expiresAt
+   ? "Expires: "+new Date(result.expiresAt).toLocaleString()
+   : "This code is temporary. Use it promptly.";
+  wrap.classList.remove("hidden");
+  setStatus("telegramLinkMessage","Code created. Send /link "+result.code+" to the Telegram bot.","ok");
+ }catch(e){
+  console.error("Telegram link code error:",e);
+  setStatus("telegramLinkMessage","Could not create code yet: "+String(e.message||e)+". The Worker linking endpoint must be deployed first.","err");
+ }finally{button.disabled=false;}
+});
+$("telegramLinkCopy").addEventListener("click",async()=>{
+ const code=$("telegramLinkCode").value;
+ if(!code)return;
+ try{await navigator.clipboard.writeText(code);setStatus("telegramLinkMessage","Code copied. Send /link "+code+" to @BadassBigoPKNotifyBot.","ok");}
+ catch(e){$("telegramLinkCode").focus();$("telegramLinkCode").select();setStatus("telegramLinkMessage","Select the code above and copy it manually.");}
+});
+
 $("logoutBtn").onclick=async()=>{await signOut(auth);};
 // Monthly slots are generated automatically by ensureMonthSlots(); manual slot creation is intentionally disabled.
 $("manualDate").addEventListener("change",refreshManualTimes);
