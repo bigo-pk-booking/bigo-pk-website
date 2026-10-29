@@ -456,7 +456,17 @@ $("filterDate").value=defaultScheduleDate; $("manualDate").value=defaultSchedule
 const defaultScheduleMonth=new Date(defaultScheduleDate+"T12:00:00"); $("scheduleMonth").textContent=defaultScheduleMonth.toLocaleDateString("en-US",{month:"long",year:"numeric"}).toUpperCase(); if($("autoScheduleMonth"))$("autoScheduleMonth").textContent=defaultScheduleMonth.toLocaleDateString("en-US",{month:"long",year:"numeric"});
 function setStatus(id,msg,kind=""){const el=$(id);if(!el)return;el.className="status"+(kind?" "+kind:"");el.textContent=msg;}
 function showView(name){$("bookingView").classList.toggle("hidden",name!=="booking");$("lookupView").classList.toggle("hidden",name!=="lookup");$("adminView").classList.toggle("hidden",name!=="admin");document.body.classList.toggle("admin-panel-open",name==="admin");}
-$("showBookingBtn").onclick=()=>showView("booking");$("showLookupBtn").onclick=()=>showView("lookup");$("showAdminBtn").onclick=()=>showView("admin");
+async function loadFirebaseAdminSlots(){
+ if(!isAdmin||!db)return;
+ try{
+  const snap=await getDocs(collection(db,"slots"));
+  slots=snap.docs.map(d=>({id:d.id,...d.data()}));
+  renderSlots();renderAdmin();
+ }catch(e){console.error("Admin Firebase slots load failed:",e);setStatus("slotStatus","Could not load admin slot-management data.","err");}
+}
+$("showBookingBtn").onclick=async()=>{showView("booking");await loadCloudflareSlots($("filterDate").value||defaultScheduleDate);};
+$("showLookupBtn").onclick=()=>showView("lookup");
+$("showAdminBtn").onclick=async()=>{showView("admin");if(isAdmin)await loadFirebaseAdminSlots();};
 function slotId(date,time){return `${date}_${time.replace(":","")}`;}
 function selectedHeaderMonth(){const d=$("filterDate").value||defaultScheduleDate;return d.slice(0,7);}
 function monthTitle(key){const d=new Date(key+"-01T12:00:00");return d.toLocaleDateString("en-US",{month:"long",year:"numeric"});}
@@ -633,8 +643,8 @@ async function startApp(){
   });
  }catch(e){console.error(e);$("configWarning").classList.remove("hidden");}
 }
-$("filterDate").addEventListener("change",()=>{selectedSlot=null;$("chosenSlot").value="";$("bookBtn").disabled=true;if(isAdmin){renderSlots();ensureMonthSlots(selectedHeaderMonth());}else{loadCloudflareSlots($("filterDate").value);}});
-$("refreshSlots").onclick=()=>renderSlots();
+$("filterDate").addEventListener("change",()=>{selectedSlot=null;$("chosenSlot").value="";$("bookBtn").disabled=true;loadCloudflareSlots($("filterDate").value);if(isAdmin)ensureMonthSlots(selectedHeaderMonth());});
+$("refreshSlots").onclick=()=>loadCloudflareSlots($("filterDate").value||defaultScheduleDate);
 $("bookBtn").onclick=async()=>{
  const bigoId=$("bigoId").value.trim();const name=$("userName").value.trim();const s=slots.find(x=>x.id===selectedSlot);
  if(!bigoId){setStatus("bookingMessage","Ilagay muna ang BIGO ID mo.","err");return;}
@@ -667,7 +677,7 @@ $("bookBtn").onclick=async()=>{
   console.error("Cloudflare OPK booking failed:",e);
   const msg=String(e.message||e);
   if(msg==="SLOT_TAKEN"){
-   setStatus("bookingMessage","That slot is already booked. The slot list is refreshing; please choose another time.","err");
+   setStatus("bookingMessage","That slot is already booked in Cloudflare. The list is refreshing; please choose another time.","err");
    await loadCloudflareSlots(s.date);
    selectedSlot=null;$("chosenSlot").value="";$("bookBtn").disabled=true;
   }else{
