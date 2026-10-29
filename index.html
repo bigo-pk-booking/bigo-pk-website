@@ -129,6 +129,12 @@ input,select{border-radius:3px;border-color:#c4d2d1}input:focus,select:focus{out
 .admin-pagination button:disabled{opacity:.4;cursor:not-allowed}
 #slotStatusFilter{min-width:0}
 
+/* Admin sign-in loading feedback */
+#loginBtn.is-loading{opacity:.9;cursor:wait}
+#loginBtn .login-loading-spinner{display:inline-block;width:16px;height:16px;border:2px solid #ffffff75;border-top-color:#fff;border-radius:50%;animation:loginSpin .7s linear infinite;vertical-align:-3px;margin-right:8px}
+@keyframes loginSpin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){#loginBtn .login-loading-spinner{animation:none!important}}
+
 /* Requested cleanup and schedule carousel */
 body.admin-panel-open .sheet-title,
 body.admin-panel-open .pk-battle { display:none !important; }
@@ -227,7 +233,6 @@ body.admin-panel-open .pk-battle { display:none !important; }
     <label for="adminEmail">Admin email</label><input id="adminEmail" type="email" autocomplete="username" placeholder="admin@example.com">
     <label for="adminPassword">Password</label><input id="adminPassword" type="password" autocomplete="current-password" placeholder="Password">
     <button id="loginBtn" class="full">Sign in as admin</button><div id="loginMessage" class="status"></div>
-    <p class="muted" style="font-size:12px">Create an Email/Password user in Firebase Authentication, then add a document in Firestore at <code>admins/USER_UID</code> with <code>{"enabled": true}</code>.</p>
   </div>
   <div class="card hidden" id="adminDashboard">
     <div class="admin-head"><div><h3>Admin dashboard</h3><p class="sub" style="margin:5px 0 0">Manage schedule, assign opponents, and download the report.</p></div><button id="logoutBtn" class="secondary small">Sign out</button></div>
@@ -486,7 +491,9 @@ function renderPkScheduleCarousel(){
   ["▦","Date",date],["◷","Time",time+" (UTC+8)"],["▥","Host Level",b.hostLevel||b.level||b.host||"Not specified"],
   ["⚔","OPK Event",b.opkEvent||b.event||b.eventName||"Not specified"],["♙","Opponent",b.opponentName||"Not assigned yet"],["♙","Opponent BIGO ID",b.opponentBigoId||"Not assigned yet"]
  ];
- content.innerHTML=`<div class="pk-schedule-progress"><span>${pkScheduleIndex+1} of ${pkScheduleItems.length}</span></div><div class="pk-schedule-dots">${pkScheduleItems.map((_,i)=>`<i class="${i===pkScheduleIndex?"active":""}"></i>`).join("")}</div><article class="pk-schedule-card"><h3>👑 PK Schedule #${pkScheduleIndex+1}</h3>${rows.map(r=>`<div class="pk-schedule-row"><span aria-hidden="true">${r[0]}</span><span class="key">${escapeHtml(r[1])}</span><span>:</span><span class="value">${escapeHtml(r[2])}</span></div>`).join("")}<div class="pk-schedule-status ${scheduleStatusClass(status)}">✓ Status: ${escapeHtml(status)}</div></article>`;
+ content.innerHTML=`<div class="pk-schedule-progress"><span>${pkScheduleIndex+1} of ${pkScheduleItems.length}</span></div><div class="pk-schedule-dots">${pkScheduleItems.map((_,i)=>`<i class="${i===pkScheduleIndex?"active":""}"></i>`).join("")}</div><article class="pk-schedule-card"><h3>👑 PK Schedule #${pkScheduleIndex+1}</h3>${rows.map(r=>`<div class="pk-schedule-row"><span aria-hidden="true">${r[0]}</span><span class="key">${escapeHtml(r[1])}</span><span>:</span><span class="value">${escapeHtml(r[2])}${r[1]==="Opponent BIGO ID" && b.opponentBigoId && b.opponentBigoId!=="Not assigned yet" ? ` <button type="button" id="copyOpponentBigoId" class="secondary small" style="margin:5px 0 0;white-space:nowrap">Copy ID</button>` : ""}</span></div>`).join("")}<div class="pk-schedule-status ${scheduleStatusClass(status)}">✓ Status: ${escapeHtml(status)}</div></article>`;
+ const copyOpponentBtn=content.querySelector("#copyOpponentBigoId");
+ if(copyOpponentBtn) copyOpponentBtn.onclick=()=>copyText(String(b.opponentBigoId||""));
  prev.disabled=pkScheduleIndex===0;next.disabled=pkScheduleIndex>=pkScheduleItems.length-1;
 }
 function openPkScheduleModal(items){pkScheduleItems=items.slice().sort((a,b)=>(String(a.date||"")+String(a.time||"")).localeCompare(String(b.date||"")+String(b.time||"")));pkScheduleIndex=0;renderPkScheduleCarousel();$("pkScheduleModal").classList.remove("hidden");}
@@ -523,7 +530,12 @@ $("loginBtn").addEventListener("click", async (event)=>{
  if(!auth || !db){setStatus("loginMessage","Firebase did not initialize. Check internet connection and Firebase module loading, then refresh.","err");return;}
  const email=$("adminEmail").value.trim(), password=$("adminPassword").value;
  if(!email || !password){setStatus("loginMessage","Enter both admin email and password.","err");return;}
- setStatus("loginMessage","Signing in…");
+ const loginButton=$("loginBtn");
+ const originalLoginLabel="Sign in as admin";
+ loginButton.disabled=true;
+ loginButton.classList.add("is-loading");
+ loginButton.innerHTML='<span class="login-loading-spinner" aria-hidden="true"></span>Signing in…';
+ setStatus("loginMessage","Signing in securely…");
  try{
   const credential=await signInWithEmailAndPassword(auth,email,password);
   const adminSnap=await getDoc(doc(db,"admins",credential.user.uid));
@@ -545,6 +557,10 @@ $("loginBtn").addEventListener("click", async (event)=>{
    "auth/operation-not-allowed":"Enable Email/Password in Firebase Authentication → Sign-in method."
   };
   setStatus("loginMessage",messages[e.code] || ("Login failed: "+(e.code||e.message||"unknown error")),"err");
+ } finally {
+  loginButton.disabled=false;
+  loginButton.classList.remove("is-loading");
+  loginButton.textContent=originalLoginLabel;
  }
 });
 $("logoutBtn").onclick=async()=>{await signOut(auth);};

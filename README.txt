@@ -1,12 +1,14 @@
-BADASS BIGO PK WEBSITE UPDATE
+BADASS BIGO PK UI polish
 
-Includes: hide large hero/monthly banner and PK Battle banner while Admin panel is open; My PK Schedule opens a popup carousel with Previous/Next for multiple bookings; available slots are green and enabled; booked or closed slots are red and disabled; booking lookup index supports multiple lookup codes for the same BIGO ID.
+Changes in this index.html:
+- Removed the helper sentence under Admin sign-in about creating Firebase users/documents.
+- Added spinner + disabled button while Admin sign-in is in progress; restores the button on failure.
+- Added a Copy ID button beside Opponent BIGO ID in each My PK Schedule carousel card when an opponent ID exists.
 
-ANDROID DEPLOYMENT
-1. Back up the current GitHub root index.html.
-2. Upload this index.html to the repository root, replacing the current one, then commit.
-3. Wait for GitHub Pages deployment and test My OPK and slot colors.
-4. Multi-booking carousel requires compatible Firestore rules. The included firestore.rules is based on the earlier pre-announcement rules and modifies publicBigoLookup to keep multiple lookup codes. Do not publish it blindly if your live rules have since changed; compare/merge or back up your current rules first.
-5. Do not delete existing bookings or collections. Existing BIGO IDs that previously had only one lookupCode can show that one old booking plus new bookings added after this update; old overwritten bookings cannot be recovered from the index alone.
+Android upload steps:
+1. Back up the current root index.html in GitHub.
+2. Upload this index.html to the repository root, replacing the current index.html.
+3. Commit the change and wait for GitHub Pages to deploy.
+4. Test Admin sign-in and My OPK schedule.
 
-This package does not change GitHub or Firebase automatically and has not been live-tested against your project.
+This is a prepared file; it has not been deployed to GitHub automatically. Do not replace Firestore rules for these UI-only changes.
