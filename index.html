@@ -444,7 +444,7 @@ async function loadCloudflareSlots(date){
 
 const $ = id => document.getElementById(id);
 const configured = FIREBASE_CONFIG.apiKey && !FIREBASE_CONFIG.apiKey.includes("PASTE_") && FIREBASE_CONFIG.projectId && !FIREBASE_CONFIG.projectId.includes("PASTE_");
-let app, auth, db, currentUser=null, isAdmin=false, slots=[], bookings=[], selectedSlot=null, stopSlots=null, stopBookings=null;
+let app, auth, db, currentUser=null, isAdmin=false, slots=[], adminSlots=[], bookings=[], selectedSlot=null, stopSlots=null, stopBookings=null;
 let bookingPage=0, slotPage=0;
 const ADMIN_PAGE_SIZE=10;
 const escapeHtml = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -456,17 +456,29 @@ $("filterDate").value=defaultScheduleDate; $("manualDate").value=defaultSchedule
 const defaultScheduleMonth=new Date(defaultScheduleDate+"T12:00:00"); $("scheduleMonth").textContent=defaultScheduleMonth.toLocaleDateString("en-US",{month:"long",year:"numeric"}).toUpperCase(); if($("autoScheduleMonth"))$("autoScheduleMonth").textContent=defaultScheduleMonth.toLocaleDateString("en-US",{month:"long",year:"numeric"});
 function setStatus(id,msg,kind=""){const el=$(id);if(!el)return;el.className="status"+(kind?" "+kind:"");el.textContent=msg;}
 function showView(name){$("bookingView").classList.toggle("hidden",name!=="booking");$("lookupView").classList.toggle("hidden",name!=="lookup");$("adminView").classList.toggle("hidden",name!=="admin");document.body.classList.toggle("admin-panel-open",name==="admin");}
-async function loadFirebaseAdminSlots(){
- if(!isAdmin||!db)return;
+async function loadCloudflareAdminSlots(monthKeyValue){
+ if(!isAdmin)return;
+ const month=monthKeyValue||$("slotMonthFilter")?.value||selectedHeaderMonth();
+ if(!/^\\d{4}-\\d{2}$/.test(month))return;
+ const [year,monthNum]=month.split("-").map(Number);
+ const days=new Date(year,monthNum,0).getDate();
+ setStatus("adminMessage","Loading "+monthTitle(month)+" slots from Cloudflare D1…");
  try{
-  const snap=await getDocs(collection(db,"slots"));
-  slots=snap.docs.map(d=>({id:d.id,...d.data()}));
-  renderSlots();renderAdmin();
- }catch(e){console.error("Admin Firebase slots load failed:",e);setStatus("slotStatus","Could not load admin slot-management data.","err");}
+  const dates=Array.from({length:days},(_,i)=>year+"-"+String(monthNum).padStart(2,"0")+"-"+String(i+1).padStart(2,"0"));
+  const results=await Promise.all(dates.map(async date=>{
+   const response=await fetch(BIGO_API_BASE+"/api/slots?date="+encodeURIComponent(date),{cache:"no-store"});
+   const data=await response.json();
+   if(!response.ok||!data.ok)throw new Error(data.error||("Could not load "+date));
+   return (data.slots||[]).map(s=>({...s,bookingId:s.booking_id??s.bookingId,hostName:s.hostName||s.host_name||"",hostBigoId:s.hostBigoId||s.host_bigo_id||""}));
+  }));
+  adminSlots=results.flat();
+  renderAdmin();
+  setStatus("adminMessage","Loaded "+adminSlots.length+" slots from Cloudflare D1 for "+monthTitle(month)+".","ok");
+ }catch(e){console.error("Cloudflare admin slots failed:",e);setStatus("adminMessage","Could not load D1 slot-management data: "+String(e.message||e),"err");}
 }
 $("showBookingBtn").onclick=async()=>{showView("booking");await loadCloudflareSlots($("filterDate").value||defaultScheduleDate);};
 $("showLookupBtn").onclick=()=>showView("lookup");
-$("showAdminBtn").onclick=async()=>{showView("admin");if(isAdmin)await loadFirebaseAdminSlots();};
+$("showAdminBtn").onclick=async()=>{showView("admin");if(isAdmin)await loadCloudflareAdminSlots();};
 function slotId(date,time){return `${date}_${time.replace(":","")}`;}
 function selectedHeaderMonth(){const d=$("filterDate").value||defaultScheduleDate;return d.slice(0,7);}
 function monthTitle(key){const d=new Date(key+"-01T12:00:00");return d.toLocaleDateString("en-US",{month:"long",year:"numeric"});}
@@ -589,7 +601,7 @@ function renderAdmin(){
  if(!isAdmin)return;
  refreshManualTimes();
  const bookingMonth=updateMonthPicker("bookingMonthFilter",bookings);
- const slotMonth=updateMonthPicker("slotMonthFilter",slots);
+ const slotMonth=updateMonthPicker("slotMonthFilter",adminSlots);
  const term=$("adminSearch").value.trim().toLowerCase();
 
  const filteredBookings=bookings
@@ -608,7 +620,7 @@ function renderAdmin(){
  $("adminBookings").querySelector("[data-booking-next]")?.addEventListener("click",()=>{bookingPage++;renderAdmin();});
 
  const statusFilter=$("slotStatusFilter")?.value||"all";
- const filteredSlots=slots
+ const filteredSlots=adminSlots
   .filter(s=>monthKey(s.date)===slotMonth&&(statusFilter==="all"||s.status===statusFilter))
   .sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
  const slotPages=Math.max(1,Math.ceil(filteredSlots.length/ADMIN_PAGE_SIZE));
@@ -879,7 +891,7 @@ async function toggleSlot(id){
 }
 $("adminSearch").addEventListener("input",()=>{bookingPage=0;renderAdmin();});
 $("bookingMonthFilter").addEventListener("change",()=>{bookingPage=0;renderAdmin();});
-$("slotMonthFilter").addEventListener("change",()=>{slotPage=0;renderAdmin();});
+$("slotMonthFilter").addEventListener("change",()=>{slotPage=0;loadCloudflareAdminSlots($("slotMonthFilter").value);});
 $("slotStatusFilter").addEventListener("change",()=>{slotPage=0;renderAdmin();});
 $("downloadMonthExcelBtn").addEventListener("click",()=>$("exportExcelBtn").click());
 function exportRows(){const selectedMonth=$("bookingMonthFilter")?.value||dateToday().slice(0,7);return bookings.filter(b=>monthKey(b.date)===selectedMonth).map(b=>({"DATE":b.date||"","TIME":b.time||"","BIGO NAME":b.name||"","BIGO ID":b.bigoId||"","HOST LEVEL":b.hostLevel||"","AGENCY NAME":b.agencyName||"","AGENCY TELEGRAM":b.agencyTelegram||"","OPK EVENT":b.opkEvent||"","VS":"VS","OPPONENT NAME":b.opponentName||"","OPPONENT BIGO ID":b.opponentBigoId||"","LEVEL":b.opponentLevel||"","OPPONENT AGENCY NAME":b.opponentAgencyName||"","OPPONENT AGENCY TELEGRAM":b.opponentAgencyTelegram||"","REMARKS (WIN/LOSE)":b.remarks||b.status||""})).sort((a,b)=>(a.DATE+a.TIME).localeCompare(b.DATE+b.TIME));}
