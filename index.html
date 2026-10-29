@@ -174,6 +174,8 @@ body.admin-panel-open .pk-battle { display:none !important; }
 @media(prefers-reduced-motion:reduce){.pk-schedule-dialog{animation:none!important}}
 
 .report-editor{margin-top:16px;padding:16px;border:1px solid #d9caca;border-radius:8px;background:#fff;color:#202428}.report-edit-row{padding:14px 0;border-bottom:1px solid #e2e5e8}.report-edit-title{display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap;margin-bottom:10px}.report-edit-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:10px}.report-edit-grid label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:700;color:#343a40}.report-edit-grid input{min-width:0;width:100%;padding:9px;border:1px solid #c4d2d1;border-radius:3px;background:#fff;color:#202428}@media(min-width:900px){.report-edit-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:480px){.report-edit-grid{grid-template-columns:1fr}.report-editor{padding:10px}}
+
+.slot-host-details{font-size:12px!important;line-height:1.35;margin-top:5px;white-space:normal;overflow-wrap:anywhere}.slot-host-details small{display:block;font-size:11px;margin-top:2px}
 </style>
 </head>
 <body>
@@ -388,7 +390,7 @@ function renderSlots(){
  const date=$("filterDate").value;
  if(date){const d=new Date(date+"T12:00:00");$("scheduleMonth").textContent=d.toLocaleDateString("en-PH",{month:"long",year:"numeric"}).toUpperCase();}const list=slots.filter(s=>s.date===date).sort((a,b)=>a.time.localeCompare(b.time));
  if(!list.length){$("slotsArea").innerHTML='<div class="notice err">Sorry, the date you selected is not available. Choose another date and time. Thank you.</div>';return;}
- $("slotsArea").innerHTML=`<div class="slot-date">${escapeHtml(prettyDate(date))}</div><div class="slots">${list.map(s=>{const state=s.status||"available";const disabled=state!=="available";return `<button class="slot ${state==="full"?"full-slot":state==="closed"?"closed-slot":""} ${selectedSlot===s.id?"selected":""}" data-slot="${escapeHtml(s.id)}" ${disabled?"disabled":""}>${escapeHtml(s.time)}<span>${slotStatus(s)}</span></button>`}).join("")}</div>`;
+ $("slotsArea").innerHTML=`<div class="slot-date">${escapeHtml(prettyDate(date))}</div><div class="slots">${list.map(s=>{const state=s.status||"available";const disabled=state!=="available";return `<button class="slot ${state==="full"?"full-slot":state==="closed"?"closed-slot":""} ${selectedSlot===s.id?"selected":""}" data-slot="${escapeHtml(s.id)}" ${disabled?"disabled":""}>${escapeHtml(s.time)}<span>${slotStatus(s)}</span>${state==="full"?`<span class="slot-host-details">👤 ${escapeHtml(s.hostName||"Host details unavailable")}${s.hostBigoId?`<small>BIGO ID: ${escapeHtml(s.hostBigoId)}</small>`:""}</span>`:""}</button>`}).join("")}</div>`;
  $("slotsArea").querySelectorAll("[data-slot]").forEach(b=>b.onclick=()=>{selectedSlot=b.dataset.slot;const s=slots.find(x=>x.id===selectedSlot);$("chosenSlot").value=s?`${prettyDate(s.date)} • ${s.time}`:"";$("bookBtn").disabled=!s;$("slotStatus").textContent="Selected slot: "+(s?`${s.date} ${s.time}`:"");renderSlots();});
 }
 function refreshManualTimes(){
@@ -502,7 +504,7 @@ $("bookBtn").onclick=async()=>{
    tx.set(bookingRef,bookingData);
    tx.set(publicRef,bookingData);
    tx.set(lookupRef,{...bookingData,lookupCodes});
-   tx.update(slotRef,{status:"full",bookingId:bookingRef.id,updatedAt:serverTimestamp()});
+   tx.update(slotRef,{status:"full",bookingId:bookingRef.id,hostName:name,hostBigoId:bigoId,updatedAt:serverTimestamp()});
   });
   $("bookingResult").classList.remove("hidden");$("bookingResult").innerHTML=`<div class="pk-success-celebration"><span class="pk-success-crown" aria-hidden="true">👑 🎉 🔥</span><h3 class="pk-success-title">OPK REQUEST SUBMITTED!</h3><p class="pk-success-copy">Your PK slot request was submitted successfully.</p><p class="pk-success-copy"><span class="pk-success-spark">✦</span> PK date: <b>${escapeHtml(s.date)}</b> &nbsp; Time: <b>${escapeHtml(s.time)}</b> <span class="pk-success-spark">✦</span></p><p class="pk-success-copy">Good luck sa PK match mo! Please wait for admin approval and check your schedule in My OPK. ❤️</p></div><div class="row" style="margin-top:12px"><button class="secondary" id="viewNewBooking">View my PK schedule</button><button class="success" id="copyNewCode">Copy reference (backup)</button></div>`;
   localStorage.setItem("bigoPkLastCode",bigoId);$("copyNewCode").onclick=()=>copyText(lookupCode);$("viewNewBooking").onclick=()=>{$("lookupCode").value=bigoId;showView("lookup");lookupBooking();};
@@ -625,7 +627,7 @@ $("manualCreateBtn").onclick=async()=>{
    tx.set(bookingRef,data);
    tx.set(publicRef,{bookingId:bookingRef.id,bigoId,name,date:slot.date,time:slot.time,lookupCode,status,opponentBigoId,opponentName,hostLevel,agencyName,agencyTelegram,opkEvent,opponentLevel,opponentAgencyName,opponentAgencyTelegram,remarks,createdAt:serverTimestamp()});
    tx.set(lookupRef,{bookingId:bookingRef.id,bigoId,name,date:slot.date,time:slot.time,lookupCode,lookupCodes,status,opponentBigoId,opponentName,hostLevel,agencyName,agencyTelegram,opkEvent,opponentLevel,opponentAgencyName,opponentAgencyTelegram,remarks,createdAt:serverTimestamp()});
-   tx.update(slotRef,{status:"full",bookingId:bookingRef.id,updatedAt:serverTimestamp()});
+   tx.update(slotRef,{status:"full",bookingId:bookingRef.id,hostName:name,hostBigoId:bigoId,updatedAt:serverTimestamp()});
   });
   ["manualBigoId","manualName","manualOpponentName","manualOpponentId","manualHostLevel","manualAgencyName","manualAgencyTelegram","manualOpkEvent","manualOpponentLevel","manualOpponentAgencyName","manualOpponentAgencyTelegram","manualRemarks"].forEach(id=>$(id).value="");
   setStatus("manualMessage","Manual PK booking created and approved successfully!","ok");
@@ -665,7 +667,7 @@ async function cancelBooking(id){
    if(remaining.length){const latestSnap=await getDoc(doc(db,"publicBookings",remaining[remaining.length-1]));const latest=latestSnap.exists()?latestSnap.data():{};batch.set(lookupRef,{...latest,bigoId:b.bigoId,lookupCodes:remaining,lookupCode:remaining[remaining.length-1]}, {merge:true});}
    else if(index.bookingId===id||index.lookupCode===b.lookupCode)batch.delete(lookupRef);
   }
-  batch.update(doc(db,"slots",b.slotId),{status:"available",bookingId:null,updatedAt:serverTimestamp()});await batch.commit();setStatus("adminMessage","Booking cancelled and slot reopened.","ok");
+  batch.update(doc(db,"slots",b.slotId),{status:"available",bookingId:null,hostName:null,hostBigoId:null,updatedAt:serverTimestamp()});await batch.commit();setStatus("adminMessage","Booking cancelled and slot reopened.","ok");
  }catch(e){console.error(e);setStatus("adminMessage","Could not cancel booking. Check admin permissions.","err");}
 }
 async function toggleSlot(id){
