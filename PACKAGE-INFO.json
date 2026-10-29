@@ -1,0 +1,7 @@
+{
+  "project": "BADASS BIGO PK Slots Website",
+  "entry_file": "index.html",
+  "includes_static_announcement_popup": true,
+  "source_backup": "index-backup-with-announcement-popup.html",
+  "note": "Generated package for manual upload; not published to GitHub."
+}
