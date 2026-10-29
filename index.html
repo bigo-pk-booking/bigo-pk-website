@@ -672,46 +672,90 @@ async function startApp(){
 }
 $("filterDate").addEventListener("change",()=>{selectedSlot=null;$("chosenSlot").value="";$("bookBtn").disabled=true;loadCloudflareSlots($("filterDate").value);});
 $("refreshSlots").onclick=()=>loadCloudflareSlots($("filterDate").value||defaultScheduleDate);
-$("bookBtn").onclick=async()=>{
- const bigoId=$("bigoId").value.trim();const name=$("userName").value.trim();const s=slots.find(x=>x.id===selectedSlot);
+function openBookingReview(initial){
+ let overlay=document.getElementById("bookingReviewModal");
+ if(!overlay){
+  overlay=document.createElement("div");
+  overlay.id="bookingReviewModal";
+  overlay.style.cssText="position:fixed;inset:0;z-index:20000;background:rgba(0,0,0,.76);display:flex;align-items:center;justify-content:center;padding:16px;";
+  document.body.appendChild(overlay);
+ }
+ const timeOptions=TIMES.map(t=>'<option value="'+t+'" '+(t===initial.time?'selected':'')+'>'+t+'</option>').join("");
+ overlay.innerHTML='<div style="width:min(100%,480px);max-height:88vh;overflow:auto;background:#fff;border:2px solid #c90012;border-radius:18px;padding:20px;color:#222;box-shadow:0 20px 60px #0008;">'+
+  '<h2 style="margin:0 0 8px;color:#b90012">Confirm Your PK Booking</h2>'+
+  '<p style="margin:0 0 16px;color:#555">Are you sure the details below are correct? You can edit every row before submitting.</p>'+
+  '<label style="display:block;margin:12px 0 5px;font-weight:700">BIGO ID</label><input id="reviewBigoId" value="'+escapeHtml(initial.bigoId)+'" style="box-sizing:border-box;width:100%;padding:12px;border:1px solid #bbb;border-radius:8px;font-size:16px">'+
+  '<label style="display:block;margin:12px 0 5px;font-weight:700">Name</label><input id="reviewName" value="'+escapeHtml(initial.name)+'" style="box-sizing:border-box;width:100%;padding:12px;border:1px solid #bbb;border-radius:8px;font-size:16px">'+
+  '<label style="display:block;margin:12px 0 5px;font-weight:700">Date</label><input id="reviewDate" type="date" value="'+escapeHtml(initial.date)+'" style="box-sizing:border-box;width:100%;padding:12px;border:1px solid #bbb;border-radius:8px;font-size:16px">'+
+  '<label style="display:block;margin:12px 0 5px;font-weight:700">Time</label><select id="reviewTime" style="box-sizing:border-box;width:100%;padding:12px;border:1px solid #bbb;border-radius:8px;font-size:16px">'+timeOptions+'</select>'+
+  '<div id="bookingReviewMessage" role="status" style="margin-top:12px;color:#b00020"></div>'+
+  '<div style="display:flex;gap:10px;margin-top:16px"><button type="button" id="bookingReviewCancel" style="flex:1;padding:13px;border:1px solid #bd9b9b;border-radius:8px;background:white;color:#8b0000;font-weight:700">Go Back</button><button type="button" id="bookingReviewConfirm" style="flex:1;padding:13px;border:0;border-radius:8px;background:#c90012;color:white;font-weight:700">Confirm & Submit</button></div>'+
+  '</div>';
+ overlay.style.display="flex";
+ const close=()=>{overlay.style.display="none";};
+ document.getElementById("bookingReviewCancel").onclick=close;
+ document.getElementById("bookingReviewConfirm").onclick=async()=>{
+  const bigoId=document.getElementById("reviewBigoId").value.trim();
+  const name=document.getElementById("reviewName").value.trim();
+  const date=document.getElementById("reviewDate").value;
+  const time=document.getElementById("reviewTime").value;
+  const msg=document.getElementById("bookingReviewMessage");
+  const confirmBtn=document.getElementById("bookingReviewConfirm");
+  if(!/^[A-Za-z0-9._-]{3,40}$/.test(bigoId)){msg.textContent="Please check the BIGO ID (3–40 letters, numbers, dot, underscore, or dash).";return;}
+  if(!name){msg.textContent="Please enter your name.";return;}
+  if(!date||!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(date)){msg.textContent="Please choose a valid date.";return;}
+  if(!TIMES.includes(time)){msg.textContent="Please choose a valid time.";return;}
+  confirmBtn.disabled=true;confirmBtn.textContent="Checking slot…";msg.textContent="Checking availability…";
+  try{
+   const response=await fetch(BIGO_API_BASE+"/api/slots?date="+encodeURIComponent(date),{cache:"no-store"});
+   const slotData=await response.json();
+   if(!response.ok||!slotData.ok)throw new Error(slotData.error||"Could not check slot availability.");
+   const chosen=(slotData.slots||[]).find(x=>x.time===time);
+   if(!chosen||chosen.status!=="available"){
+    msg.textContent="That date/time is no longer available. Please go back and choose another slot.";
+    confirmBtn.disabled=false;confirmBtn.textContent="Confirm & Submit";return;
+   }
+   confirmBtn.textContent="Submitting…";
+   $("bookBtn").disabled=true;
+   setStatus("bookingMessage","Submitting confirmed booking to Cloudflare…");
+   const saveResponse=await fetch(BIGO_API_BASE+"/api/bookings",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({date,time,bigoId,name})
+   });
+   const result=await saveResponse.json();
+   if(!saveResponse.ok||!result.ok)throw new Error(saveResponse.status===409?"That slot was just taken. Please choose another time.":(result.error||"Cloudflare booking failed"));
+   const saved=result.booking||{};
+   const lookupCode=saved.bookingCode||saved.booking_code||"";
+   $("bookingResult").classList.remove("hidden");
+   $("bookingResult").innerHTML='<div class="pk-success-celebration"><span class="pk-success-crown" aria-hidden="true">👑 🎉 🔥</span><h3 class="pk-success-title">OPK REQUEST SUBMITTED!</h3><p class="pk-success-copy">Your PK slot request was submitted successfully.</p><p class="pk-success-copy">PK date: <b>'+escapeHtml(date)+'</b> · Time: <b>'+escapeHtml(time)+'</b></p><p class="pk-success-copy">Please wait for admin approval and check your schedule in My OPK. ❤️</p><p class="pk-success-copy">Reference: <b>'+escapeHtml(lookupCode||saved.id||"Saved")+'</b></p></div><div class="row" style="margin-top:12px"><button class="secondary" id="viewNewBooking">View my PK schedule</button><button class="success" id="copyNewCode">Copy reference (backup)</button></div>';
+   localStorage.setItem("bigoPkLastCode",bigoId);
+   $("copyNewCode").onclick=()=>copyText(lookupCode||saved.id||"");
+   $("viewNewBooking").onclick=()=>{$("lookupCode").value=bigoId;showView("lookup");lookupBooking();};
+   setStatus("bookingMessage","Booking saved to Cloudflare D1. Waiting for admin approval.","ok");
+   $("bigoId").value=bigoId;$("userName").value=name;$("filterDate").value=date;
+   selectedSlot=null;$("chosenSlot").value="";
+   close();
+   await loadCloudflareSlots(date);
+  }catch(e){
+   console.error("Cloudflare OPK booking failed:",e);
+   msg.textContent="Could not submit booking: "+String(e.message||e);
+   setStatus("bookingMessage","Booking failed: "+String(e.message||e),"err");
+  }finally{
+   confirmBtn.disabled=false;confirmBtn.textContent="Confirm & Submit";$("bookBtn").disabled=false;
+  }
+ };
+}
+$("bookBtn").onclick=()=>{
+ const bigoId=$("bigoId").value.trim();
+ const name=$("userName").value.trim();
+ const s=slots.find(x=>x.id===selectedSlot);
  if(!bigoId){setStatus("bookingMessage","Ilagay muna ang BIGO ID mo.","err");return;}
  if(!name){setStatus("bookingMessage","Please enter your name.","err");return;}
  if(!/^[A-Za-z0-9._-]{3,40}$/.test(bigoId)){setStatus("bookingMessage","Check your BIGO ID. Use 3–40 letters, numbers, dot, underscore, or dash.","err");return;}
  if(!s||s.status!=="available"){setStatus("bookingMessage","Already set this date to another host. Please choose another time.","err");return;}
- $("bookBtn").disabled=true;setStatus("bookingMessage","Saving booking securely to Cloudflare…");
- try{
-  const response=await fetch(BIGO_API_BASE+"/api/bookings",{
-   method:"POST",
-   headers:{"Content-Type":"application/json"},
-   body:JSON.stringify({date:s.date,time:s.time,bigoId,name})
-  });
-  const result=await response.json();
-  if(!response.ok||!result.ok){
-   if(response.status===409)throw new Error("SLOT_TAKEN");
-   throw new Error(result.error||"Cloudflare booking failed");
-  }
-  const saved=result.booking;
-  const lookupCode=saved.bookingCode||saved.booking_code||"";
-  $("bookingResult").classList.remove("hidden");
-  $("bookingResult").innerHTML=`<div class="pk-success-celebration"><span class="pk-success-crown" aria-hidden="true">👑 🎉 🔥</span><h3 class="pk-success-title">OPK REQUEST SUBMITTED!</h3><p class="pk-success-copy">Your PK slot request was submitted successfully.</p><p class="pk-success-copy"><span class="pk-success-spark">✦</span> PK date: <b>${escapeHtml(s.date)}</b> &nbsp; Time: <b>${escapeHtml(s.time)}</b> <span class="pk-success-spark">✦</span></p><p class="pk-success-copy">Good luck sa PK match mo! Please wait for admin approval and check your schedule in My OPK. ❤️</p><p class="pk-success-copy">Reference: <b>${escapeHtml(lookupCode||saved.id||"Saved")}</b></p></div><div class="row" style="margin-top:12px"><button class="secondary" id="viewNewBooking">View my PK schedule</button><button class="success" id="copyNewCode">Copy reference (backup)</button></div>`;
-  localStorage.setItem("bigoPkLastCode",bigoId);
-  $("copyNewCode").onclick=()=>copyText(lookupCode||saved.id||"");
-  $("viewNewBooking").onclick=()=>{$("lookupCode").value=bigoId;showView("lookup");lookupBooking();};
-  setStatus("bookingMessage","Booking saved to Cloudflare D1. Waiting for admin approval.","ok");
-  selectedSlot=null;$("chosenSlot").value="";$("bigoId").value="";$("userName").value="";
-  await loadCloudflareSlots(s.date);
- }catch(e){
-  console.error("Cloudflare OPK booking failed:",e);
-  const msg=String(e.message||e);
-  if(msg==="SLOT_TAKEN"){
-   setStatus("bookingMessage","That slot is already booked in Cloudflare. The list is refreshing; please choose another time.","err");
-   await loadCloudflareSlots(s.date);
-   selectedSlot=null;$("chosenSlot").value="";$("bookBtn").disabled=true;
-  }else{
-   setStatus("bookingMessage","Booking failed: "+msg,"err");
-  }
- }finally{$("bookBtn").disabled=false;}
-};;
+ openBookingReview({bigoId,name,date:s.date,time:s.time});
+};
 let pkScheduleItems=[];let pkScheduleIndex=0;
 function scheduleStatusClass(status){const s=String(status||"").toLowerCase();if(s.includes("pending"))return "pending";if(s.includes("cancel"))return "cancelled";return "";}
 function renderPkScheduleCarousel(){
