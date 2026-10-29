@@ -400,7 +400,8 @@ function showView(name){$("bookingView").classList.toggle("hidden",name!=="booki
 $("showBookingBtn").onclick=()=>showView("booking");$("showLookupBtn").onclick=()=>showView("lookup");$("showAdminBtn").onclick=()=>showView("admin");
 function slotId(date,time){return `${date}_${time.replace(":","")}`;}
 function selectedHeaderMonth(){const d=$("filterDate").value||defaultScheduleDate;return d.slice(0,7);}
-function monthTitle(key){const d=new Date(key+"-01T12:00:00");return d.toLocaleDateString("en-US",{month:"long",year:"numeriasync function ensureMonthSlots(monthKeyValue){
+function monthTitle(key){const d=new Date(key+"-01T12:00:00");return d.toLocaleDateString("en-US",{month:"long",year:"numeric"});}
+async function ensureMonthSlots(monthKeyValue){
  if(!isAdmin||!db||!/^\\d{4}-\\d{2}$/.test(monthKeyValue))return;
  const title=monthTitle(monthKeyValue);const label=$("autoScheduleMonth");if(label)label.textContent=title;
  setStatus("scheduleMessage",`Preparing available OPK slots for ${title}…`);
