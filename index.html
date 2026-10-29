@@ -321,8 +321,29 @@ body.admin-panel-open .pk-battle { display:none !important; }
 })();
 </script>
 <script>
-/* Visible diagnostics if Firebase module fails to load or never attaches login handler. */
+/* Visible diagnostics for Firebase module startup and syntax errors. */
 (function(){
+  window.addEventListener("error", function(event){
+    var msg = document.getElementById("loginMessage");
+    if (!msg) return;
+    var text = String(event.message || "JavaScript startup error");
+    if (/SyntaxError|module|script|token|unexpected|import/i.test(text)) {
+      msg.className = "status err";
+      msg.textContent = "Website script error: " + text +
+        (event.lineno ? " (line " + event.lineno + ")" : "") +
+        ". Send this exact message to support.";
+    }
+  });
+  window.addEventListener("unhandledrejection", function(event){
+    var reason = event.reason;
+    var text = String(reason && (reason.message || reason) || "Unknown module error");
+    var msg = document.getElementById("loginMessage");
+    if (msg && !window.__badassLoginHandlerAttached) {
+      msg.className = "status err";
+      msg.textContent = "Firebase startup error: " + text;
+    }
+  });
+
   document.addEventListener('click', function(event){
     var btn = event.target.closest('#loginBtn');
     if (!btn) return;
