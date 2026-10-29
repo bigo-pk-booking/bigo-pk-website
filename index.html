@@ -631,7 +631,6 @@ async function startApp(){
    isAdmin=false;
    if(!user.isAnonymous){try{const a=await getDoc(doc(db,"admins",user.uid));isAdmin=a.exists()&&a.data().enabled===true;}catch(e){console.error(e)}}
    $("adminLogin").classList.toggle("hidden",isAdmin);$("adminDashboard").classList.toggle("hidden",!isAdmin);
-   if(isAdmin){await loadCloudflareSlots($("filterDate").value||defaultScheduleDate);}
    if(stopSlots)stopSlots();stopSlots=null;
    // Cloudflare D1 is the single source of truth for slot availability.
    await loadCloudflareSlots($("filterDate").value||defaultScheduleDate);
