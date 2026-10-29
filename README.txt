@@ -1,9 +1,7 @@
-Announcement Manager fix v2
+Announcement Manager Fix v3
 
-Replace only the root index.html in the GitHub repository with this file after backing up the current one. Do not replace Firestore rules.
+Replace only the root index.html in the GitHub repository with this file after backing up the current version. Do not change Firestore rules for this step.
 
-Fixes: snapshot listener no longer overwrites the saving status; success only appears after Firestore confirms the write; pending local writes are identified as syncing; permission-denied errors explain required superadmin fields; active popup is suppressed for signed-in non-anonymous admins so visitors can see it without interrupting admin editing.
+This version prevents the Firestore listener from overwriting the save success/error message immediately after the save attempt. After deployment, click Publish / Save and read the final status. If it fails, the exact error should remain visible.
 
-Expected document: Firestore / announcements / current.
-Admin document must contain enabled Boolean true and role String superadmin.
-Not live-tested against the user's Firebase project. Test save status and then open site in a private tab after GitHub Pages deploys.
+Expected Firestore document: announcements/current. Write rules require admins/{uid}.enabled == true and role == "superadmin".

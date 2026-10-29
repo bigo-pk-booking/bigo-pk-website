@@ -700,6 +700,7 @@ import { getFirestore, doc, getDoc, onSnapshot, setDoc, serverTimestamp } from "
   let latestAnnouncement = null;
   let formDirty = false;
   let isSaving = false;
+  let preserveSaveStatus = false;
   let lastShownKey = "";
 
   function status(message, error=false) {
@@ -714,8 +715,9 @@ import { getFirestore, doc, getDoc, onSnapshot, setDoc, serverTimestamp } from "
     saveBtn.innerHTML = saving ? '<span class="spinner" aria-hidden="true"></span> Saving…' : originalSaveLabel;
   }
   [titleInput, messageInput, activeInput].forEach(el => {
-    el.addEventListener("input", () => { formDirty = true; });
-    el.addEventListener("change", () => { formDirty = true; });
+    const markDirty = () => { formDirty = true; preserveSaveStatus = false; };
+    el.addEventListener("input", markDirty);
+    el.addEventListener("change", markDirty);
   });
   if (clearBtn) clearBtn.addEventListener("click", () => {
     titleInput.value = "";
@@ -767,7 +769,7 @@ import { getFirestore, doc, getDoc, onSnapshot, setDoc, serverTimestamp } from "
       else lastShownKey = "";
       // Snapshot events can arrive before the server confirms a write. Never report
       // a successful save while the Save button is still waiting for server acknowledgement.
-      if (!isSaving) {
+      if (!isSaving && !preserveSaveStatus) {
         if (snap.metadata.hasPendingWrites) {
           status("Syncing announcement with Firebase…");
         } else if (latestAnnouncement) {
@@ -792,7 +794,7 @@ import { getFirestore, doc, getDoc, onSnapshot, setDoc, serverTimestamp } from "
         const allowed = adminSnap.exists() && adminSnap.data().enabled === true;
         saveBtn.disabled = !allowed;
         if (!allowed) status("This account is not enabled as an admin.", true);
-        else if (!statusEl.textContent.startsWith("Announcement is")) status("Admin access ready. You can publish announcements.");
+        else if (!isSaving && !preserveSaveStatus && !statusEl.textContent.includes("published") && !statusEl.textContent.includes("saved")) status("Admin access ready. You can publish announcements.");
       } catch (error) {
         console.error("Announcement admin check failed", error);
         saveBtn.disabled = true;
@@ -816,6 +818,7 @@ import { getFirestore, doc, getDoc, onSnapshot, setDoc, serverTimestamp } from "
         status("Title limit is 100 characters; message limit is 1,500 characters.", true);
         return;
       }
+      preserveSaveStatus = false;
       setSaving(true);
       statusEl.innerHTML = '<span class="spinner" aria-hidden="true"></span> Saving announcement to Firestore…';
       try {
@@ -834,9 +837,10 @@ import { getFirestore, doc, getDoc, onSnapshot, setDoc, serverTimestamp } from "
         status(activeInput.checked ? "✓ SUCCESS! Announcement published and confirmed by Firestore." : "✓ SUCCESS! Announcement saved and confirmed by Firestore, but popup is disabled.");
       } catch (error) {
         console.error("Announcement save failed", error);
+        preserveSaveStatus = true;
         const reason = error?.code === "permission-denied"
           ? "Permission denied. Check that this admin has enabled=true and role=superadmin, and that the Firestore rules are published."
-          : (error?.message || "Unknown Firebase error.");
+          : (error?.message || error?.code || "Unknown Firebase error.");
         status("✖ SAVE FAILED: " + reason, true);
       } finally {
         setSaving(false);
