@@ -129,11 +129,43 @@ input,select{border-radius:3px;border-color:#c4d2d1}input:focus,select:focus{out
 .admin-pagination button:disabled{opacity:.4;cursor:not-allowed}
 #slotStatusFilter{min-width:0}
 
-/* Admin-only cleanup: hide the large monthly BADASS banner and PK battle banner in Admin view. */
-body.admin-panel-open .monthly-sheet,
-body.admin-panel-open .pk-battle {
-  display: none !important;
-}
+/* Requested cleanup and schedule carousel */
+body.admin-panel-open .sheet-title,
+body.admin-panel-open .pk-battle { display:none !important; }
+.slot:not(.full-slot):not(.closed-slot) { background:#e2f8e8 !important; color:#176534 !important; border-color:#9cddb0 !important; }
+.slot.full-slot, .slot.closed-slot { background:#fde7e7 !important; color:#a10f1b !important; border-color:#f0a6aa !important; }
+.slot:disabled { opacity:1 !important; cursor:not-allowed !important; filter:saturate(.9); }
+.slot.full-slot:disabled, .slot.closed-slot:disabled { background:#fde7e7 !important; color:#a10f1b !important; }
+.pk-schedule-modal{position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:16px;}
+.pk-schedule-dialog{position:relative;width:min(100%,470px);max-height:min(88vh,760px);overflow:auto;background:#fff;border:2px solid #d40000;border-radius:18px;box-shadow:0 22px 80px #0008;padding:22px 18px 18px;animation:pkScheduleIn .22s ease-out;}
+@keyframes pkScheduleIn{from{opacity:0;transform:translateY(12px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+.pk-schedule-close{position:absolute;right:12px;top:10px;width:34px;height:34px;border-radius:50%;padding:0;background:#fff;color:#7d1010;border:1px solid #e7b8b8;font-size:22px;line-height:1;}
+.pk-schedule-heading{text-align:center;padding:2px 28px 14px;}
+.pk-schedule-icon{display:grid;place-items:center;margin:0 auto 9px;width:54px;height:54px;border-radius:50%;background:#ffe5e5;color:#c90016;font-size:27px;}
+.pk-schedule-heading h2{font-size:22px;margin:0 0 5px;color:#191919;}
+.pk-schedule-heading p{margin:0;color:#687078;font-size:13px;}
+.pk-schedule-progress{display:flex;justify-content:center;align-items:center;gap:8px;color:#a00000;font-weight:800;font-size:13px;margin:0 0 12px;}
+.pk-schedule-dots{display:flex;justify-content:center;gap:6px;margin-top:8px;}
+.pk-schedule-dots i{width:7px;height:7px;border-radius:50%;background:#e2b8b8;display:block;}
+.pk-schedule-dots i.active{background:#d40000;box-shadow:0 0 0 3px #ffe5e5;}
+.pk-schedule-card{background:#fff8f8;border:1px solid #f0cccc;border-radius:13px;padding:15px;margin-bottom:15px;}
+.pk-schedule-card h3{font-size:17px;margin:0 0 13px;color:#222;}
+.pk-schedule-row{display:grid;grid-template-columns:22px minmax(90px,.85fr) 10px minmax(0,1.25fr);gap:7px;align-items:start;padding:7px 0;border-bottom:1px solid #f2e5e5;font-size:13px;}
+.pk-schedule-row:last-child{border-bottom:0;}
+.pk-schedule-row .key{color:#687078;}
+.pk-schedule-row .value{font-weight:750;overflow-wrap:anywhere;color:#222;}
+.pk-schedule-status{margin-top:13px;padding:10px;border-radius:9px;background:#e5f8ea;color:#176534;font-weight:800;font-size:13px;}
+.pk-schedule-status.pending{background:#fff2d5;color:#805b0b;}
+.pk-schedule-status.cancelled{background:#fde7e7;color:#a10f1b;}
+.pk-schedule-controls{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.pk-schedule-controls button{min-height:46px;}
+.pk-schedule-controls button:disabled{opacity:.35;}
+.pk-schedule-empty{text-align:center;padding:20px 8px 8px;}
+.pk-schedule-empty .empty-icon{font-size:48px;margin-bottom:10px;}
+.pk-schedule-empty h3{margin:0 0 7px;font-size:21px;}
+.pk-schedule-empty p{color:#687078;font-size:14px;line-height:1.5;}
+@media(max-width:380px){.pk-schedule-dialog{padding:18px 12px 13px}.pk-schedule-row{grid-template-columns:18px minmax(75px,.8fr) 8px minmax(0,1.2fr);gap:5px;font-size:12px}.pk-schedule-card{padding:12px}}
+@media(prefers-reduced-motion:reduce){.pk-schedule-dialog{animation:none!important}}
 
 </style>
 </head>
@@ -315,7 +347,7 @@ const defaultScheduleDate=dateOneMonthAhead();
 $("filterDate").value=defaultScheduleDate; $("manualDate").value=defaultScheduleDate;
 const defaultScheduleMonth=new Date(defaultScheduleDate+"T12:00:00"); $("scheduleMonth").textContent=defaultScheduleMonth.toLocaleDateString("en-US",{month:"long",year:"numeric"}).toUpperCase(); if($("autoScheduleMonth"))$("autoScheduleMonth").textContent=defaultScheduleMonth.toLocaleDateString("en-US",{month:"long",year:"numeric"});
 function setStatus(id,msg,kind=""){const el=$(id);if(!el)return;el.className="status"+(kind?" "+kind:"");el.textContent=msg;}
-function showView(name){$("bookingView").classList.toggle("hidden",name!=="booking");$("lookupView").classList.toggle("hidden",name!=="lookup");$("adminView").classList.toggle("hidden",name!=="admin");}
+function showView(name){$("bookingView").classList.toggle("hidden",name!=="booking");$("lookupView").classList.toggle("hidden",name!=="lookup");$("adminView").classList.toggle("hidden",name!=="admin");document.body.classList.toggle("admin-panel-open",name==="admin");}
 $("showBookingBtn").onclick=()=>showView("booking");$("showLookupBtn").onclick=()=>showView("lookup");$("showAdminBtn").onclick=()=>showView("admin");
 function slotId(date,time){return `${date}_${time.replace(":","")}`;}
 function selectedHeaderMonth(){const d=$("filterDate").value||defaultScheduleDate;return d.slice(0,7);}
@@ -337,7 +369,7 @@ async function ensureMonthSlots(monthKeyValue){
  }catch(e){console.error(e);setStatus("scheduleMessage","Could not auto-create monthly slots. Check Firestore rules allow the admin to create documents in the slots collection.","err");}
 }
 function prettyDate(date){const d=new Date(date+"T12:00:00");return d.toLocaleDateString("en-PH",{year:"numeric",month:"short",day:"numeric",weekday:"short"});}
-function slotStatus(s){return s.status==="full"?"Already set this date by another host":s.status==="closed"?"Closed":"Available";}
+function slotStatus(s){return s.status==="full"?"Booked":s.status==="closed"?"Not available":"Available";}
 function renderSlots(){
  const date=$("filterDate").value;
  if(date){const d=new Date(date+"T12:00:00");$("scheduleMonth").textContent=d.toLocaleDateString("en-PH",{month:"long",year:"numeric"}).toUpperCase();}const list=slots.filter(s=>s.date===date).sort((a,b)=>a.time.localeCompare(b.time));
@@ -423,12 +455,17 @@ $("bookBtn").onclick=async()=>{
  $("bookBtn").disabled=true;setStatus("bookingMessage","Reserving slot…");
  try{
   const bookingRef=doc(collection(db,"bookings"));const lookupCode=Array.from(crypto.getRandomValues(new Uint8Array(18))).map(x=>x.toString(16).padStart(2,"0")).join("");
-  const publicRef=doc(db,"publicBookings",lookupCode);const slotRef=doc(db,"slots",s.id);
+  const publicRef=doc(db,"publicBookings",lookupCode);const slotRef=doc(db,"slots",s.id);const lookupRef=doc(db,"publicBigoLookup",bigoId);
   await runTransaction(db,async tx=>{
    const snap=await tx.get(slotRef);if(!snap.exists()||snap.data().status!=="available")throw new Error("SLOT_TAKEN");
-   tx.set(bookingRef,{bigoId,name,date:s.date,time:s.time,slotId:s.id,lookupCode,status:"Pending approval",opponentBigoId:"",opponentName:"",createdAt:serverTimestamp()});
-   tx.set(publicRef,{bookingId:bookingRef.id,bigoId,name,date:s.date,time:s.time,lookupCode,status:"Pending approval",opponentBigoId:"",opponentName:"",createdAt:serverTimestamp()});
-   tx.set(doc(db,"publicBigoLookup",bigoId),{bookingId:bookingRef.id,bigoId,name,date:s.date,time:s.time,lookupCode,status:"Pending approval",opponentBigoId:"",opponentName:"",createdAt:serverTimestamp()});
+   const lookupSnap=await tx.get(lookupRef);
+   const oldLookup=lookupSnap.exists()?lookupSnap.data():{};
+   const oldCodes=Array.isArray(oldLookup.lookupCodes)?oldLookup.lookupCodes:(oldLookup.lookupCode?[oldLookup.lookupCode]:[]);
+   const lookupCodes=Array.from(new Set([...oldCodes,lookupCode]));
+   const bookingData={bookingId:bookingRef.id,bigoId,name,date:s.date,time:s.time,slotId:s.id,lookupCode,status:"Pending approval",opponentBigoId:"",opponentName:"",createdAt:serverTimestamp()};
+   tx.set(bookingRef,bookingData);
+   tx.set(publicRef,bookingData);
+   tx.set(lookupRef,{...bookingData,lookupCodes});
    tx.update(slotRef,{status:"full",bookingId:bookingRef.id,updatedAt:serverTimestamp()});
   });
   $("bookingResult").classList.remove("hidden");$("bookingResult").innerHTML=`<div class="pk-success-celebration"><span class="pk-success-crown" aria-hidden="true">👑 🎉 🔥</span><h3 class="pk-success-title">OPK REQUEST SUBMITTED!</h3><p class="pk-success-copy">Your PK slot request was submitted successfully.</p><p class="pk-success-copy"><span class="pk-success-spark">✦</span> PK date: <b>${escapeHtml(s.date)}</b> &nbsp; Time: <b>${escapeHtml(s.time)}</b> <span class="pk-success-spark">✦</span></p><p class="pk-success-copy">Good luck sa PK match mo! Please wait for admin approval and check your schedule in My OPK. ❤️</p></div><div class="row" style="margin-top:12px"><button class="secondary" id="viewNewBooking">View my PK schedule</button><button class="success" id="copyNewCode">Copy reference (backup)</button></div>`;
@@ -437,16 +474,45 @@ $("bookBtn").onclick=async()=>{
  }catch(e){console.error(e);setStatus("bookingMessage",e.message==="SLOT_TAKEN"?"Already set this date to another host. Please choose another time.":"Booking failed. Check connection and Firebase rules, then try again.","err");}
  finally{$("bookBtn").disabled=true;}
 };
+let pkScheduleItems=[];let pkScheduleIndex=0;
+function scheduleStatusClass(status){const s=String(status||"").toLowerCase();if(s.includes("pending"))return "pending";if(s.includes("cancel"))return "cancelled";return "";}
+function renderPkScheduleCarousel(){
+ const content=$("pkScheduleCarouselContent"),prev=$("pkSchedulePrev"),next=$("pkScheduleNext"),subtitle=$("pkScheduleSubtitle");
+ if(!pkScheduleItems.length){content.innerHTML='<div class="pk-schedule-empty"><div class="empty-icon">📅</div><h3>No PK Schedule Found</h3><p>No PK slots were found for this BIGO ID. Please check the ID or book an OPK slot first.</p></div>';subtitle.textContent="No schedule found";prev.disabled=true;next.disabled=true;return;}
+ const b=pkScheduleItems[pkScheduleIndex];
+ subtitle.textContent=`You have ${pkScheduleItems.length} PK slot${pkScheduleItems.length===1?"":"s"} on this BIGO ID.`;
+ const date=b.date||"—",time=b.time||"—",status=b.status||"Reserved";
+ const rows=[
+  ["▦","Date",date],["◷","Time",time+" (UTC+8)"],["▥","Host Level",b.hostLevel||b.level||b.host||"Not specified"],
+  ["⚔","OPK Event",b.opkEvent||b.event||b.eventName||"Not specified"],["♙","Opponent",b.opponentName||"Not assigned yet"],["♙","Opponent BIGO ID",b.opponentBigoId||"Not assigned yet"]
+ ];
+ content.innerHTML=`<div class="pk-schedule-progress"><span>${pkScheduleIndex+1} of ${pkScheduleItems.length}</span></div><div class="pk-schedule-dots">${pkScheduleItems.map((_,i)=>`<i class="${i===pkScheduleIndex?"active":""}"></i>`).join("")}</div><article class="pk-schedule-card"><h3>👑 PK Schedule #${pkScheduleIndex+1}</h3>${rows.map(r=>`<div class="pk-schedule-row"><span aria-hidden="true">${r[0]}</span><span class="key">${escapeHtml(r[1])}</span><span>:</span><span class="value">${escapeHtml(r[2])}</span></div>`).join("")}<div class="pk-schedule-status ${scheduleStatusClass(status)}">✓ Status: ${escapeHtml(status)}</div></article>`;
+ prev.disabled=pkScheduleIndex===0;next.disabled=pkScheduleIndex>=pkScheduleItems.length-1;
+}
+function openPkScheduleModal(items){pkScheduleItems=items.slice().sort((a,b)=>(String(a.date||"")+String(a.time||"")).localeCompare(String(b.date||"")+String(b.time||"")));pkScheduleIndex=0;renderPkScheduleCarousel();$("pkScheduleModal").classList.remove("hidden");}
+function closePkScheduleModal(){$("pkScheduleModal").classList.add("hidden");}
+$("pkSchedulePrev").addEventListener("click",()=>{if(pkScheduleIndex>0){pkScheduleIndex--;renderPkScheduleCarousel();}});
+$("pkScheduleNext").addEventListener("click",()=>{if(pkScheduleIndex<pkScheduleItems.length-1){pkScheduleIndex++;renderPkScheduleCarousel();}});
+$("pkScheduleClose").addEventListener("click",closePkScheduleModal);
+$("pkScheduleModal").addEventListener("click",e=>{if(e.target===$("pkScheduleModal"))closePkScheduleModal();});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closePkScheduleModal();if(!$("pkScheduleModal").classList.contains("hidden")){if(e.key==="ArrowRight"&&!$("pkScheduleNext").disabled)$("pkScheduleNext").click();if(e.key==="ArrowLeft"&&!$("pkSchedulePrev").disabled)$("pkSchedulePrev").click();}});
 async function lookupBooking(){
  const bigoId=$("lookupCode").value.trim();
  if(!/^[A-Za-z0-9._-]{3,40}$/.test(bigoId)){setStatus("lookupResult","Ilagay ang tamang BIGO ID at subukan ulit.","err");return;}
- setStatus("lookupResult","Searching…");
+ setStatus("lookupResult","Searching for your PK schedules…");
  try{
   const snap=await getDoc(doc(db,"publicBigoLookup",bigoId));
-  if(!snap.exists()){setStatus("lookupResult","Walang booking na nakita para sa BIGO ID na ito.","err");return;}
-  const b=snap.data();
-  $("lookupResult").innerHTML=`<div class="card" style="margin-top:12px"><h3>Booking details</h3><p><span class="muted">Name:</span> <b>${escapeHtml(b.name||"—")}</b></p><p><span class="muted">BIGO ID:</span> <b>${escapeHtml(b.bigoId||bigoId)}</b></p><p><span class="muted">Opponent name:</span> <b>${escapeHtml(b.opponentName||"Not assigned yet")}</b></p><p><span class="muted">Opponent BIGO ID:</span> <b id="oppValue">${escapeHtml(b.opponentBigoId||"Not assigned yet")}</b></p><p><span class="muted">PK date:</span> <b>${escapeHtml(b.date||"—")}</b></p><p><span class="muted">PK time:</span> <b>${escapeHtml(b.time||"—")}</b></p><p><span class="muted">Status:</span> <span class="pill ${b.opponentBigoId?"assigned":""}">${escapeHtml(b.opponentBigoId?"Opponent assigned":b.status||"Reserved")}</span></p>${b.opponentBigoId?'<button id="copyOpponent" class="success">Copy opponent BIGO ID</button>':""}</div>`;
-  if(b.opponentBigoId)$("copyOpponent").onclick=()=>copyText(b.opponentBigoId);
+  if(!snap.exists()){setStatus("lookupResult","Walang booking na nakita para sa BIGO ID na ito.","err");openPkScheduleModal([]);return;}
+  const index=snap.data();
+  let codes=Array.isArray(index.lookupCodes)?index.lookupCodes:[];
+  if(!codes.length&&index.lookupCode)codes=[index.lookupCode];
+  const items=[];
+  for(const code of [...new Set(codes)]){
+   try{const publicSnap=await getDoc(doc(db,"publicBookings",code));if(publicSnap.exists())items.push({id:code,...publicSnap.data()});}catch(e){console.warn("Could not load one public schedule",e);}
+  }
+  if(!items.length&&index.bookingId){items.push({id:index.lookupCode||index.bookingId,...index});}
+  if(!items.length){setStatus("lookupResult","Walang booking na nakita para sa BIGO ID na ito.","err");openPkScheduleModal([]);return;}
+  setStatus("lookupResult",`Found ${items.length} PK schedule${items.length===1?"":"s"}.` ,"ok");openPkScheduleModal(items);
  }catch(e){console.error(e);setStatus("lookupResult","Lookup failed. Check Firebase rules and try again.","err");}
 }
 $("lookupBtn").onclick=lookupBooking;
@@ -502,10 +568,14 @@ $("manualCreateBtn").onclick=async()=>{
   const status=opponentBigoId?"Opponent assigned":"Approved";
   await runTransaction(db,async tx=>{
    const snap=await tx.get(slotRef);if(!snap.exists()||snap.data().status!=="available")throw new Error("SLOT_TAKEN");
+   const lookupSnap=await tx.get(lookupRef);
+   const oldLookup=lookupSnap.exists()?lookupSnap.data():{};
+   const oldCodes=Array.isArray(oldLookup.lookupCodes)?oldLookup.lookupCodes:(oldLookup.lookupCode?[oldLookup.lookupCode]:[]);
+   const lookupCodes=Array.from(new Set([...oldCodes,lookupCode]));
    const data={bigoId,name,date:slot.date,time:slot.time,slotId:slot.id,lookupCode,status,opponentBigoId,opponentName,createdAt:serverTimestamp(),approvedAt:serverTimestamp(),approvedBy:currentUser.uid,createdByAdmin:true};
    tx.set(bookingRef,data);
    tx.set(publicRef,{bookingId:bookingRef.id,bigoId,name,date:slot.date,time:slot.time,lookupCode,status,opponentBigoId,opponentName,createdAt:serverTimestamp()});
-   tx.set(lookupRef,{bookingId:bookingRef.id,bigoId,name,date:slot.date,time:slot.time,lookupCode,status,opponentBigoId,opponentName,createdAt:serverTimestamp()});
+   tx.set(lookupRef,{bookingId:bookingRef.id,bigoId,name,date:slot.date,time:slot.time,lookupCode,lookupCodes,status,opponentBigoId,opponentName,createdAt:serverTimestamp()});
    tx.update(slotRef,{status:"full",bookingId:bookingRef.id,updatedAt:serverTimestamp()});
   });
   ["manualBigoId","manualName","manualOpponentName","manualOpponentId"].forEach(id=>$(id).value="");
@@ -538,7 +608,16 @@ async function saveOpponent(id){
 }
 async function cancelBooking(id){
  const b=bookings.find(x=>x.id===id);if(!b||!confirm(`Cancel booking for ${b.bigoId} on ${b.date} ${b.time}?`))return;
- try{const batch=writeBatch(db);batch.delete(doc(db,"bookings",id));if(b.lookupCode)batch.delete(doc(db,"publicBookings",b.lookupCode));const lookupSnap=await getDoc(doc(db,"publicBigoLookup",b.bigoId));if(lookupSnap.exists()&&lookupSnap.data().bookingId===id)batch.delete(doc(db,"publicBigoLookup",b.bigoId));batch.update(doc(db,"slots",b.slotId),{status:"available",bookingId:null,updatedAt:serverTimestamp()});await batch.commit();setStatus("adminMessage","Booking cancelled and slot reopened.","ok");}catch(e){console.error(e);setStatus("adminMessage","Could not cancel booking. Check admin permissions.","err");}
+ try{
+  const batch=writeBatch(db);batch.delete(doc(db,"bookings",id));if(b.lookupCode)batch.delete(doc(db,"publicBookings",b.lookupCode));
+  const lookupRef=doc(db,"publicBigoLookup",b.bigoId),lookupSnap=await getDoc(lookupRef);
+  if(lookupSnap.exists()){
+   const index=lookupSnap.data();const codes=Array.isArray(index.lookupCodes)?index.lookupCodes:(index.lookupCode?[index.lookupCode]:[]);const remaining=codes.filter(code=>code!==b.lookupCode);
+   if(remaining.length){const latestSnap=await getDoc(doc(db,"publicBookings",remaining[remaining.length-1]));const latest=latestSnap.exists()?latestSnap.data():{};batch.set(lookupRef,{...latest,bigoId:b.bigoId,lookupCodes:remaining,lookupCode:remaining[remaining.length-1]}, {merge:true});}
+   else if(index.bookingId===id||index.lookupCode===b.lookupCode)batch.delete(lookupRef);
+  }
+  batch.update(doc(db,"slots",b.slotId),{status:"available",bookingId:null,updatedAt:serverTimestamp()});await batch.commit();setStatus("adminMessage","Booking cancelled and slot reopened.","ok");
+ }catch(e){console.error(e);setStatus("adminMessage","Could not cancel booking. Check admin permissions.","err");}
 }
 async function toggleSlot(id){
  const s=slots.find(x=>x.id===id);if(!s||s.status==="full")return;
@@ -588,6 +667,23 @@ startApp();
 </script>
 
 
+
+<div id="pkScheduleModal" class="pk-schedule-modal hidden" role="dialog" aria-modal="true" aria-labelledby="pkScheduleTitle">
+  <div class="pk-schedule-dialog">
+    <button type="button" id="pkScheduleClose" class="pk-schedule-close" aria-label="Close schedule">×</button>
+    <div class="pk-schedule-heading">
+      <span class="pk-schedule-icon" aria-hidden="true">▣</span>
+      <h2 id="pkScheduleTitle">My PK Schedule</h2>
+      <p id="pkScheduleSubtitle">Your PK schedule details</p>
+    </div>
+    <div id="pkScheduleCarouselContent"></div>
+    <div class="pk-schedule-controls">
+      <button type="button" id="pkSchedulePrev" class="secondary">‹ Previous</button>
+      <button type="button" id="pkScheduleNext">Next ›</button>
+    </div>
+  </div>
+</div>
+
 <div id="manualPkSuccessModal" class="manual-pk-modal hidden" role="dialog" aria-modal="true" aria-labelledby="manualPkSuccessTitle">
   <div class="manual-pk-dialog">
     <div class="manual-pk-confetti" aria-hidden="true"><i style="left:5%;animation-delay:.05s"></i><i style="left:14%;animation-delay:.3s"></i><i style="left:24%;animation-delay:.12s"></i><i style="left:34%;animation-delay:.45s"></i><i style="left:44%;animation-delay:.18s"></i><i style="left:54%;animation-delay:.35s"></i><i style="left:64%;animation-delay:.08s"></i><i style="left:74%;animation-delay:.4s"></i><i style="left:84%;animation-delay:.22s"></i><i style="left:94%;animation-delay:.5s"></i></div>
@@ -615,27 +711,6 @@ startApp();
     target.innerHTML='<div><b>BIGO ID:</b> '+safe(data.bigoId)+'</div><div><b>Name:</b> '+safe(data.name)+'</div><div><b>PK date:</b> '+safe(data.date)+'</div><div><b>PK time:</b> '+safe(data.time)+'</div>';
     modal.classList.remove('hidden');
   };
-})();
-</script>
-
-
-<script>
-(function () {
-  function syncAdminPanelClass() {
-    var adminView = document.getElementById('adminView');
-    var isAdminVisible = !!adminView && !adminView.classList.contains('hidden');
-    document.body.classList.toggle('admin-panel-open', isAdminVisible);
-  }
-
-  document.addEventListener('DOMContentLoaded', function () {
-    var adminView = document.getElementById('adminView');
-    if (!adminView) return;
-    syncAdminPanelClass();
-    new MutationObserver(syncAdminPanelClass).observe(adminView, {
-      attributes: true,
-      attributeFilter: ['class']
-    });
-  });
 })();
 </script>
 

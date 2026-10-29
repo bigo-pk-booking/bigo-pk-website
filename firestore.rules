@@ -7,10 +7,6 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
         && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.enabled == true;
     }
-    function isSuperAdmin() {
-      return isAdmin()
-        && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role == "superadmin";
-    }
     function validBookingForSlot(slotId) {
       return signedIn()
         && request.resource.data.status == "full"
@@ -18,45 +14,18 @@ service cloud.firestore {
         && getAfter(/databases/$(database)/documents/bookings/$(request.resource.data.bookingId)).data.slotId == slotId
         && getAfter(/databases/$(database)/documents/bookings/$(request.resource.data.bookingId)).data.bigoId is string;
     }
-
     match /admins/{uid} {
-      allow get: if signedIn() && (request.auth.uid == uid || isSuperAdmin());
-      allow list: if isSuperAdmin();
-      // Admin creation/deletion is server-only through callable Cloud Functions.
-      allow create, update, delete: if false;
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow write: if false;
     }
-
-    match /announcements/{announcementId} {
-      allow read: if true;
-      allow create: if isSuperAdmin()
-        && request.resource.data.title is string
-        && request.resource.data.title.size() > 0
-        && request.resource.data.title.size() <= 100
-        && request.resource.data.message is string
-        && request.resource.data.message.size() > 0
-        && request.resource.data.message.size() <= 1500
-        && request.resource.data.active is bool;
-      allow update: if isSuperAdmin()
-        && request.resource.data.title is string
-        && request.resource.data.title.size() > 0
-        && request.resource.data.title.size() <= 100
-        && request.resource.data.message is string
-        && request.resource.data.message.size() > 0
-        && request.resource.data.message.size() <= 1500
-        && request.resource.data.active is bool;
-      allow delete: if isSuperAdmin();
-    }
-
     match /slots/{slotId} {
       allow read: if true;
       allow create, delete: if isAdmin();
-      allow update: if isAdmin()
-        || (resource.data.status == "available" && validBookingForSlot(slotId));
+      allow update: if isAdmin() || (resource.data.status == "available" && validBookingForSlot(slotId));
     }
-
     match /bookings/{bookingId} {
       allow read: if isAdmin();
-      allow create: if signedIn()
+      allow create: if isAdmin() || (signedIn()
         && request.resource.data.bigoId is string
         && request.resource.data.bigoId.size() >= 3
         && request.resource.data.bigoId.size() <= 40
@@ -64,12 +33,11 @@ service cloud.firestore {
         && request.resource.data.time is string
         && request.resource.data.slotId is string
         && request.resource.data.lookupCode is string
-        && request.resource.data.status in ["Reserved", "Pending approval"]
+        && request.resource.data.status in ["Reserved", "Pending approval", "Approved", "Opponent assigned"]
         && getAfter(/databases/$(database)/documents/slots/$(request.resource.data.slotId)).data.bookingId == bookingId
-        && getAfter(/databases/$(database)/documents/slots/$(request.resource.data.slotId)).data.status == "full";
+        && getAfter(/databases/$(database)/documents/slots/$(request.resource.data.slotId)).data.status == "full");
       allow update, delete: if isAdmin();
     }
-
     match /publicBookings/{lookupCode} {
       allow get: if signedIn();
       allow list: if false;
@@ -82,16 +50,33 @@ service cloud.firestore {
         && getAfter(/databases/$(database)/documents/bookings/$(request.resource.data.bookingId)).data.lookupCode == lookupCode;
       allow update, delete: if isAdmin();
     }
-
     match /publicBigoLookup/{bigoId} {
       allow get: if signedIn();
       allow list: if false;
-      allow create: if isAdmin()
-        || (signedIn()
-          && request.resource.data.bigoId == bigoId
-          && request.resource.data.bookingId is string
-          && getAfter(/databases/$(database)/documents/bookings/$(request.resource.data.bookingId)).data.bigoId == bigoId);
-      allow update, delete: if isAdmin();
+      allow create: if isAdmin() || (signedIn()
+        && request.resource.data.bigoId == bigoId
+        && request.resource.data.bookingId is string
+        && request.resource.data.lookupCode is string
+        && request.resource.data.lookupCodes is list
+        && request.resource.data.lookupCodes.size() == 1
+        && request.resource.data.lookupCodes.hasAny([request.resource.data.lookupCode])
+        && getAfter(/databases/$(database)/documents/publicBookings/$(request.resource.data.lookupCode)).data.bigoId == bigoId);
+      allow update: if isAdmin() || (signedIn()
+        && request.resource.data.bigoId == bigoId
+        && request.resource.data.bookingId is string
+        && request.resource.data.lookupCode is string
+        && request.resource.data.lookupCodes is list
+        && getAfter(/databases/$(database)/documents/publicBookings/$(request.resource.data.lookupCode)).data.bigoId == bigoId
+        && (
+          (resource.data.lookupCodes is list
+            && request.resource.data.lookupCodes.size() == resource.data.lookupCodes.size() + 1
+            && request.resource.data.lookupCodes.hasAll(resource.data.lookupCodes))
+          || (!(resource.data.lookupCodes is list)
+            && resource.data.lookupCode is string
+            && request.resource.data.lookupCodes.size() == 2
+            && request.resource.data.lookupCodes.hasAny([resource.data.lookupCode]))
+        ));
+      allow delete: if isAdmin();
     }
   }
 }
