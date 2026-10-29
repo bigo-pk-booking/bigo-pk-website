@@ -704,6 +704,12 @@ import { getFirestore, doc, getDoc, onSnapshot, setDoc, serverTimestamp } from "
   function status(message, error=false) {
     statusEl.textContent = message;
     statusEl.className = "status" + (error ? " err" : " ok");
+    statusEl.setAttribute("role", error ? "alert" : "status");
+  }
+  const originalSaveLabel = saveBtn.textContent;
+  function setSaving(isSaving) {
+    saveBtn.disabled = isSaving;
+    saveBtn.innerHTML = isSaving ? '<span class="spinner" aria-hidden="true"></span> Saving…' : originalSaveLabel;
   }
   [titleInput, messageInput, activeInput].forEach(el => {
     el.addEventListener("input", () => { formDirty = true; });
@@ -727,12 +733,20 @@ import { getFirestore, doc, getDoc, onSnapshot, setDoc, serverTimestamp } from "
     }
   }
 
-  async function initialize() {
-    if (!getApps().length) {
-      status("Firebase is still starting. Refresh the page if this message remains.", true);
-      return;
+  async function waitForFirebaseApp() {
+    // Firebase is initialized by the main page module. Module scripts can start
+    // in an order that briefly leaves getApps() empty, so wait instead of failing.
+    for (let attempt = 0; attempt < 100; attempt++) {
+      if (getApps().length) return getApp();
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
-    const app = getApp();
+    throw new Error("Firebase app did not initialize within 10 seconds.");
+  }
+
+  async function initialize() {
+    saveBtn.disabled = true;
+    statusEl.innerHTML = '<span class="spinner" aria-hidden="true"></span> Connecting to Firebase…';
+    const app = await waitForFirebaseApp();
     const auth = getAuth(app);
     const db = getFirestore(app);
     announcementDocRef = doc(db, "announcements", "current");
@@ -791,8 +805,8 @@ import { getFirestore, doc, getDoc, onSnapshot, setDoc, serverTimestamp } from "
         status("Title limit is 100 characters; message limit is 1,500 characters.", true);
         return;
       }
-      saveBtn.disabled = true;
-      status("Saving announcement…");
+      setSaving(true);
+      statusEl.innerHTML = '<span class="spinner" aria-hidden="true"></span> Saving announcement to Firestore…';
       try {
         const adminSnap = await getDoc(doc(db, "admins", user.uid));
         if (!adminSnap.exists() || adminSnap.data().enabled !== true) {
@@ -806,12 +820,12 @@ import { getFirestore, doc, getDoc, onSnapshot, setDoc, serverTimestamp } from "
           updatedBy: user.uid
         });
         formDirty = false;
-        status(activeInput.checked ? "Announcement published successfully." : "Announcement saved and disabled.");
+        status(activeInput.checked ? "✓ SUCCESS! Announcement published and saved." : "✓ SUCCESS! Announcement saved but popup is disabled.");
       } catch (error) {
         console.error("Announcement save failed", error);
         status("Could not save. Check that the Firestore announcements rule is published. " + (error?.message || ""), true);
       } finally {
-        saveBtn.disabled = false;
+        setSaving(false);
       }
     });
   }
@@ -819,7 +833,8 @@ import { getFirestore, doc, getDoc, onSnapshot, setDoc, serverTimestamp } from "
   // This module appears after the main app module, so the Firebase app should already exist.
   initialize().catch(error => {
     console.error("Announcement manager initialization failed", error);
-    status("Announcement manager could not start. Refresh and check the browser console.", true);
+    saveBtn.disabled = true;
+    status("ERROR: Announcement manager could not connect to Firebase. " + (error?.message || "Check Firebase setup and refresh."), true);
   });
 })();
 </script>
