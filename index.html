@@ -459,7 +459,7 @@ function showView(name){$("bookingView").classList.toggle("hidden",name!=="booki
 async function loadCloudflareAdminSlots(monthKeyValue){
  if(!isAdmin)return;
  const month=monthKeyValue||$("slotMonthFilter")?.value||selectedHeaderMonth();
- if(!/^\\d{4}-\\d{2}$/.test(month))return;
+ if(!/^\d{4}-\d{2}$/.test(month))return;
  const [year,monthNum]=month.split("-").map(Number);
  const days=new Date(year,monthNum,0).getDate();
  setStatus("adminMessage","Loading "+monthTitle(month)+" slots from Cloudflare D1…");
