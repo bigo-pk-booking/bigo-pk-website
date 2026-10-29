@@ -70,5 +70,11 @@ service cloud.firestore {
           && getAfter(/databases/$(database)/documents/bookings/$(request.resource.data.bookingId)).data.bigoId == bigoId);
       allow update, delete: if isAdmin();
     }
+    // Public can read the single announcement; only enabled admins can create/update/delete it.
+    match /announcements/{announcementId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
   }
 }
