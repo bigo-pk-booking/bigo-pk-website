@@ -830,28 +830,52 @@ $("manualCreateBtn").onclick=async()=>{
  const createBtn=$("manualCreateBtn");
  createBtn.disabled=true;createBtn.classList.add("is-loading");createBtn.dataset.originalText=createBtn.textContent;
  createBtn.innerHTML='<span class="manual-loading-spinner" aria-hidden="true"></span>Creating PK…';
- setStatus("manualMessage","Creating and approving the manual PK. Please wait…");
+ setStatus("manualMessage","Creating and approving the manual PK in Cloudflare D1. Please wait…");
+ let createdBookingId="";
  try{
-  const bookingRef=doc(collection(db,"bookings")),lookupCode=Array.from(crypto.getRandomValues(new Uint8Array(18))).map(x=>x.toString(16).padStart(2,"0")).join("");
-  const publicRef=doc(db,"publicBookings",lookupCode),slotRef=doc(db,"slots",slot.id),lookupRef=doc(db,"publicBigoLookup",bigoId);
-  const status=opponentBigoId?"Opponent assigned":"Approved";
-  await runTransaction(db,async tx=>{
-   const snap=await tx.get(slotRef);if(!snap.exists()||snap.data().status!=="available")throw new Error("SLOT_TAKEN");
-   const lookupSnap=await tx.get(lookupRef);
-   const oldLookup=lookupSnap.exists()?lookupSnap.data():{};
-   const oldCodes=Array.isArray(oldLookup.lookupCodes)?oldLookup.lookupCodes:(oldLookup.lookupCode?[oldLookup.lookupCode]:[]);
-   const lookupCodes=Array.from(new Set([...oldCodes,lookupCode]));
-   const data={bigoId,name,date:slot.date,time:slot.time,slotId:slot.id,lookupCode,status,opponentBigoId,opponentName,hostLevel,agencyName,agencyTelegram,opkEvent,opponentLevel,opponentAgencyName,opponentAgencyTelegram,remarks,createdAt:serverTimestamp(),approvedAt:serverTimestamp(),approvedBy:currentUser.uid,createdByAdmin:true};
-   tx.set(bookingRef,data);
-   tx.set(publicRef,{bookingId:bookingRef.id,bigoId,name,date:slot.date,time:slot.time,lookupCode,status,opponentBigoId,opponentName,hostLevel,agencyName,agencyTelegram,opkEvent,opponentLevel,opponentAgencyName,opponentAgencyTelegram,remarks,createdAt:serverTimestamp()});
-   tx.set(lookupRef,{bookingId:bookingRef.id,bigoId,name,date:slot.date,time:slot.time,lookupCode,lookupCodes,status,opponentBigoId,opponentName,hostLevel,agencyName,agencyTelegram,opkEvent,opponentLevel,opponentAgencyName,opponentAgencyTelegram,remarks,createdAt:serverTimestamp()});
-   tx.update(slotRef,{status:"full",bookingId:bookingRef.id,hostName:name,hostBigoId:bigoId,updatedAt:serverTimestamp()});
+  // Create the booking in D1 first; the API checks that the slot is still available.
+  const created=await cloudflareAdminRequest("/api/bookings",{
+   method:"POST",
+   body:JSON.stringify({date:slot.date,time:slot.time,name,bigoId})
   });
+  createdBookingId=created.booking?.id||"";
+  if(!createdBookingId)throw new Error("Booking was created but no booking ID was returned.");
+
+  // Save every manual form field to the D1 booking.
+  await cloudflareAdminRequest("/api/admin/bookings/"+encodeURIComponent(createdBookingId),{
+   method:"PATCH",
+   body:JSON.stringify({
+    date:slot.date,time:slot.time,name,bigoId,
+    hostLevel,agencyName,agencyTelegram,opkEvent,
+    opponentName,opponentBigoId,opponentLevel,
+    opponentAgencyName,opponentAgencyTelegram,remarks
+   })
+  });
+
+  // Manual entries are immediately approved, or assigned if opponent details were supplied.
+  const finalStatus=opponentBigoId?"Opponent assigned":"Approved";
+  await cloudflareAdminRequest("/api/admin/bookings/"+encodeURIComponent(createdBookingId)+"/status",{
+   method:"PATCH",
+   body:JSON.stringify({status:finalStatus})
+  });
+
   ["manualBigoId","manualName","manualOpponentName","manualOpponentId","manualHostLevel","manualAgencyName","manualAgencyTelegram","manualOpkEvent","manualOpponentLevel","manualOpponentAgencyName","manualOpponentAgencyTelegram","manualRemarks"].forEach(id=>$(id).value="");
-  setStatus("manualMessage","Manual PK booking created and approved successfully!","ok");
+  setStatus("manualMessage","Manual PK booking created in Cloudflare D1 and "+finalStatus.toLowerCase()+" successfully!","ok");
   if(typeof window.showManualPkSuccess==="function")window.showManualPkSuccess({bigoId,name,date:slot.date,time:slot.time});
- }catch(e){console.error(e);setStatus("manualMessage",e.message==="SLOT_TAKEN"?"That slot was just taken. Please choose another time.":"Could not create manual PK. Check connection and Firestore rules, then try again.","err");}
- finally{createBtn.disabled=false;createBtn.classList.remove("is-loading");createBtn.textContent=createBtn.dataset.originalText||"Create & approve PK";refreshManualTimes();}
+  await loadCloudflareAdminBookings();
+  await loadCloudflareAdminSlots($("slotMonthFilter")?.value||slot.date.slice(0,7));
+  await loadCloudflareSlots($("filterDate")?.value||slot.date);
+ }catch(e){
+  console.error("Manual D1 booking failed:",e);
+  const message=String(e.message||e);
+  setStatus("manualMessage",message==="SLOT_TAKEN"||message.includes("SLOT_TAKEN")?"That slot was just taken. Please choose another time.":"Could not create manual PK in Cloudflare D1: "+message,"err");
+  if(createdBookingId){
+   setStatus("manualMessage","A booking was created, but a later update failed. Refresh the admin bookings and check booking ID "+createdBookingId+". Error: "+message,"err");
+  }
+ }finally{
+  createBtn.disabled=false;createBtn.classList.remove("is-loading");createBtn.textContent=createBtn.dataset.originalText||"Create & approve PK";
+  refreshManualTimes();
+ }
 };
 async function approveBooking(id){
  const b=bookings.find(x=>x.id===id);if(!b)return;
