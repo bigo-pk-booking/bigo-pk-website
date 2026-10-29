@@ -383,6 +383,23 @@ const FIREBASE_CONFIG = {
   measurementId: "G-F4QH6QR2W0"
 };
 const TIMES = ["20:00","20:15","20:30","20:45","21:00","21:15","21:30","21:45","22:00"];
+const BIGO_API_BASE = "https://bigo-pk-api.wandering-forest-74e9.workers.dev";
+async function loadCloudflareSlots(date){
+ if(!date)return;
+ setStatus("slotStatus","Loading slots…");
+ try{
+  const response=await fetch(BIGO_API_BASE+"/api/slots?date="+encodeURIComponent(date),{cache:"no-store"});
+  const data=await response.json();
+  if(!response.ok||!data.ok)throw new Error(data.error||"Could not load slots");
+  slots=Array.isArray(data.slots)?data.slots.map(s=>({...s,bookingId:s.booking_id??s.bookingId,hostName:s.hostName||s.host_name||"",hostBigoId:s.hostBigoId||s.host_bigo_id||""})):[];
+  renderSlots();
+  $("slotStatus").textContent="";
+ }catch(e){
+  console.error("Cloudflare slots failed:",e);
+  setStatus("slotStatus","Could not load slots from Cloudflare. Please refresh and try again.","err");
+ }
+}
+
 const $ = id => document.getElementById(id);
 const configured = FIREBASE_CONFIG.apiKey && !FIREBASE_CONFIG.apiKey.includes("PASTE_") && FIREBASE_CONFIG.projectId && !FIREBASE_CONFIG.projectId.includes("PASTE_");
 let app, auth, db, currentUser=null, isAdmin=false, slots=[], bookings=[], selectedSlot=null, stopSlots=null, stopBookings=null;
@@ -563,12 +580,18 @@ async function startApp(){
    if(!user.isAnonymous){try{const a=await getDoc(doc(db,"admins",user.uid));isAdmin=a.exists()&&a.data().enabled===true;}catch(e){console.error(e)}}
    $("adminLogin").classList.toggle("hidden",isAdmin);$("adminDashboard").classList.toggle("hidden",!isAdmin);
    if(isAdmin){await ensureMonthSlots(selectedHeaderMonth());}
-   if(stopSlots)stopSlots();stopSlots=onSnapshot(collection(db,"slots"),snap=>{slots=snap.docs.map(d=>({id:d.id,...d.data()}));renderSlots();if(isAdmin)renderAdmin();},e=>{console.error(e);setStatus("slotStatus","Could not load slots. Check Firestore rules.","err");});
+   if(stopSlots)stopSlots();
+   if(isAdmin){
+    stopSlots=onSnapshot(collection(db,"slots"),snap=>{slots=snap.docs.map(d=>({id:d.id,...d.data()}));renderSlots();renderAdmin();},e=>{console.error(e);setStatus("slotStatus","Admin slot listener failed.","err");});
+   }else{
+    stopSlots=null;
+    await loadCloudflareSlots($("filterDate").value||defaultScheduleDate);
+   }
    if(stopBookings)stopBookings();if(isAdmin){stopBookings=onSnapshot(collection(db,"bookings"),snap=>{bookings=snap.docs.map(d=>({id:d.id,...d.data()}));renderAdmin();syncBookedSlotHostDetails(bookings);},e=>{console.error(e);setStatus("adminMessage","Could not load bookings. Check admin access.","err");});}else{bookings=[];}
   });
  }catch(e){console.error(e);$("configWarning").classList.remove("hidden");}
 }
-$("filterDate").addEventListener("change",()=>{selectedSlot=null;$("chosenSlot").value="";$("bookBtn").disabled=true;renderSlots();if(isAdmin)ensureMonthSlots(selectedHeaderMonth());});
+$("filterDate").addEventListener("change",()=>{selectedSlot=null;$("chosenSlot").value="";$("bookBtn").disabled=true;if(isAdmin){renderSlots();ensureMonthSlots(selectedHeaderMonth());}else{loadCloudflareSlots($("filterDate").value);}});
 $("refreshSlots").onclick=()=>renderSlots();
 $("bookBtn").onclick=async()=>{
  const bigoId=$("bigoId").value.trim();const name=$("userName").value.trim();const s=slots.find(x=>x.id===selectedSlot);
@@ -576,28 +599,34 @@ $("bookBtn").onclick=async()=>{
  if(!name){setStatus("bookingMessage","Please enter your name.","err");return;}
  if(!/^[A-Za-z0-9._-]{3,40}$/.test(bigoId)){setStatus("bookingMessage","Check your BIGO ID. Use 3–40 letters, numbers, dot, underscore, or dash.","err");return;}
  if(!s||s.status!=="available"){setStatus("bookingMessage","Already set this date to another host. Please choose another time.","err");return;}
- $("bookBtn").disabled=true;setStatus("bookingMessage","Reserving slot…");
+ $("bookBtn").disabled=true;setStatus("bookingMessage","Saving booking securely to Cloudflare…");
  try{
-  const bookingRef=doc(collection(db,"bookings"));const lookupCode=Array.from(crypto.getRandomValues(new Uint8Array(18))).map(x=>x.toString(16).padStart(2,"0")).join("");
-  const publicRef=doc(db,"publicBookings",lookupCode);const slotRef=doc(db,"slots",s.id);const lookupRef=doc(db,"publicBigoLookup",bigoId);
-  await runTransaction(db,async tx=>{
-   const snap=await tx.get(slotRef);if(!snap.exists()||snap.data().status!=="available")throw new Error("SLOT_TAKEN");
-   const lookupSnap=await tx.get(lookupRef);
-   const oldLookup=lookupSnap.exists()?lookupSnap.data():{};
-   const oldCodes=Array.isArray(oldLookup.lookupCodes)?oldLookup.lookupCodes:(oldLookup.lookupCode?[oldLookup.lookupCode]:[]);
-   const lookupCodes=Array.from(new Set([...oldCodes,lookupCode]));
-   const bookingData={bookingId:bookingRef.id,bigoId,name,date:s.date,time:s.time,slotId:s.id,lookupCode,status:"Pending approval",opponentBigoId:"",opponentName:"",createdAt:serverTimestamp()};
-   tx.set(bookingRef,bookingData);
-   tx.set(publicRef,bookingData);
-   tx.set(lookupRef,{...bookingData,lookupCodes});
-   tx.update(slotRef,{status:"full",bookingId:bookingRef.id,hostName:name,hostBigoId:bigoId,updatedAt:serverTimestamp()});
+  const response=await fetch(BIGO_API_BASE+"/api/bookings",{
+   method:"POST",
+   headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({date:s.date,time:s.time,bigoId,name})
   });
-  $("bookingResult").classList.remove("hidden");$("bookingResult").innerHTML=`<div class="pk-success-celebration"><span class="pk-success-crown" aria-hidden="true">👑 🎉 🔥</span><h3 class="pk-success-title">OPK REQUEST SUBMITTED!</h3><p class="pk-success-copy">Your PK slot request was submitted successfully.</p><p class="pk-success-copy"><span class="pk-success-spark">✦</span> PK date: <b>${escapeHtml(s.date)}</b> &nbsp; Time: <b>${escapeHtml(s.time)}</b> <span class="pk-success-spark">✦</span></p><p class="pk-success-copy">Good luck sa PK match mo! Please wait for admin approval and check your schedule in My OPK. ❤️</p></div><div class="row" style="margin-top:12px"><button class="secondary" id="viewNewBooking">View my PK schedule</button><button class="success" id="copyNewCode">Copy reference (backup)</button></div>`;
-  localStorage.setItem("bigoPkLastCode",bigoId);$("copyNewCode").onclick=()=>copyText(lookupCode);$("viewNewBooking").onclick=()=>{$("lookupCode").value=bigoId;showView("lookup");lookupBooking();};
-  setStatus("bookingMessage","Booking request sent. Waiting for admin approval.","ok");selectedSlot=null;$("chosenSlot").value="";$("bigoId").value="";$("userName").value="";renderSlots();
- }catch(e){console.error("OPK booking failed:",e);const code=String(e?.code||"");const msg=String(e?.message||"");let friendly=e.message==="SLOT_TAKEN"?"Already set this date to another host. Please choose another time.":code.includes("permission-denied")?"Firebase denied this booking. Please check the deployed Firestore rules and try again.":code.includes("unavailable")||code.includes("network")?"Connection problem. Check your internet and try again.":code.includes("unauthenticated")?"Your session is not ready. Refresh the page and try again.":(code.includes("resource-exhausted")||msg.toLowerCase().includes("quota exceeded"))?"Firebase quota has been exceeded. The booking was not saved. Check Firebase Usage/Quotas or retry after the quota resets.": "Booking failed ("+(code||"unknown error")+"): "+msg;setStatus("bookingMessage",friendly,"err");}
- finally{$("bookBtn").disabled=false;}
-};
+  const result=await response.json();
+  if(!response.ok||!result.ok){
+   if(response.status===409)throw new Error("SLOT_TAKEN");
+   throw new Error(result.error||"Cloudflare booking failed");
+  }
+  const saved=result.booking;
+  const lookupCode=saved.bookingCode||saved.booking_code||"";
+  $("bookingResult").classList.remove("hidden");
+  $("bookingResult").innerHTML=`<div class="pk-success-celebration"><span class="pk-success-crown" aria-hidden="true">👑 🎉 🔥</span><h3 class="pk-success-title">OPK REQUEST SUBMITTED!</h3><p class="pk-success-copy">Your PK slot request was submitted successfully.</p><p class="pk-success-copy"><span class="pk-success-spark">✦</span> PK date: <b>${escapeHtml(s.date)}</b> &nbsp; Time: <b>${escapeHtml(s.time)}</b> <span class="pk-success-spark">✦</span></p><p class="pk-success-copy">Good luck sa PK match mo! Please wait for admin approval and check your schedule in My OPK. ❤️</p><p class="pk-success-copy">Reference: <b>${escapeHtml(lookupCode||saved.id||"Saved")}</b></p></div><div class="row" style="margin-top:12px"><button class="secondary" id="viewNewBooking">View my PK schedule</button><button class="success" id="copyNewCode">Copy reference (backup)</button></div>`;
+  localStorage.setItem("bigoPkLastCode",bigoId);
+  $("copyNewCode").onclick=()=>copyText(lookupCode||saved.id||"");
+  $("viewNewBooking").onclick=()=>{$("lookupCode").value=bigoId;showView("lookup");lookupBooking();};
+  setStatus("bookingMessage","Booking saved to Cloudflare D1. Waiting for admin approval.","ok");
+  selectedSlot=null;$("chosenSlot").value="";$("bigoId").value="";$("userName").value="";
+  await loadCloudflareSlots(s.date);
+ }catch(e){
+  console.error("Cloudflare OPK booking failed:",e);
+  const msg=String(e.message||e);
+  setStatus("bookingMessage",msg==="SLOT_TAKEN"?"That slot was just booked. Please choose another time.":"Booking failed: "+msg,"err");
+ }finally{$("bookBtn").disabled=false;}
+};;
 let pkScheduleItems=[];let pkScheduleIndex=0;
 function scheduleStatusClass(status){const s=String(status||"").toLowerCase();if(s.includes("pending"))return "pending";if(s.includes("cancel"))return "cancelled";return "";}
 function renderPkScheduleCarousel(){
@@ -627,19 +656,21 @@ async function lookupBooking(){
  if(!/^[A-Za-z0-9._-]{3,40}$/.test(bigoId)){setStatus("lookupResult","Ilagay ang tamang BIGO ID at subukan ulit.","err");return;}
  setStatus("lookupResult","Searching for your PK schedules…");
  try{
-  const snap=await getDoc(doc(db,"publicBigoLookup",bigoId));
-  if(!snap.exists()){setStatus("lookupResult","Walang booking na nakita para sa BIGO ID na ito.","err");openPkScheduleModal([]);return;}
-  const index=snap.data();
-  let codes=Array.isArray(index.lookupCodes)?index.lookupCodes:[];
-  if(!codes.length&&index.lookupCode)codes=[index.lookupCode];
-  const items=[];
-  for(const code of [...new Set(codes)]){
-   try{const publicSnap=await getDoc(doc(db,"publicBookings",code));if(publicSnap.exists())items.push({id:code,...publicSnap.data()});}catch(e){console.warn("Could not load one public schedule",e);}
-  }
-  if(!items.length&&index.bookingId){items.push({id:index.lookupCode||index.bookingId,...index});}
+  const response=await fetch(BIGO_API_BASE+"/api/lookup?bigoId="+encodeURIComponent(bigoId),{cache:"no-store"});
+  const result=await response.json();
+  if(!response.ok||!result.ok)throw new Error(result.error||"Lookup failed");
+  const items=(result.bookings||[]).map(b=>({
+   id:b.bookingCode||b.booking_code||"",
+   date:b.date,time:b.time,name:b.name||b.bigo_name||"",
+   bigoId:b.bigoId||b.bigo_id||"",status:b.status||"Pending approval",
+   opponentName:b.opponentName||b.opponent_name||"",
+   opponentBigoId:b.opponentBigoId||b.opponent_bigo_id||"",
+   hostLevel:b.hostLevel||b.host_level||"",
+   opkEvent:b.opkEvent||b.opk_event||""
+  }));
   if(!items.length){setStatus("lookupResult","Walang booking na nakita para sa BIGO ID na ito.","err");openPkScheduleModal([]);return;}
-  setStatus("lookupResult",`Found ${items.length} PK schedule${items.length===1?"":"s"}.` ,"ok");openPkScheduleModal(items);
- }catch(e){console.error(e);setStatus("lookupResult","Lookup failed. Check Firebase rules and try again.","err");}
+  setStatus("lookupResult",`Found ${items.length} PK schedule${items.length===1?"":"s"}.`,"ok");openPkScheduleModal(items);
+ }catch(e){console.error(e);setStatus("lookupResult","Lookup failed: "+String(e.message||e),"err");}
 }
 
 $("lookupBtn").onclick=lookupBooking;
@@ -651,24 +682,20 @@ async function autofillKnownBigoName(){
  if(!/^[A-Za-z0-9._-]{3,40}$/.test(id))return;
  setStatus("bookingMessage","Checking saved BIGO ID…");
  try{
-  const snap=await getDoc(doc(db,"publicBigoLookup",id));
-  if(!snap.exists()){
-   lastAutofilledBigoId="";
-   setStatus("bookingMessage","BIGO ID not found in previous bookings. You can enter your name manually.");
-   return;
-  }
-  const data=snap.data();
-  const savedName=String(data.name||data.hostName||"").trim();
+  const response=await fetch(BIGO_API_BASE+"/api/lookup?bigoId="+encodeURIComponent(id),{cache:"no-store"});
+  const result=await response.json();
+  const first=(result.bookings||[])[0];
+  const savedName=String(first?.name||first?.bigo_name||"").trim();
   if(savedName){
-   $("userName").value=savedName;
-   lastAutofilledBigoId=id;
-   setStatus("bookingMessage","Saved name found and filled in. You can still edit the name before booking.","ok");
+   $("userName").value=savedName;lastAutofilledBigoId=id;
+   setStatus("bookingMessage","Saved name found and filled in. You can still edit it.","ok");
   }else{
-   setStatus("bookingMessage","BIGO ID found, but no saved name is available. Please enter your name.");
+   lastAutofilledBigoId="";
+   setStatus("bookingMessage","No saved name found. You can enter your name manually.");
   }
  }catch(e){
-  console.error("BIGO name autofill failed:",e);
-  setStatus("bookingMessage","Could not check the saved name. You can enter your name manually.","err");
+  console.error("BIGO name lookup failed:",e);
+  setStatus("bookingMessage","You can enter your name manually.");
  }
 }
 $("bigoId").addEventListener("change",autofillKnownBigoName);
