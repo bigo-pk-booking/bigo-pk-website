@@ -393,6 +393,31 @@ function renderSlots(){
  $("slotsArea").innerHTML=`<div class="slot-date">${escapeHtml(prettyDate(date))}</div><div class="slots">${list.map(s=>{const state=s.status||"available";const disabled=state!=="available";return `<button class="slot ${state==="full"?"full-slot":state==="closed"?"closed-slot":""} ${selectedSlot===s.id?"selected":""}" data-slot="${escapeHtml(s.id)}" ${disabled?"disabled":""}>${escapeHtml(s.time)}<span>${slotStatus(s)}</span>${state==="full"?`<span class="slot-host-details">👤 ${escapeHtml(s.hostName||"Host details unavailable")}${s.hostBigoId?`<small>BIGO ID: ${escapeHtml(s.hostBigoId)}</small>`:""}</span>`:""}</button>`}).join("")}</div>`;
  $("slotsArea").querySelectorAll("[data-slot]").forEach(b=>b.onclick=()=>{selectedSlot=b.dataset.slot;const s=slots.find(x=>x.id===selectedSlot);$("chosenSlot").value=s?`${prettyDate(s.date)} • ${s.time}`:"";$("bookBtn").disabled=!s;$("slotStatus").textContent="Selected slot: "+(s?`${s.date} ${s.time}`:"");renderSlots();});
 }
+// Backfill host details for older booked slots. Runs only after an authenticated admin loads bookings.
+let hostBackfillRunning=false;
+async function syncBookedSlotHostDetails(records){
+ if(!isAdmin||hostBackfillRunning||!db)return;
+ hostBackfillRunning=true;
+ try{
+  for(const b of records){
+   const slotIdValue=b.slotId||((b.date&&b.time)?slotId(b.date,b.time):"");
+   if(!slotIdValue||!b.name||!b.bigoId)continue;
+   const localSlot=slots.find(s=>s.id===slotIdValue);
+   if(localSlot&&localSlot.status!=="full")continue;
+   if(localSlot&&localSlot.hostName&&localSlot.hostBigoId)continue;
+   const slotRef=doc(db,"slots",slotIdValue);
+   const slotSnap=await getDoc(slotRef);
+   if(!slotSnap.exists())continue;
+   const slotData=slotSnap.data();
+   if(slotData.status!=="full"|| (slotData.bookingId&&slotData.bookingId!==b.id))continue;
+   const patch={};
+   if(!slotData.hostName)patch.hostName=b.name;
+   if(!slotData.hostBigoId)patch.hostBigoId=b.bigoId;
+   if(Object.keys(patch).length)await updateDoc(slotRef,{...patch,updatedAt:serverTimestamp()});
+  }
+ }catch(e){console.warn("Could not backfill host details for older slots. Check admin Firestore permissions.",e);}
+ finally{hostBackfillRunning=false;}
+}
 function refreshManualTimes(){
  const date=$("manualDate")?.value;
  if(!$("manualTime"))return;
@@ -478,7 +503,7 @@ async function startApp(){
    $("adminLogin").classList.toggle("hidden",isAdmin);$("adminDashboard").classList.toggle("hidden",!isAdmin);
    if(isAdmin){await ensureMonthSlots(selectedHeaderMonth());}
    if(stopSlots)stopSlots();stopSlots=onSnapshot(collection(db,"slots"),snap=>{slots=snap.docs.map(d=>({id:d.id,...d.data()}));renderSlots();if(isAdmin)renderAdmin();},e=>{console.error(e);setStatus("slotStatus","Could not load slots. Check Firestore rules.","err");});
-   if(stopBookings)stopBookings();if(isAdmin){stopBookings=onSnapshot(collection(db,"bookings"),snap=>{bookings=snap.docs.map(d=>({id:d.id,...d.data()}));renderAdmin();},e=>{console.error(e);setStatus("adminMessage","Could not load bookings. Check admin access.","err");});}else{bookings=[];}
+   if(stopBookings)stopBookings();if(isAdmin){stopBookings=onSnapshot(collection(db,"bookings"),snap=>{bookings=snap.docs.map(d=>({id:d.id,...d.data()}));renderAdmin();syncBookedSlotHostDetails(bookings);},e=>{console.error(e);setStatus("adminMessage","Could not load bookings. Check admin access.","err");});}else{bookings=[];}
   });
  }catch(e){console.error(e);$("configWarning").classList.remove("hidden");}
 }
