@@ -461,7 +461,7 @@ main{
             <button id="saveMonthlySettingsBtn" type="button">Save Monthly Settings</button>
             <button id="generateMonthlyScheduleBtn" type="button" class="secondary">Generate / Refresh Month</button>
           </div>
-          <div id="monthlySettingsMessage" class="status" aria-live="polite"></div>
+          <div class="row" style="margin-top:10px"><button id="openAllSlotsBtn" type="button" class="success">Open All Closed Slots</button><button id="closeAllSlotsBtn" type="button" class="secondary">Close All Available Slots</button></div><p class="sub">Booked/full slots are protected from bulk actions.</p><div id="monthlySettingsMessage" class="status" aria-live="polite"></div>
         </section>
         <div id="adminSlots" class="table-wrap"><div class="notice">Loading slots…</div></div>
         <div style="display:flex;justify-content:flex-end;margin-top:14px"><button id="closeSlotManagementBottom" type="button" class="secondary">Close</button></div>
@@ -680,6 +680,10 @@ const defaultScheduleDate=dateOneMonthAhead();
 $("filterDate").value=defaultScheduleDate; $("manualDate").value=defaultScheduleDate;
 const defaultScheduleMonth=new Date(defaultScheduleDate+"T12:00:00"); $("scheduleMonth").textContent=defaultScheduleMonth.toLocaleDateString("en-US",{month:"long",year:"numeric"}).toUpperCase(); if($("autoScheduleMonth"))$("autoScheduleMonth").textContent=defaultScheduleMonth.toLocaleDateString("en-US",{month:"long",year:"numeric"});
 function setStatus(id,msg,kind=""){const el=$(id);if(!el)return;el.className="status"+(kind?" "+kind:"");el.textContent=msg;}
+const adminSession={startedAt:null,actions:[]};
+function recordAdminAction(label){adminSession.actions.push(label);}
+function showLogoutSummary(){const mins=adminSession.startedAt?Math.max(0,Math.round((Date.now()-adminSession.startedAt)/60000)):0;const counts=adminSession.actions.reduce((a,x)=>(a[x]=(a[x]||0)+1,a),{});const lines=Object.entries(counts).map(([k,v])=>v+" × "+k).join("\n");return confirm("ADMIN SESSION SUMMARY\nDuration: "+mins+" minute(s)\nActions: "+adminSession.actions.length+"\n"+(lines||"No tracked actions") +"\n\nLog out now?");}
+async function bulkToggleSlots(action){const month=$("slotMonthFilter")?.value||selectedHeaderMonth();const verb=action==="open"?"OPEN ALL CLOSED SLOTS":"CLOSE ALL AVAILABLE SLOTS";if(!confirm(verb+" for "+monthTitle(month)+"? Booked slots will not change."))return;const buttons=[$("openAllSlotsBtn"),$("closeAllSlotsBtn")];buttons.forEach(b=>b.disabled=true);try{const result=await cloudflareAdminRequest("/api/admin/slots/bulk",{method:"PATCH",body:JSON.stringify({month,action})});recordAdminAction(action==="open"?"Bulk opened slots":"Bulk closed slots");await loadCloudflareAdminSlots(month);setStatus("monthlySettingsMessage",result.affected+" slot(s) "+(action==="open"?"opened":"closed")+". Booked slots were protected.","ok");}catch(e){setStatus("monthlySettingsMessage","Bulk action failed: "+String(e.message||e),"err");}finally{buttons.forEach(b=>b.disabled=false);}}
 function showView(name){$("bookingView").classList.toggle("hidden",name!=="booking");$("lookupView").classList.toggle("hidden",name!=="lookup");$("adminView").classList.toggle("hidden",name!=="admin");document.body.classList.toggle("admin-panel-open",name==="admin");}
 async function loadMonthlySettings(month){
  if(!isAdmin||!/^\d{4}-\d{2}$/.test(month))return;
@@ -919,7 +923,7 @@ async function startApp(){
    if(!user){isAdmin=false;try{await signInAnonymously(auth)}catch(e){console.error(e);setStatus("bookingMessage","Could not start a session. Check Firebase Anonymous Authentication settings.","err");}return;}
    isAdmin=false;
    if(!user.isAnonymous){try{const a=await getDoc(doc(db,"admins",user.uid));isAdmin=a.exists()&&a.data().enabled===true;}catch(e){console.error(e)}}
-   $("adminLogin").classList.toggle("hidden",isAdmin);$("adminDashboard").classList.toggle("hidden",!isAdmin);$("showAdminBtn").classList.toggle("hidden",isAdmin);$("logoutBtn").classList.toggle("hidden",!isAdmin);if(isAdmin)updateAdminWelcomeGreeting();
+   $("adminLogin").classList.toggle("hidden",isAdmin);$("adminDashboard").classList.toggle("hidden",!isAdmin);$("showAdminBtn").classList.toggle("hidden",isAdmin);$("logoutBtn").classList.toggle("hidden",!isAdmin);if(isAdmin){if(!adminSession.startedAt){adminSession.startedAt=new Date();adminSession.actions=[];}updateAdminWelcomeGreeting();}
    if(stopSlots)stopSlots();stopSlots=null;
    // Load public monthly settings before checking slots, so the first page load matches the Set OPK button behavior.
    const hasOpenMonths=await loadPublicOpenMonths();
@@ -1162,7 +1166,7 @@ $("loginBtn").addEventListener("click", async (event)=>{
  }
 });
 
-$("logoutBtn").onclick=async()=>{await signOut(auth);};
+$("logoutBtn").onclick=async()=>{if(!showLogoutSummary())return;await signOut(auth);adminSession.startedAt=null;adminSession.actions=[];};
 // Monthly slots are generated automatically by ensureMonthSlots(); manual slot creation is intentionally disabled.
 $("manualDate").addEventListener("change",refreshManualTimes);
 function openManualPkReview(initial){
@@ -1345,13 +1349,16 @@ async function cancelBooking(id){
  }catch(e){console.error(e);setStatus("adminMessage","Could not cancel D1 booking: "+String(e.message||e),"err");}
 }
 async function toggleSlot(id){
- const s=slots.find(x=>x.id===id);if(!s||s.status==="full")return;
- try{await updateDoc(doc(db,"slots",id),{status:s.status==="closed"?"available":"closed",updatedAt:serverTimestamp()});setStatus("adminMessage","Slot status updated.","ok");}catch(e){console.error(e);setStatus("adminMessage","Could not update slot status.","err");}
+ const s=adminSlots.find(x=>x.id===id);if(!s||s.status==="full")return;
+ const action=s.status==="closed"?"open":"close";
+ try{await cloudflareAdminRequest("/api/admin/slots/bulk",{method:"PATCH",body:JSON.stringify({month:s.date.slice(0,7),action,slotId:id})});recordAdminAction(action==="open"?"Reopened one slot":"Closed one slot");await loadCloudflareAdminSlots($("slotMonthFilter")?.value||s.date.slice(0,7));setStatus("adminMessage","Slot status updated in Cloudflare D1.","ok");}catch(e){console.error(e);setStatus("adminMessage","Could not update slot: "+String(e.message||e),"err");}
 }
 $("adminSearch").addEventListener("input",()=>{bookingPage=0;renderAdmin();});
 $("bookingMonthFilter").addEventListener("change",()=>{bookingPage=0;renderAdmin();});
 $("slotMonthFilter").addEventListener("change",()=>{slotPage=0;loadCloudflareAdminSlots($("slotMonthFilter").value);});
 $("saveMonthlySettingsBtn").addEventListener("click",saveMonthlySettings);
+$("openAllSlotsBtn").addEventListener("click",()=>bulkToggleSlots("open"));
+$("closeAllSlotsBtn").addEventListener("click",()=>bulkToggleSlots("close"));
 $("generateMonthlyScheduleBtn").addEventListener("click",generateMonthlySchedule);
 $("slotStatusFilter").addEventListener("change",()=>{slotPage=0;renderAdmin();});
 (function(){
