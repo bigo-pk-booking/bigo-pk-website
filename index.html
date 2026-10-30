@@ -1509,11 +1509,27 @@ $("slotStatusFilter").addEventListener("change",()=>{slotPage=0;renderAdmin();})
  const open=$("openSlotManagement");
  const closeButtons=[$("closeSlotManagement"),$("closeSlotManagementBottom")];
  if(!modal||!open)return;
- const close=()=>{modal.classList.add("hidden");document.body.style.overflow="";};
- open.addEventListener("click",()=>{modal.classList.remove("hidden");document.body.style.overflow="hidden";});
- closeButtons.forEach(button=>button?.addEventListener("click",close));
+ const close=()=>{
+  modal.classList.add("hidden");
+  modal.style.display="none";
+  modal.setAttribute("aria-hidden","true");
+  document.body.style.overflow="";
+ };
+ const show=event=>{
+  event?.preventDefault();
+  event?.stopPropagation();
+  modal.classList.remove("hidden");
+  modal.style.display="block";
+  modal.setAttribute("aria-hidden","false");
+  document.body.style.overflow="hidden";
+  modal.scrollTop=0;
+ };
+ // Use the button's direct click handler to avoid delegated/overlapping click handlers.
+ open.onclick=show;
+ closeButtons.forEach(button=>{if(button)button.onclick=event=>{event.preventDefault();event.stopPropagation();close();};});
  modal.addEventListener("click",event=>{if(event.target===modal)close();});
  document.addEventListener("keydown",event=>{if(event.key==="Escape"&&!modal.classList.contains("hidden"))close();});
+ close();
 })();
 $("downloadMonthExcelBtn").addEventListener("click",()=>$("exportExcelBtn").click());
 function exportRows(){const selectedMonth=$("bookingMonthFilter")?.value||dateToday().slice(0,7);return bookings.filter(b=>monthKey(b.date)===selectedMonth).map(b=>({"DATE":b.date||"","TIME":b.time||"","BIGO NAME":b.name||"","BIGO ID":b.bigoId||"","HOST LEVEL":b.hostLevel||"","AGENCY NAME":b.agencyName||"","AGENCY TELEGRAM":b.agencyTelegram||"","OPK EVENT":b.opkEvent||"","VS":"VS","OPPONENT NAME":b.opponentName||"","OPPONENT BIGO ID":b.opponentBigoId||"","LEVEL":b.opponentLevel||"","OPPONENT AGENCY NAME":b.opponentAgencyName||"","OPPONENT AGENCY TELEGRAM":b.opponentAgencyTelegram||"","REMARKS (WIN/LOSE)":b.remarks||b.status||""})).sort((a,b)=>(a.DATE+a.TIME).localeCompare(b.DATE+b.TIME));}
