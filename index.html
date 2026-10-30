@@ -535,10 +535,15 @@ main{
       </div>
     </div>
     <hr>
+    <button id="toggleBookingEditableSection" type="button" class="secondary full" style="display:flex;align-items:center;justify-content:space-between;text-align:left;margin:12px 0">
+      <span>Bookings &amp; editable details</span><span id="bookingEditableChevron">＋</span>
+    </button>
+    <div id="bookingEditableContent" class="hidden">
     <div class="admin-head"><div><h3>Bookings & editable details</h3><p class="sub" style="margin:5px 0 0">Edit host and opponent information directly in this Admin section, then press Save changes.</p></div><input id="adminSearch" style="max-width:300px" placeholder="Search BIGO ID / name / date / time"></div>
     <div class="row month-filter-row" style="margin-top:12px"><div><label for="bookingMonthFilter">Select month for bookings</label><select id="bookingMonthFilter" aria-label="Filter bookings by month"></select></div><div style="flex:0 0 auto;min-width:auto"><button id="downloadMonthExcelBtn" class="success" type="button">Download selected month Excel</button></div></div>
 
     <div id="adminBookings" class="table-wrap"><div class="notice">Loading bookings…</div></div>
+    </div>
     <hr>
     <div class="card" style="margin:12px 0;padding:14px">
       <h3>Slot management</h3>
@@ -1016,6 +1021,8 @@ function renderAdmin(){
  $("opponentReportContent").innerHTML=reportText?'<textarea id="opponentReportText" readonly rows="10" style="width:100%;background:#fff;color:#202428;padding:10px;border-radius:6px"></textarea><p class="sub">'+missingOpponents.length+' booking(s) still need an opponent.</p>':'<div class="notice ok">All active bookings this month already have an opponent.</div>';
  if($("opponentReportText"))$("opponentReportText").value=reportText;
  const copyBtn=$("copyOpponentReportBtn");copyBtn.disabled=!reportText;copyBtn.onclick=async()=>{if(!reportText)return;try{await navigator.clipboard.writeText(reportText);$("opponentReportStatus").textContent="Report copied. Paste it into Telegram.";}catch(e){const t=$("opponentReportText");t.focus();t.select();$("opponentReportStatus").textContent="Select the report above and copy it.";}};
+ const editableToggle=$("toggleBookingEditableSection");
+ if(editableToggle)editableToggle.onclick=()=>{const panel=$("bookingEditableContent");panel.classList.toggle("hidden");$("bookingEditableChevron").textContent=panel.classList.contains("hidden")?"＋":"−";};
  $("adminBookings").innerHTML=bookingTable+bookingPager;
  $("adminBookings").querySelectorAll("[data-edit-booking]").forEach(btn=>btn.onclick=()=>openBookingEdit(btn.dataset.editBooking));
  $("adminBookings").querySelectorAll("[data-approve]").forEach(btn=>btn.onclick=()=>approveBooking(btn.dataset.approve));
