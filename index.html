@@ -495,6 +495,16 @@ main{
   </div>
   <div class="card hidden" id="adminDashboard">
     <div class="admin-head"><div><h3>Welcome, Badass Admin!</h3><p id="adminWelcomeGreeting" class="sub" style="margin:5px 0 0">Welcome back. Have a great day!</p></div></div>
+    <section id="opponentSearchReport" style="margin:14px 0">
+      <button id="toggleOpponentReportBtn" type="button" class="secondary full" style="display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left">
+        <span>🔎 Looking for Active Opponents</span>
+        <span id="opponentReportCount" style="display:inline-flex;min-width:30px;height:30px;padding:0 9px;align-items:center;justify-content:center;border-radius:18px;background:#c90012;color:#fff;font-weight:900">0</span>
+      </button>
+      <div id="opponentReportPanel" class="hidden card" style="margin-top:10px;padding:14px">
+        <div class="admin-head"><div><h3>Opponent Search Report</h3><p class="sub">Copy this list and post it to find opponents. It updates automatically when an opponent is saved.</p></div><button id="copyOpponentReportBtn" type="button" class="success">Copy report</button></div>
+        <div id="opponentReportContent" style="margin-top:10px"></div><div id="opponentReportStatus" class="status"></div>
+      </div>
+    </section>
     <div class="admin-grid" style="margin-top:14px">
       <div class="card manual-pk-card" style="padding:14px">
         <h3>Manual PK booking</h3>
@@ -527,6 +537,7 @@ main{
     <hr>
     <div class="admin-head"><div><h3>Bookings & editable details</h3><p class="sub" style="margin:5px 0 0">Edit host and opponent information directly in this Admin section, then press Save changes.</p></div><input id="adminSearch" style="max-width:300px" placeholder="Search BIGO ID / name / date / time"></div>
     <div class="row month-filter-row" style="margin-top:12px"><div><label for="bookingMonthFilter">Select month for bookings</label><select id="bookingMonthFilter" aria-label="Filter bookings by month"></select></div><div style="flex:0 0 auto;min-width:auto"><button id="downloadMonthExcelBtn" class="success" type="button">Download selected month Excel</button></div></div>
+
     <div id="adminBookings" class="table-wrap"><div class="notice">Loading bookings…</div></div>
     <hr>
     <div class="card" style="margin:12px 0;padding:14px">
@@ -992,6 +1003,19 @@ function renderAdmin(){
  const visibleBookings=filteredBookings.slice(bookingPage*ADMIN_PAGE_SIZE,(bookingPage+1)*ADMIN_PAGE_SIZE);
  const bookingTable=visibleBookings.length?`<table><thead><tr><th>DATE</th><th>TIME</th><th>BIGO NAME</th><th>BIGO ID</th><th>HOST LEVEL</th><th>AGENCY NAME</th><th>AGENCY TELEGRAM</th><th>OPK EVENT</th><th class="vs-head">VS</th><th>OPPONENT NAME</th><th>OPPONENT BIGO ID</th><th>LEVEL</th><th>OPPONENT AGENCY NAME</th><th>OPPONENT AGENCY TELEGRAM</th><th>REMARKS (WIN/LOSE)</th><th>STATUS</th><th>ACTIONS</th></tr></thead><tbody>${visibleBookings.map(b=>`<tr><td>${escapeHtml(b.date||"")}</td><td><b>${escapeHtml(b.time||"")}</b></td><td>${escapeHtml(b.name||"")}</td><td>${escapeHtml(b.bigoId||"")}</td><td>${escapeHtml(b.hostLevel||"")}</td><td>${escapeHtml(b.agencyName||"")}</td><td>${escapeHtml(b.agencyTelegram||"")}</td><td>${escapeHtml(b.opkEvent||"")}</td><td class="vs-cell">VS</td><td>${escapeHtml(b.opponentName||"")}</td><td>${escapeHtml(b.opponentBigoId||"")}</td><td>${escapeHtml(b.opponentLevel||"")}</td><td>${escapeHtml(b.opponentAgencyName||"")}</td><td>${escapeHtml(b.opponentAgencyTelegram||"")}</td><td>${escapeHtml(b.remarks||"")}</td><td><span class="pill ${b.opponentBigoId?"assigned":"full"}">${escapeHtml(b.status||"Reserved")}</span></td><td><button class="small booking-edit-trigger" data-edit-booking="${escapeHtml(b.id)}">Edit details</button> ${b.adminReviewed&&!["Approved","Opponent assigned","Cancelled","Rejected"].includes(String(b.status||""))?'<button class="small" data-approve="'+escapeHtml(b.id)+'">Approve</button>':'<span class="muted">'+(["Cancelled","Rejected"].includes(String(b.status||""))?'Closed':b.adminReviewed?'Already reviewed':'Review required')+'</span>'} <button class="small danger" data-cancel="${escapeHtml(b.id)}">Reject / cancel</button></td></tr>`).join("")}</tbody></table>`:'<div class="notice">No bookings for this month match your search.</div>';
  const bookingPager=filteredBookings.length?`<div class="admin-pagination"><span>Showing ${bookingPage*ADMIN_PAGE_SIZE+1}–${Math.min((bookingPage+1)*ADMIN_PAGE_SIZE,filteredBookings.length)} of ${filteredBookings.length}</span><div><button class="secondary small" type="button" data-booking-prev ${bookingPage===0?"disabled":""}>Previous</button> <button class="secondary small" type="button" data-booking-next ${bookingPage>=bookingPages-1?"disabled":""}>Next</button></div></div>`:"";
+ const missingOpponents=bookings.filter(b=>!["Cancelled","Rejected"].includes(String(b.status||""))&&monthKey(b.date)===bookingMonth&&!String(b.opponentBigoId||"").trim()).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+ const reportDate=v=>{const p=String(v||"").split("-").map(Number);return p.length===3?new Date(p[0],p[1]-1,p[2]).toLocaleDateString("en-US",{month:"long",day:"numeric"}).toUpperCase():String(v||"");};
+ const reportTime=v=>{const p=String(v||"").split(":");if(p.length!==2)return String(v||"");let h=Number(p[0]);const ap=h>=12?"PM":"AM";h=h%12||12;return h+":"+p[1]+" "+ap;};
+ let reportLines=["LOOKING FOR ACTIVE OPPONENT FOR "+monthLabel(bookingMonth).toUpperCase()+"‼️",""];
+ let lastDate="";
+ missingOpponents.forEach(b=>{const d=reportDate(b.date);if(d!==lastDate){reportLines.push(d,"");lastDate=d;}reportLines.push("NAME : "+(b.name||"—"),"BIGO ID : "+(b.bigoId||"—"),"TIME : "+reportTime(b.time),"");});
+ if(missingOpponents.length)reportLines.push("No PM, no match. Tara 😘");
+ const reportText=missingOpponents.length?reportLines.join("\n"):"";
+ $("opponentReportCount").textContent=String(missingOpponents.length);
+ $("toggleOpponentReportBtn").onclick=()=>{$("opponentReportPanel").classList.toggle("hidden");};
+ $("opponentReportContent").innerHTML=reportText?'<textarea id="opponentReportText" readonly rows="10" style="width:100%;background:#fff;color:#202428;padding:10px;border-radius:6px"></textarea><p class="sub">'+missingOpponents.length+' booking(s) still need an opponent.</p>':'<div class="notice ok">All active bookings this month already have an opponent.</div>';
+ if($("opponentReportText"))$("opponentReportText").value=reportText;
+ const copyBtn=$("copyOpponentReportBtn");copyBtn.disabled=!reportText;copyBtn.onclick=async()=>{if(!reportText)return;try{await navigator.clipboard.writeText(reportText);$("opponentReportStatus").textContent="Report copied. Paste it into Telegram.";}catch(e){const t=$("opponentReportText");t.focus();t.select();$("opponentReportStatus").textContent="Select the report above and copy it.";}};
  $("adminBookings").innerHTML=bookingTable+bookingPager;
  $("adminBookings").querySelectorAll("[data-edit-booking]").forEach(btn=>btn.onclick=()=>openBookingEdit(btn.dataset.editBooking));
  $("adminBookings").querySelectorAll("[data-approve]").forEach(btn=>btn.onclick=()=>approveBooking(btn.dataset.approve));
