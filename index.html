@@ -450,8 +450,8 @@ async function loadCloudflareSlots(date){
   if(!response.ok||!data.ok)throw new Error(data.error||"Could not load slots");
   slots=Array.isArray(data.slots)?data.slots.map(s=>({...s,bookingId:s.booking_id??s.bookingId,hostName:s.hostName||s.host_name||"",hostBigoId:s.hostBigoId||s.host_bigo_id||""})):[];
   renderSlots();
-  const hasAvailableDateSlot=slots.some(s=>s.status==="available");
-  $("bookingFormCard")?.classList.toggle("hidden",!(bookingDateChosen&&hasAvailableDateSlot));
+  const selectedAvailableSlot=bookingDateChosen&&slots.some(s=>s.id===selectedSlot&&s.status==="available");
+  $("bookingFormCard")?.classList.toggle("hidden",!selectedAvailableSlot);
   $("slotStatus").textContent="";
  }catch(e){
   console.error("Cloudflare slots failed:",e);
@@ -712,7 +712,7 @@ async function startApp(){
   setStatus("loginMessage","Firebase initialization error: "+String(e?.message||e),"err");
  }
 }
-$("filterDate").addEventListener("change",()=>{bookingDateChosen=true;selectedSlot=null;$("chosenSlot").value="";$("bookBtn").disabled=true;$("bookingFormCard")?.classList.add("hidden");loadCloudflareSlots($("filterDate").value);});
+$("filterDate").addEventListener("change",()=>{bookingDateChosen=false;selectedSlot=null;$("chosenSlot").value="";$("bookBtn").disabled=true;$("bookingFormCard")?.classList.add("hidden");loadCloudflareSlots($("filterDate").value);});
 $("refreshSlots").onclick=()=>loadCloudflareSlots($("filterDate").value||defaultScheduleDate);
 function openBookingReview(initial){
  let overlay=document.getElementById("bookingReviewModal");
