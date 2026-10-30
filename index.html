@@ -1088,7 +1088,27 @@ function openBookingReview(initial){
     body:JSON.stringify({date,time,bigoId,name})
    });
    const result=await saveResponse.json();
-   if(!saveResponse.ok||!result.ok)throw new Error(saveResponse.status===409?"That slot was just taken. Please choose another time.":(result.error||"Cloudflare booking failed"));
+
+   /* Show a clear popup when the admin-set monthly BIGO ID limit is reached. */
+   if(result.error==="MONTHLY_LIMIT_REACHED"){
+    const limit=Number(result.limit||2);
+    overlay.innerHTML='<div role="alertdialog" aria-modal="true" style="width:min(100%,440px);max-height:88vh;overflow:auto;box-sizing:border-box;background:#fff;border:2px solid #c90012;border-radius:18px;padding:24px;color:#222;box-shadow:0 20px 60px #0008;text-align:center;">'+
+     '<div style="font-size:42px;margin-bottom:8px">⚠️</div>'+
+     '<h2 style="margin:0 0 12px;color:#b90012">Monthly Booking Limit Reached</h2>'+
+     '<p style="margin:0 0 12px;line-height:1.55;color:#444">The admin has set a limit of <b>'+limit+' bookings per BIGO ID</b> for this month.</p>'+
+     '<p style="margin:0 0 20px;line-height:1.55;color:#444">You have already reached your monthly booking limit. You cannot submit another booking for this BIGO ID until the next month or until the admin changes the limit.</p>'+
+     '<button type="button" id="closeBookingLimitPopup" style="width:100%;padding:13px;border:0;border-radius:9px;background:#c90012;color:#fff;font-weight:700;font-size:15px">Understood</button>'+
+     '</div>';
+    document.getElementById("closeBookingLimitPopup").onclick=close;
+    return;
+   }
+
+   if(!saveResponse.ok||!result.ok){
+    const message=result.error==="SLOT_TAKEN"
+      ?"That time slot has just been booked by someone else. Please select another available time."
+      :(result.message||result.error||"We could not submit your booking. Please try again.");
+    throw new Error(message);
+   }
    const saved=result.booking||{};
    const lookupCode=saved.bookingCode||saved.booking_code||"";
    $("bookingResult").classList.remove("hidden");
