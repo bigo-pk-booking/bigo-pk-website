@@ -190,14 +190,16 @@ body.admin-panel-open .pk-battle { display:none !important; }
 @media(max-width:520px){.booking-edit-grid{grid-template-columns:1fr}.booking-edit-grid .wide{grid-column:auto}.booking-edit-body{padding:14px}.booking-edit-head h2{font-size:18px}}
 
 /* Responsive wide layout + gentle booking form entrance */
+/* Use the full available width on tablets and laptops */
+@media(min-width:601px){
+  main{width:100%;max-width:none;margin:0;padding-left:clamp(18px,2.5vw,40px);padding-right:clamp(18px,2.5vw,40px)}
+  .head{width:100%;max-width:none;margin:0;padding-left:clamp(8px,1.5vw,24px);padding-right:clamp(8px,1.5vw,24px)}
+}
 @media(min-width:801px){
-  main{width:100%;max-width:1500px;padding-left:clamp(22px,3vw,48px);padding-right:clamp(22px,3vw,48px)}
-  .head{max-width:1500px;padding-left:clamp(8px,2vw,28px);padding-right:clamp(8px,2vw,28px)}
   #bookingView{grid-template-columns:minmax(0,1.12fr) minmax(320px,.88fr);align-items:start;gap:20px}
   #bookingView>.card{width:100%}
 }
 @media(min-width:1300px){
-  main{max-width:1680px}
   #bookingView{gap:24px}
 }
 #bookingFormCard:not(.hidden){
