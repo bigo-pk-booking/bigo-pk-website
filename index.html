@@ -599,8 +599,50 @@ async function loadCloudflareAdminBookings(){
   setStatus("adminMessage","Could not load D1 bookings: "+String(e.message||e),"err");
  }
 }
+let publicOpenMonths=[];
+async function loadPublicOpenMonths(){
+ try{
+  const response=await fetch(BIGO_API_BASE+"/api/months/open",{cache:"no-store"});
+  const data=await response.json();
+  if(!response.ok||!data.ok)throw new Error(data.error||"Could not load open months");
+  publicOpenMonths=Array.isArray(data.months)?data.months.filter(m=>/^\\d{4}-(0[1-9]|1[0-2])$/.test(m)).sort():[];
+  const dateInput=$("filterDate");
+  if(!publicOpenMonths.length){
+   dateInput.disabled=true;dateInput.removeAttribute("min");dateInput.removeAttribute("max");
+   $("slotsArea").innerHTML='<div class="notice">Bookings are currently closed. Please check again when the admin opens a month.</div>';
+   return false;
+  }
+  dateInput.disabled=false;
+  dateInput.min=publicOpenMonths[0]+"-01";
+  const lastMonth=publicOpenMonths[publicOpenMonths.length-1];
+  const [yy,mm]=lastMonth.split("-").map(Number);
+  dateInput.max=lastMonth+"-"+String(new Date(yy,mm,0).getDate()).padStart(2,"0");
+  const chosenMonth=(dateInput.value||"").slice(0,7);
+  if(!publicOpenMonths.includes(chosenMonth)){
+   const first=publicOpenMonths[0];
+   const [fy,fm]=first.split("-").map(Number);
+   const today=new Date();
+   const day=first===today.getFullYear()+"-"+String(today.getMonth()+1).padStart(2,"0")
+    ?today.getDate():1;
+   dateInput.value=first+"-"+String(Math.min(day,new Date(fy,fm,0).getDate())).padStart(2,"0");
+  }
+  return true;
+ }catch(e){
+  console.error("Could not load public open months:",e);
+  $("slotsArea").innerHTML='<div class="notice err">Could not check the booking calendar. Please refresh the page.</div>';
+  return false;
+ }
+}
 async function loadCloudflareSlots(date){
  if(!date)return;
+ if(!publicOpenMonths.includes(date.slice(0,7))){
+  slots=[];selectedSlot=null;bookingDateChosen=false;
+  $("bookingFormCard")?.classList.add("hidden");
+  $("bookingResult")?.classList.add("hidden");
+  $("chosenSlot").value="";$("bookBtn").disabled=true;
+  $("slotsArea").innerHTML='<div class="notice err">Bookings for '+escapeHtml(monthTitle(date.slice(0,7)))+' are CLOSED. Please choose an OPEN month.</div>';
+  return;
+ }
  setStatus("slotStatus","Loading slots…");
  try{
   const response=await fetch(BIGO_API_BASE+"/api/slots?date="+encodeURIComponent(date),{cache:"no-store"});
@@ -613,7 +655,11 @@ async function loadCloudflareSlots(date){
   $("slotStatus").textContent="";
  }catch(e){
   console.error("Cloudflare slots failed:",e);
-  setStatus("slotStatus","Could not load slots from Cloudflare. Please refresh and try again.","err");
+  slots=[];selectedSlot=null;bookingDateChosen=false;
+  $("bookingFormCard")?.classList.add("hidden");
+  $("bookingResult")?.classList.add("hidden");
+  $("slotsArea").innerHTML='<div class="notice err">'+(String(e.message||"").includes("MONTH_CLOSED")?"Bookings for this month are CLOSED. Please choose an OPEN month.":"Could not load slots. Please refresh and try again.")+'</div>';
+  setStatus("slotStatus","", "err");
  }
 }
 
@@ -686,7 +732,7 @@ async function loadCloudflareAdminSlots(monthKeyValue){
   setStatus("adminMessage","Loaded "+adminSlots.length+" slots from Cloudflare D1 for "+monthTitle(month)+".","ok");
  }catch(e){console.error("Cloudflare admin slots failed:",e);setStatus("adminMessage","Could not load D1 slot-management data: "+String(e.message||e),"err");}
 }
-$("showBookingBtn").onclick=async()=>{showView("booking");await loadCloudflareSlots($("filterDate").value||defaultScheduleDate);};
+$("showBookingBtn").onclick=async()=>{showView("booking");if(await loadPublicOpenMonths())await loadCloudflareSlots($("filterDate").value||defaultScheduleDate);};
 $("showLookupBtn").onclick=()=>showView("lookup");
 $("showAdminBtn").onclick=async()=>{showView("admin");if(isAdmin)await loadCloudflareAdminSlots();};
 function slotId(date,time){return `${date}_${time.replace(":","")}`;}
@@ -723,7 +769,7 @@ function renderSlots(){
  if(date){const d=new Date(date+"T12:00:00");$("scheduleMonth").textContent=d.toLocaleDateString("en-PH",{month:"long",year:"numeric"}).toUpperCase();}const list=slots.filter(s=>s.date===date).sort((a,b)=>a.time.localeCompare(b.time));
  if(!list.length){$("slotsArea").innerHTML='<div class="notice err">Sorry, the date you selected is not available. Choose another date and time. Thank you.</div>';return;}
  $("slotsArea").innerHTML=`<div class="slot-date">${escapeHtml(prettyDate(date))}</div><div class="slots">${list.map(s=>{const state=s.status||"available";const disabled=state!=="available";return `<button class="slot ${state==="full"?"full-slot":state==="closed"?"closed-slot":""} ${selectedSlot===s.id?"selected":""}" data-slot="${escapeHtml(s.id)}" ${disabled?"disabled":""}>${escapeHtml(s.time)}<span>${slotStatus(s)}</span>${state==="full"?`<span class="slot-host-details">👤 ${escapeHtml(s.hostName||"Host details unavailable")}${s.hostBigoId?`<small>BIGO ID: ${escapeHtml(s.hostBigoId)}</small>`:""}</span>`:""}</button>`}).join("")}</div>`;
- $("slotsArea").querySelectorAll("[data-slot]").forEach(b=>b.onclick=()=>{selectedSlot=b.dataset.slot;const s=slots.find(x=>x.id===selectedSlot);if(s&&s.status==="available"){bookingDateChosen=true;$("bookingFormCard")?.classList.remove("hidden");}$("chosenSlot").value=s?`${prettyDate(s.date)} • ${s.time}`:"";$("bookBtn").disabled=!s||s.status!=="available";$("slotStatus").textContent="Selected slot: "+(s?`${s.date} ${s.time}`:"");renderSlots();if(s&&s.status==="available")$("bookingFormCard")?.scrollIntoView({behavior:"smooth",block:"start"});});
+ $("slotsArea").querySelectorAll("[data-slot]").forEach(b=>b.onclick=()=>{$("bookingResult")?.classList.add("hidden");setStatus("bookingMessage","");selectedSlot=b.dataset.slot;const s=slots.find(x=>x.id===selectedSlot);if(s&&s.status==="available"){bookingDateChosen=true;$("bookingFormCard")?.classList.remove("hidden");}$("chosenSlot").value=s?`${prettyDate(s.date)} • ${s.time}`:"";$("bookBtn").disabled=!s||s.status!=="available";$("slotStatus").textContent="Selected slot: "+(s?`${s.date} ${s.time}`:"");renderSlots();if(s&&s.status==="available")$("bookingFormCard")?.scrollIntoView({behavior:"smooth",block:"start"});});
 }
 // Backfill host details for older booked slots. Runs only after an authenticated admin loads bookings.
 let hostBackfillRunning=false;
@@ -901,7 +947,17 @@ async function startApp(){
   setStatus("loginMessage","Firebase initialization error: "+String(e?.message||e),"err");
  }
 }
-$("filterDate").addEventListener("change",()=>{bookingDateChosen=false;selectedSlot=null;$("chosenSlot").value="";$("bookBtn").disabled=true;$("bookingFormCard")?.classList.add("hidden");loadCloudflareSlots($("filterDate").value);});
+$("filterDate").addEventListener("change",()=>{
+ const date=$("filterDate").value;
+ bookingDateChosen=false;selectedSlot=null;$("chosenSlot").value="";
+ $("bookBtn").disabled=true;$("bookingFormCard")?.classList.add("hidden");
+ $("bookingResult")?.classList.add("hidden");setStatus("bookingMessage","");
+ if(!publicOpenMonths.includes((date||"").slice(0,7))){
+  $("slotsArea").innerHTML='<div class="notice err">That month is CLOSED for public bookings. Please choose an OPEN month.</div>';
+  return;
+ }
+ loadCloudflareSlots(date);
+});
 $("refreshSlots").onclick=()=>loadCloudflareSlots($("filterDate").value||defaultScheduleDate);
 function openBookingReview(initial){
  let overlay=document.getElementById("bookingReviewModal");
