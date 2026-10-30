@@ -75,7 +75,7 @@ input,select{border-radius:3px;border-color:#c4d2d1}input:focus,select:focus{out
 @keyframes battleFlareLeft{to{transform:translateX(75%);opacity:.8}}
 @keyframes battleFlareRight{to{transform:translateX(-75%);opacity:.8}}
 @media(max-width:420px){.pk-battle{padding:15px 9px}.battle-arena{gap:5px}.battle-vs{width:45px;height:45px;font-size:18px}.battle-side{padding:9px 2px}.battle-side small{font-size:9px}}
-@media(prefers-reduced-motion:reduce){.pk-battle:before,.pk-battle:after,.battle-emblem,.battle-vs,.battle-energy,.battle-side.right,.battle-side.right:after{animation:none!important}}
+@media(prefers-reduced-motion:reduce){.pk-battle:before,.pk-battle:after,.battle-emblem,.battle-vs,.battle-energy,.battle-side.right,.battle-side.right:after{animation-duration:6s!important;animation-iteration-count:infinite!important}.battle-side.right{animation-name:challengerLose!important}.battle-side.right .battle-emblem{animation-name:challengerDizzy!important}.battle-side.right:after{animation-name:defeatStamp!important}}
 
 
 /* PK success celebration: CSS-only so it cannot interrupt Firebase startup */
