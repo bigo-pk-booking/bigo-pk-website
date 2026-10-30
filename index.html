@@ -223,7 +223,7 @@ body.admin-panel-open .pk-battle { display:none !important; }
     <div id="slotsArea"><div class="notice">Connect Firebase and add a schedule from the admin panel to show slots here.</div></div>
     <div id="slotStatus" class="status" aria-live="polite"></div>
   </section>
-  <section class="card">
+  <section class="card hidden" id="bookingFormCard">
     <h3>SET YOUR PK SLOT</h3><p class="sub">Enter your BIGO ID and name, then select a date and available time.</p>
     <label for="bigoId">BIGO ID</label><input id="bigoId" maxlength="40" autocomplete="off" placeholder="Enter BIGO ID">
     <label for="userName">Name</label><input id="userName" maxlength="80" autocomplete="name" placeholder="Enter your name">
@@ -450,6 +450,8 @@ async function loadCloudflareSlots(date){
   if(!response.ok||!data.ok)throw new Error(data.error||"Could not load slots");
   slots=Array.isArray(data.slots)?data.slots.map(s=>({...s,bookingId:s.booking_id??s.bookingId,hostName:s.hostName||s.host_name||"",hostBigoId:s.hostBigoId||s.host_bigo_id||""})):[];
   renderSlots();
+  const hasAvailableDateSlot=slots.some(s=>s.status==="available");
+  $("bookingFormCard")?.classList.toggle("hidden",!(bookingDateChosen&&hasAvailableDateSlot));
   $("slotStatus").textContent="";
  }catch(e){
   console.error("Cloudflare slots failed:",e);
@@ -461,6 +463,7 @@ const $ = id => document.getElementById(id);
 const configured = FIREBASE_CONFIG.apiKey && !FIREBASE_CONFIG.apiKey.includes("PASTE_") && FIREBASE_CONFIG.projectId && !FIREBASE_CONFIG.projectId.includes("PASTE_");
 let app, auth, db, currentUser=null, isAdmin=false, slots=[], adminSlots=[], bookings=[], selectedSlot=null, stopSlots=null, stopBookings=null;
 let bookingPage=0, slotPage=0;
+let bookingDateChosen=false;
 // Telegram direct-edit deep link: ?edit=<booking UUID>
 const requestedEditBookingId = new URLSearchParams(window.location.search).get("edit") || "";
 if (requestedEditBookingId) showView("admin");
@@ -709,7 +712,7 @@ async function startApp(){
   setStatus("loginMessage","Firebase initialization error: "+String(e?.message||e),"err");
  }
 }
-$("filterDate").addEventListener("change",()=>{selectedSlot=null;$("chosenSlot").value="";$("bookBtn").disabled=true;loadCloudflareSlots($("filterDate").value);});
+$("filterDate").addEventListener("change",()=>{bookingDateChosen=true;selectedSlot=null;$("chosenSlot").value="";$("bookBtn").disabled=true;$("bookingFormCard")?.classList.add("hidden");loadCloudflareSlots($("filterDate").value);});
 $("refreshSlots").onclick=()=>loadCloudflareSlots($("filterDate").value||defaultScheduleDate);
 function openBookingReview(initial){
  let overlay=document.getElementById("bookingReviewModal");
