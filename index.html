@@ -425,6 +425,12 @@ main{
 @media(max-width:600px){.tg-top-strip{margin-top:10px}.tg-top-link{font-size:12px;padding:8px}.tg-snake-tile{font-size:9px;padding:4px 7px}}
 @media(prefers-reduced-motion:reduce){.tg-snake-track,.tg-snake-tile{animation:none!important}}
 
+
+/* ADMIN VIEW CLEANUP: hide the public Telegram announcement while admin is open. */
+body.admin-panel-open .tg-top-strip,
+body:has(#adminView:not(.hidden)) .tg-top-strip{display:none!important;}
+/* Keep the Slot Management close control above the modal content on mobile. */
+#slotManagementModal #closeSlotManagement{position:relative!important;z-index:30!important;flex:0 0 56px!important;min-width:56px!important;min-height:56px!important;pointer-events:auto!important;touch-action:manipulation!important;}
 </style>
 </head>
 <body>
@@ -582,6 +588,24 @@ main{
 </section>
 <div class="footer">BADASS BIGO PK Slots • Times shown in Philippine time • Keep your PK reference private.</div>
 </main>
+<script>
+/* Reliable mobile close handler for Slot Management. */
+document.addEventListener("click",function(event){
+ const closeButton=event.target.closest("#closeSlotManagement, #closeSlotManagementBottom");
+ if(!closeButton)return;
+ const modal=document.getElementById("slotManagementModal");
+ if(!modal)return;
+ event.preventDefault();event.stopPropagation();
+ modal.classList.add("hidden");modal.style.display="none";modal.setAttribute("aria-hidden","true");document.body.style.overflow="";
+},true);
+/* Keep the public Telegram strip out of the admin workspace, including fallback navigation. */
+(function(){
+ const admin=document.getElementById("adminView");
+ if(!admin)return;
+ const sync=function(){document.body.classList.toggle("admin-panel-open",!admin.classList.contains("hidden"));};
+ sync();new MutationObserver(sync).observe(admin,{attributes:true,attributeFilter:["class"]});
+})();
+</script>
 <script>
 /* Navigation fallback: keep the three main views usable even if Firebase module loading fails. */
 (function(){
