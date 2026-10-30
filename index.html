@@ -527,7 +527,16 @@ main{
     <hr>
     <div class="admin-head"><div><h3>Bookings & editable details</h3><p class="sub" style="margin:5px 0 0">Edit host and opponent information directly in this Admin section, then press Save changes.</p></div><input id="adminSearch" style="max-width:300px" placeholder="Search BIGO ID / name / date / time"></div>
     <div class="row month-filter-row" style="margin-top:12px"><div><label for="bookingMonthFilter">Select month for bookings</label><select id="bookingMonthFilter" aria-label="Filter bookings by month"></select></div><div style="flex:0 0 auto;min-width:auto"><button id="downloadMonthExcelBtn" class="success" type="button">Download selected month Excel</button></div></div>
-    <section class="card" id="opponentSearchReport" style="margin:14px 0;padding:14px;border:1px solid #d9a3a3"><div class="admin-head"><div><h3>Looking for Active Opponents</h3><p class="sub">Bookings without an opponent BIGO ID appear here. Copy the report; once you save an opponent BIGO ID, that booking disappears from this list.</p></div><button id="copyOpponentReportBtn" type="button" class="success">Copy report</button></div><div id="opponentReportContent" style="margin-top:10px"></div><div id="opponentReportStatus" class="status"></div></section>
+    <section id="opponentSearchReport" style="margin:14px 0">
+      <button id="toggleOpponentReportBtn" type="button" class="secondary full" style="display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left">
+        <span>🔎 Looking for Active Opponents</span>
+        <span id="opponentReportCount" style="display:inline-flex;min-width:30px;height:30px;padding:0 9px;align-items:center;justify-content:center;border-radius:18px;background:#c90012;color:#fff;font-weight:900">0</span>
+      </button>
+      <div id="opponentReportPanel" class="hidden card" style="margin-top:10px;padding:14px">
+        <div class="admin-head"><div><h3>Opponent Search Report</h3><p class="sub">Copy this list and post it to find opponents. It updates automatically when an opponent is saved.</p></div><button id="copyOpponentReportBtn" type="button" class="success">Copy report</button></div>
+        <div id="opponentReportContent" style="margin-top:10px"></div><div id="opponentReportStatus" class="status"></div>
+      </div>
+    </section>
     <div id="adminBookings" class="table-wrap"><div class="notice">Loading bookings…</div></div>
     <hr>
     <div class="card" style="margin:12px 0;padding:14px">
@@ -1001,6 +1010,8 @@ function renderAdmin(){
  missingOpponents.forEach(b=>{const d=reportDate(b.date);if(d!==lastDate){reportLines.push(d,"");lastDate=d;}reportLines.push("NAME : "+(b.name||"—"),"BIGO ID : "+(b.bigoId||"—"),"TIME : "+reportTime(b.time),"");});
  if(missingOpponents.length)reportLines.push("No PM, no match. Tara 😘");
  const reportText=missingOpponents.length?reportLines.join("\n"):"";
+ $("opponentReportCount").textContent=String(missingOpponents.length);
+ $("toggleOpponentReportBtn").onclick=()=>{$("opponentReportPanel").classList.toggle("hidden");};
  $("opponentReportContent").innerHTML=reportText?'<textarea id="opponentReportText" readonly rows="10" style="width:100%;background:#fff;color:#202428;padding:10px;border-radius:6px"></textarea><p class="sub">'+missingOpponents.length+' booking(s) still need an opponent.</p>':'<div class="notice ok">All active bookings this month already have an opponent.</div>';
  if($("opponentReportText"))$("opponentReportText").value=reportText;
  const copyBtn=$("copyOpponentReportBtn");copyBtn.disabled=!reportText;copyBtn.onclick=async()=>{if(!reportText)return;try{await navigator.clipboard.writeText(reportText);$("opponentReportStatus").textContent="Report copied. Paste it into Telegram.";}catch(e){const t=$("opponentReportText");t.focus();t.select();$("opponentReportStatus").textContent="Select the report above and copy it.";}};
