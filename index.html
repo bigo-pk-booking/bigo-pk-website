@@ -420,6 +420,19 @@ main{
             <option value="closed">Closed</option>
           </select></div>
         </div>
+        <section class="card" style="margin:14px 0;padding:14px;border:1px solid #d9a3a3">
+          <h3>Monthly Booking Controls</h3>
+          <p class="sub">Choose whether this month is open for public bookings and set the BIGO ID monthly limit.</p>
+          <div class="row">
+            <div><label for="monthlyOpenSelect">Monthly booking status</label><select id="monthlyOpenSelect"><option value="0">CLOSED</option><option value="1">OPEN</option></select></div>
+            <div><label for="monthlyLimitInput">Maximum bookings per BIGO ID</label><input id="monthlyLimitInput" type="number" min="1" max="1000" step="1" placeholder="Blank = no limit"></div>
+          </div>
+          <div class="row" style="margin-top:10px">
+            <button id="saveMonthlySettingsBtn" type="button">Save Monthly Settings</button>
+            <button id="generateMonthlyScheduleBtn" type="button" class="secondary">Generate / Refresh Month</button>
+          </div>
+          <div id="monthlySettingsMessage" class="status" aria-live="polite"></div>
+        </section>
         <div id="adminSlots" class="table-wrap"><div class="notice">Loading slots…</div></div>
         <div style="display:flex;justify-content:flex-end;margin-top:14px"><button id="closeSlotManagementBottom" type="button" class="secondary">Close</button></div>
       </div>
@@ -592,9 +605,40 @@ $("filterDate").value=defaultScheduleDate; $("manualDate").value=defaultSchedule
 const defaultScheduleMonth=new Date(defaultScheduleDate+"T12:00:00"); $("scheduleMonth").textContent=defaultScheduleMonth.toLocaleDateString("en-US",{month:"long",year:"numeric"}).toUpperCase(); if($("autoScheduleMonth"))$("autoScheduleMonth").textContent=defaultScheduleMonth.toLocaleDateString("en-US",{month:"long",year:"numeric"});
 function setStatus(id,msg,kind=""){const el=$(id);if(!el)return;el.className="status"+(kind?" "+kind:"");el.textContent=msg;}
 function showView(name){$("bookingView").classList.toggle("hidden",name!=="booking");$("lookupView").classList.toggle("hidden",name!=="lookup");$("adminView").classList.toggle("hidden",name!=="admin");document.body.classList.toggle("admin-panel-open",name==="admin");}
+async function loadMonthlySettings(month){
+ if(!isAdmin||!/^\d{4}-\d{2}$/.test(month))return;
+ try{
+  const result=await cloudflareAdminRequest("/api/admin/month-settings?month="+encodeURIComponent(month));
+  const settings=result.settings||{};
+  $("monthlyOpenSelect").value=String(Number(settings.is_open)===1?1:0);
+  $("monthlyLimitInput").value=settings.max_per_bigo_id==null?"":String(settings.max_per_bigo_id);
+  setStatus("monthlySettingsMessage",monthTitle(month)+" settings loaded.","ok");
+ }catch(e){console.error(e);setStatus("monthlySettingsMessage","Could not load monthly settings: "+String(e.message||e),"err");}
+}
+async function saveMonthlySettings(){
+ const month=$("slotMonthFilter")?.value||selectedHeaderMonth();
+ const raw=$("monthlyLimitInput").value.trim();
+ const limit=raw===""?null:Number(raw);
+ if(raw!==""&&(!Number.isInteger(limit)||limit<1||limit>1000)){
+  setStatus("monthlySettingsMessage","Enter a whole-number limit from 1 to 1000, or leave blank for no limit.","err");return;
+ }
+ try{
+  const result=await cloudflareAdminRequest("/api/admin/month-settings",{method:"PATCH",body:JSON.stringify({month,isOpen:$("monthlyOpenSelect").value==="1",maxPerBigoId:limit})});
+  setStatus("monthlySettingsMessage","Saved: "+monthTitle(month)+" is "+(Number(result.settings.is_open)===1?"OPEN":"CLOSED")+".","ok");
+ }catch(e){console.error(e);setStatus("monthlySettingsMessage","Could not save settings: "+String(e.message||e),"err");}
+}
+async function generateMonthlySchedule(){
+ const month=$("slotMonthFilter")?.value||selectedHeaderMonth();
+ if(!confirm("Generate or refresh all "+monthTitle(month)+" slots? Existing bookings and closed slots will be preserved."))return;
+ try{
+  const result=await cloudflareAdminRequest("/api/admin/month-schedule/generate",{method:"POST",body:JSON.stringify({month})});
+  setStatus("monthlySettingsMessage","Schedule ready for "+monthTitle(month)+". "+result.totalSlots+" total slots; "+result.occupiedBookings+" existing bookings preserved.","ok");
+ }catch(e){console.error(e);setStatus("monthlySettingsMessage","Could not generate schedule: "+String(e.message||e),"err");}
+}
 async function loadCloudflareAdminSlots(monthKeyValue){
  if(!isAdmin)return;
  const month=monthKeyValue||$("slotMonthFilter")?.value||selectedHeaderMonth();
+ await loadMonthlySettings(month);
  if(!/^\d{4}-\d{2}$/.test(month))return;
  const [year,monthNum]=month.split("-").map(Number);
  const days=new Date(year,monthNum,0).getDate();
@@ -1218,6 +1262,8 @@ async function toggleSlot(id){
 $("adminSearch").addEventListener("input",()=>{bookingPage=0;renderAdmin();});
 $("bookingMonthFilter").addEventListener("change",()=>{bookingPage=0;renderAdmin();});
 $("slotMonthFilter").addEventListener("change",()=>{slotPage=0;loadCloudflareAdminSlots($("slotMonthFilter").value);});
+$("saveMonthlySettingsBtn").addEventListener("click",saveMonthlySettings);
+$("generateMonthlyScheduleBtn").addEventListener("click",generateMonthlySchedule);
 $("slotStatusFilter").addEventListener("change",()=>{slotPage=0;renderAdmin();});
 (function(){
  const modal=$("slotManagementModal");
