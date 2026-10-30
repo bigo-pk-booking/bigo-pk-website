@@ -495,16 +495,6 @@ main{
   </div>
   <div class="card hidden" id="adminDashboard">
     <div class="admin-head"><div><h3>Welcome, Badass Admin!</h3><p id="adminWelcomeGreeting" class="sub" style="margin:5px 0 0">Welcome back. Have a great day!</p></div></div>
-    <section id="opponentSearchReport" style="margin:14px 0">
-      <button id="toggleOpponentReportBtn" type="button" class="secondary full" style="display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left">
-        <span>Choose</span>
-        <span id="opponentReportCount" style="display:inline-flex;min-width:30px;height:30px;padding:0 9px;align-items:center;justify-content:center;border-radius:18px;background:#c90012;color:#fff;font-weight:900">0</span>
-      </button>
-      <div id="opponentReportPanel" class="hidden card" style="margin-top:10px;padding:14px">
-        <div class="admin-head"><div><h3>Opponent Search Report</h3><p class="sub">Copy this list and post it to find opponents. It updates automatically when an opponent is saved.</p></div><button id="copyOpponentReportBtn" type="button" class="success">Copy report</button></div>
-        <div id="opponentReportContent" style="margin-top:10px"></div><div id="opponentReportStatus" class="status"></div>
-      </div>
-    </section>
     <div class="admin-grid" style="margin-top:14px">
       <div class="card manual-pk-card" style="padding:14px">
         <h3>Manual PK booking</h3>
@@ -535,15 +525,9 @@ main{
       </div>
     </div>
     <hr>
-    <button id="toggleBookingEditableSection" type="button" class="secondary full" style="display:flex;align-items:center;justify-content:space-between;text-align:left;margin:12px 0">
-      <span>Bookings &amp; editable details</span><span id="bookingEditableChevron">＋</span>
-    </button>
-    <div id="bookingEditableContent" class="hidden">
     <div class="admin-head"><div><h3>Bookings & editable details</h3><p class="sub" style="margin:5px 0 0">Edit host and opponent information directly in this Admin section, then press Save changes.</p></div><input id="adminSearch" style="max-width:300px" placeholder="Search BIGO ID / name / date / time"></div>
-
-
+    <div class="row month-filter-row" style="margin-top:12px"><div><label for="bookingMonthFilter">Select month for bookings</label><select id="bookingMonthFilter" aria-label="Filter bookings by month"></select></div><div style="flex:0 0 auto;min-width:auto"><button id="downloadMonthExcelBtn" class="success" type="button">Download selected month Excel</button></div></div>
     <div id="adminBookings" class="table-wrap"><div class="notice">Loading bookings…</div></div>
-    </div>
     <hr>
     <div class="card" style="margin:12px 0;padding:14px">
       <h3>Slot management</h3>
@@ -996,33 +980,18 @@ function updateAdminWelcomeGreeting(){
 function renderAdmin(){
  if(!isAdmin)return;
  refreshManualTimes();
- const bookingMonth="all";
+ const bookingMonth=updateMonthPicker("bookingMonthFilter",bookings);
  const slotMonth=updateMonthPicker("slotMonthFilter",adminSlots);
  const term=$("adminSearch").value.trim().toLowerCase();
 
  const filteredBookings=bookings
-  .filter(b=>!["Cancelled","Rejected"].includes(String(b.status||""))&&[b.date,b.time,b.name,b.bigoId,b.hostLevel,b.agencyName,b.agencyTelegram,b.opkEvent,b.opponentName,b.opponentBigoId,b.opponentLevel,b.opponentAgencyName,b.opponentAgencyTelegram,b.remarks,b.status].some(v=>String(v||"").toLowerCase().includes(term)))
+  .filter(b=>!["Cancelled","Rejected"].includes(String(b.status||""))&&monthKey(b.date)===bookingMonth&&[b.date,b.time,b.name,b.bigoId,b.hostLevel,b.agencyName,b.agencyTelegram,b.opkEvent,b.opponentName,b.opponentBigoId,b.opponentLevel,b.opponentAgencyName,b.opponentAgencyTelegram,b.remarks,b.status].some(v=>String(v||"").toLowerCase().includes(term)))
   .sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time));
  const bookingPages=Math.max(1,Math.ceil(filteredBookings.length/ADMIN_PAGE_SIZE));
  bookingPage=Math.min(bookingPage,bookingPages-1);
  const visibleBookings=filteredBookings.slice(bookingPage*ADMIN_PAGE_SIZE,(bookingPage+1)*ADMIN_PAGE_SIZE);
  const bookingTable=visibleBookings.length?`<table><thead><tr><th>DATE</th><th>TIME</th><th>BIGO NAME</th><th>BIGO ID</th><th>HOST LEVEL</th><th>AGENCY NAME</th><th>AGENCY TELEGRAM</th><th>OPK EVENT</th><th class="vs-head">VS</th><th>OPPONENT NAME</th><th>OPPONENT BIGO ID</th><th>LEVEL</th><th>OPPONENT AGENCY NAME</th><th>OPPONENT AGENCY TELEGRAM</th><th>REMARKS (WIN/LOSE)</th><th>STATUS</th><th>ACTIONS</th></tr></thead><tbody>${visibleBookings.map(b=>`<tr><td>${escapeHtml(b.date||"")}</td><td><b>${escapeHtml(b.time||"")}</b></td><td>${escapeHtml(b.name||"")}</td><td>${escapeHtml(b.bigoId||"")}</td><td>${escapeHtml(b.hostLevel||"")}</td><td>${escapeHtml(b.agencyName||"")}</td><td>${escapeHtml(b.agencyTelegram||"")}</td><td>${escapeHtml(b.opkEvent||"")}</td><td class="vs-cell">VS</td><td>${escapeHtml(b.opponentName||"")}</td><td>${escapeHtml(b.opponentBigoId||"")}</td><td>${escapeHtml(b.opponentLevel||"")}</td><td>${escapeHtml(b.opponentAgencyName||"")}</td><td>${escapeHtml(b.opponentAgencyTelegram||"")}</td><td>${escapeHtml(b.remarks||"")}</td><td><span class="pill ${b.opponentBigoId?"assigned":"full"}">${escapeHtml(b.status||"Reserved")}</span></td><td><button class="small booking-edit-trigger" data-edit-booking="${escapeHtml(b.id)}">Edit details</button> ${b.adminReviewed&&!["Approved","Opponent assigned","Cancelled","Rejected"].includes(String(b.status||""))?'<button class="small" data-approve="'+escapeHtml(b.id)+'">Approve</button>':'<span class="muted">'+(["Cancelled","Rejected"].includes(String(b.status||""))?'Closed':b.adminReviewed?'Already reviewed':'Review required')+'</span>'} <button class="small danger" data-cancel="${escapeHtml(b.id)}">Reject / cancel</button></td></tr>`).join("")}</tbody></table>`:'<div class="notice">No bookings for this month match your search.</div>';
  const bookingPager=filteredBookings.length?`<div class="admin-pagination"><span>Showing ${bookingPage*ADMIN_PAGE_SIZE+1}–${Math.min((bookingPage+1)*ADMIN_PAGE_SIZE,filteredBookings.length)} of ${filteredBookings.length}</span><div><button class="secondary small" type="button" data-booking-prev ${bookingPage===0?"disabled":""}>Previous</button> <button class="secondary small" type="button" data-booking-next ${bookingPage>=bookingPages-1?"disabled":""}>Next</button></div></div>`:"";
- const missingOpponents=bookings.filter(b=>!["Cancelled","Rejected"].includes(String(b.status||""))&&!String(b.opponentBigoId||"").trim()).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
- const reportDate=v=>{const p=String(v||"").split("-").map(Number);return p.length===3?new Date(p[0],p[1]-1,p[2]).toLocaleDateString("en-US",{month:"long",day:"numeric"}).toUpperCase():String(v||"");};
- const reportTime=v=>{const p=String(v||"").split(":");if(p.length!==2)return String(v||"");let h=Number(p[0]);const ap=h>=12?"PM":"AM";h=h%12||12;return h+":"+p[1]+" "+ap;};
- let reportLines=["LOOKING FOR ACTIVE OPPONENT‼️",""];
- let lastDate="";
- missingOpponents.forEach(b=>{const d=reportDate(b.date);if(d!==lastDate){reportLines.push(d,"");lastDate=d;}reportLines.push("NAME : "+(b.name||"—"),"BIGO ID : "+(b.bigoId||"—"),"TIME : "+reportTime(b.time),"");});
- if(missingOpponents.length)reportLines.push("No PM, no match. Tara 😘");
- const reportText=missingOpponents.length?reportLines.join("\n"):"";
- $("opponentReportCount").textContent=String(missingOpponents.length);
- $("toggleOpponentReportBtn").onclick=()=>{$("opponentReportPanel").classList.toggle("hidden");};
- $("opponentReportContent").innerHTML=reportText?'<textarea id="opponentReportText" readonly rows="10" style="width:100%;background:#fff;color:#202428;padding:10px;border-radius:6px"></textarea><p class="sub">'+missingOpponents.length+' booking(s) still need an opponent.</p>':'<div class="notice ok">All active bookings this month already have an opponent.</div>';
- if($("opponentReportText"))$("opponentReportText").value=reportText;
- const copyBtn=$("copyOpponentReportBtn");copyBtn.disabled=!reportText;copyBtn.onclick=async()=>{if(!reportText)return;try{await navigator.clipboard.writeText(reportText);$("opponentReportStatus").textContent="Report copied. Paste it into Telegram.";}catch(e){const t=$("opponentReportText");t.focus();t.select();$("opponentReportStatus").textContent="Select the report above and copy it.";}};
- const editableToggle=$("toggleBookingEditableSection");
- if(editableToggle)editableToggle.onclick=()=>{const panel=$("bookingEditableContent");panel.classList.toggle("hidden");$("bookingEditableChevron").textContent=panel.classList.contains("hidden")?"＋":"−";};
  $("adminBookings").innerHTML=bookingTable+bookingPager;
  $("adminBookings").querySelectorAll("[data-edit-booking]").forEach(btn=>btn.onclick=()=>openBookingEdit(btn.dataset.editBooking));
  $("adminBookings").querySelectorAll("[data-approve]").forEach(btn=>btn.onclick=()=>approveBooking(btn.dataset.approve));
@@ -1504,7 +1473,7 @@ async function toggleSlot(id){
  try{await cloudflareAdminRequest("/api/admin/slots/bulk",{method:"PATCH",body:JSON.stringify({month:s.date.slice(0,7),action,slotId:id})});recordAdminAction(action==="open"?"Reopened one slot":"Closed one slot");await loadCloudflareAdminSlots($("slotMonthFilter")?.value||s.date.slice(0,7));setStatus("adminMessage","Slot status updated in Cloudflare D1.","ok");}catch(e){console.error(e);setStatus("adminMessage","Could not update slot: "+String(e.message||e),"err");}
 }
 $("adminSearch").addEventListener("input",()=>{bookingPage=0;renderAdmin();});
-
+$("bookingMonthFilter").addEventListener("change",()=>{bookingPage=0;renderAdmin();});
 $("slotMonthFilter").addEventListener("change",()=>{slotPage=0;loadCloudflareAdminSlots($("slotMonthFilter").value);});
 $("saveMonthlySettingsBtn").addEventListener("click",saveMonthlySettings);
 $("openAllSlotsBtn").addEventListener("click",()=>bulkToggleSlots("open"));
@@ -1522,8 +1491,8 @@ $("slotStatusFilter").addEventListener("change",()=>{slotPage=0;renderAdmin();})
  modal.addEventListener("click",event=>{if(event.target===modal)close();});
  document.addEventListener("keydown",event=>{if(event.key==="Escape"&&!modal.classList.contains("hidden"))close();});
 })();
-
-function exportRows(){return bookings.map(b=>({"DATE":b.date||"","TIME":b.time||"","BIGO NAME":b.name||"","BIGO ID":b.bigoId||"","HOST LEVEL":b.hostLevel||"","AGENCY NAME":b.agencyName||"","AGENCY TELEGRAM":b.agencyTelegram||"","OPK EVENT":b.opkEvent||"","VS":"VS","OPPONENT NAME":b.opponentName||"","OPPONENT BIGO ID":b.opponentBigoId||"","LEVEL":b.opponentLevel||"","OPPONENT AGENCY NAME":b.opponentAgencyName||"","OPPONENT AGENCY TELEGRAM":b.opponentAgencyTelegram||"","REMARKS (WIN/LOSE)":b.remarks||b.status||""})).sort((a,b)=>(a.DATE+a.TIME).localeCompare(b.DATE+b.TIME));}
+$("downloadMonthExcelBtn").addEventListener("click",()=>$("exportExcelBtn").click());
+function exportRows(){const selectedMonth=$("bookingMonthFilter")?.value||dateToday().slice(0,7);return bookings.filter(b=>monthKey(b.date)===selectedMonth).map(b=>({"DATE":b.date||"","TIME":b.time||"","BIGO NAME":b.name||"","BIGO ID":b.bigoId||"","HOST LEVEL":b.hostLevel||"","AGENCY NAME":b.agencyName||"","AGENCY TELEGRAM":b.agencyTelegram||"","OPK EVENT":b.opkEvent||"","VS":"VS","OPPONENT NAME":b.opponentName||"","OPPONENT BIGO ID":b.opponentBigoId||"","LEVEL":b.opponentLevel||"","OPPONENT AGENCY NAME":b.opponentAgencyName||"","OPPONENT AGENCY TELEGRAM":b.opponentAgencyTelegram||"","REMARKS (WIN/LOSE)":b.remarks||b.status||""})).sort((a,b)=>(a.DATE+a.TIME).localeCompare(b.DATE+b.TIME));}
 function downloadBlob(content,type,name){const blob=new Blob([content],{type});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 $("exportExcelBtn").onclick=async()=>{if(!isAdmin)return;const rows=exportRows();if(!window.ExcelJS){setStatus("exportMessage","Excel formatting library did not load. Check your internet connection, then try again.","err");return;}try{
  const ExcelJS=window.ExcelJS;const wb=new ExcelJS.Workbook();wb.creator="BADASS";wb.subject="BIGO OPK Match Schedule";wb.title="BADASS OPK Match Report";wb.created=new Date();
@@ -1531,7 +1500,7 @@ $("exportExcelBtn").onclick=async()=>{if(!isAdmin)return;const rows=exportRows()
  const headers=["DATE","TIME","BIGO NAME","BIGO ID","HOST LEVEL","AGENCY NAME","AGENCY TELEGRAM","OPK EVENT","VS","OPPONENT NAME","OPPONENT BIGO ID","LEVEL","OPPONENT AGENCY NAME","OPPONENT AGENCY TELEGRAM","REMARKS (WIN/LOSE)"];
  const widths=[19,13,20,18,12,20,22,18,6,21,21,12,23,25,20];headers.forEach((h,i)=>ws.getColumn(i+1).width=widths[i]);
  ws.mergeCells(1,1,1,15);ws.getCell("A1").value="♛ BADASS  |  BIGO PK MATCH SCHEDULER";ws.getCell("A1").font={name:"Arial",size:16,bold:true,color:{argb:"FFFFFFFF"}};ws.getCell("A1").alignment={vertical:"middle",horizontal:"center"};ws.getRow(1).height=30;ws.getRow(1).eachCell(c=>c.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FFD40000"}});
- const reportMonth="ALL BOOKINGS";ws.mergeCells(2,1,2,15);ws.getCell("A2").value=`OPK MATCHED FOR THE MONTH OF ${reportMonth}`;ws.getCell("A2").font={name:"Arial",size:15,bold:true,color:{argb:"FF20252B"}};ws.getCell("A2").alignment={horizontal:"center",vertical:"middle"};ws.getRow(2).height=29;
+ const selectedMonth=$("bookingMonthFilter")?.value||dateToday().slice(0,7);const reportMonth=monthLabel(selectedMonth).toUpperCase();ws.mergeCells(2,1,2,15);ws.getCell("A2").value=`OPK MATCHED FOR THE MONTH OF ${reportMonth}`;ws.getCell("A2").font={name:"Arial",size:15,bold:true,color:{argb:"FF20252B"}};ws.getCell("A2").alignment={horizontal:"center",vertical:"middle"};ws.getRow(2).height=29;
  ws.mergeCells(3,1,3,15);ws.getCell("A3").value="SAME PK EVENT ONLY. NO PM NO DEAL.";ws.getCell("A3").font={name:"Arial",size:12,bold:true,color:{argb:"FFC04452"}};ws.getCell("A3").alignment={horizontal:"center",vertical:"middle"};ws.getRow(3).height=23;
  ws.mergeCells(4,1,4,15);ws.getCell("A4").value="NOTE: MATCH HOST LEVEL / OPK EVENT WITH THE INFORMATION PROVIDED. VERIFY OPPONENT DETAILS BEFORE THE MATCH.";ws.getCell("A4").font={name:"Arial",size:10,bold:true,color:{argb:"FF374151"}};ws.getCell("A4").alignment={horizontal:"center",vertical:"middle",wrapText:true};ws.getRow(4).height=28;
  ws.mergeCells(5,1,5,15);ws.getCell("A5").value="BADASS ADMIN REPORT  •  TIMES IN PHILIPPINE TIME (UTC+8)";ws.getCell("A5").font={name:"Arial",size:9,italic:true,color:{argb:"FF667085"}};ws.getCell("A5").alignment={horizontal:"center",vertical:"middle"};ws.getRow(5).height=20;
@@ -1539,9 +1508,9 @@ $("exportExcelBtn").onclick=async()=>{if(!isAdmin)return;const rows=exportRows()
  if(!rows.length){const r=ws.addRow(["No bookings recorded yet."]);ws.mergeCells(7,1,7,15);r.height=24;r.getCell(1).font={italic:true,color:{argb:"FF667085"}};}
  rows.forEach((obj,idx)=>{const row=ws.addRow(headers.map(h=>obj[h]??""));row.height=22;row.eachCell({includeEmpty:true},(c,col)=>{c.font={name:"Arial",size:10,color:{argb:"FF20252B"}};c.alignment={vertical:"middle",horizontal:col===2||col===9?"center":"left",wrapText:true};c.border={top:{style:"hair",color:{argb:"FFD5DADD"}},bottom:{style:"thin",color:{argb:"FFD5DADD"}},left:{style:"thin",color:{argb:"FFE3E6E8"}},right:{style:"thin",color:{argb:"FFE3E6E8"}}};if(idx%2===1)c.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FFF2F8F7"}};});const vs=row.getCell(9);vs.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FFFFE45C"}};vs.font={name:"Arial",size:10,bold:true,color:{argb:"FF282000"}};vs.alignment={horizontal:"center",vertical:"middle"};});
  ws.autoFilter={from:{row:6,column:1},to:{row:6+Math.max(rows.length,1),column:15}};ws.pageSetup={orientation:"landscape",fitToPage:true,fitToWidth:1,fitToHeight:0,paperSize:ws.PAPER_LETTER,printTitlesRow:"1:6",margins:{left:0.2,right:0.2,top:0.4,bottom:0.4,header:0.2,footer:0.2}};ws.headerFooter.oddFooter="&CBADASS OPK Match Report&RPage &P of &N";
- const buffer=await wb.xlsx.writeBuffer();downloadBlob(buffer,"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",`BADASS-OPK-Match-Report-ALL.xlsx`);setStatus("exportMessage",`Styled Excel report downloaded for all bookings.`,"ok");
+ const buffer=await wb.xlsx.writeBuffer();downloadBlob(buffer,"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",`BADASS-OPK-Match-Report-${selectedMonth}.xlsx`);setStatus("exportMessage",`Styled Excel report downloaded for ${monthLabel(selectedMonth)}.`,"ok");
  }catch(e){console.error(e);setStatus("exportMessage","Could not create the Excel report. Please try again or use CSV export.","err");}};
-$("exportCsvBtn").onclick=()=>{if(!isAdmin)return;const rows=exportRows();const headers=rows.length?Object.keys(rows[0]):["DATE","TIME","BIGO NAME","BIGO ID","HOST LEVEL","AGENCY NAME","AGENCY TELEGRAM","OPK EVENT","VS","OPPONENT NAME","OPPONENT BIGO ID","LEVEL","OPPONENT AGENCY NAME","OPPONENT AGENCY TELEGRAM","REMARKS (WIN/LOSE)"];const quote=v=>`"${String(v??"").replace(/"/g,'""')}"`;const csv=[headers.map(quote).join(","),...rows.map(r=>headers.map(h=>quote(r[h])).join(","))].join("\r\n");downloadBlob("\ufeff"+csv,"text/csv;charset=utf-8","BADASS-OPK-Match-Report-ALL.csv");setStatus("exportMessage","CSV report downloaded for all bookings.","ok");};
+$("exportCsvBtn").onclick=()=>{if(!isAdmin)return;const rows=exportRows();const headers=rows.length?Object.keys(rows[0]):["DATE","TIME","BIGO NAME","BIGO ID","HOST LEVEL","AGENCY NAME","AGENCY TELEGRAM","OPK EVENT","VS","OPPONENT NAME","OPPONENT BIGO ID","LEVEL","OPPONENT AGENCY NAME","OPPONENT AGENCY TELEGRAM","REMARKS (WIN/LOSE)"];const quote=v=>`"${String(v??"").replace(/"/g,'""')}"`;const csv=[headers.map(quote).join(","),...rows.map(r=>headers.map(h=>quote(r[h])).join(","))].join("\r\n");const selectedMonth=$("bookingMonthFilter")?.value||dateToday().slice(0,7);downloadBlob("\ufeff"+csv,"text/csv;charset=utf-8",`BADASS-OPK-Match-Report-${selectedMonth}.csv`);setStatus("exportMessage",`CSV report downloaded for ${monthLabel(selectedMonth)}.`,"ok");};
 async function copyText(text){try{await navigator.clipboard.writeText(text);alert("Copied!");}catch{const t=document.createElement("textarea");t.value=text;document.body.appendChild(t);t.select();document.execCommand("copy");t.remove();alert("Copied!");}}
 startApp();
 </script>
