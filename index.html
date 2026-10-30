@@ -333,6 +333,36 @@ main{
 #adminBookings td,#adminSlots td{color:#202428!important;font-weight:600}
 #adminBookings th,#adminSlots th{color:#fff!important}
 
+
+/* FIX: Slot Management popup must scroll on touchscreens and small displays */
+#slotManagementModal{
+  align-items:flex-start!important;
+  justify-content:center!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  -webkit-overflow-scrolling:touch!important;
+  overscroll-behavior-y:contain;
+  padding:12px!important;
+}
+#slotManagementModal > div{
+  flex:0 0 auto!important;
+  width:min(100%,950px)!important;
+  max-height:calc(100vh - 24px)!important;
+  max-height:calc(100dvh - 24px)!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  -webkit-overflow-scrolling:touch!important;
+  overscroll-behavior-y:contain;
+  touch-action:pan-y;
+  margin:0 auto!important;
+}
+#slotManagementModal .table-wrap{
+  max-width:100%;
+  overflow-x:auto!important;
+  overflow-y:visible!important;
+  -webkit-overflow-scrolling:touch;
+}
+
 </style>
 </head>
 <body>
