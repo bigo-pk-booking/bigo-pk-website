@@ -907,31 +907,6 @@ $("loginBtn").addEventListener("click", async (event)=>{
  }
 });
 
-$("telegramLinkGenerate").addEventListener("click",async()=>{
- const button=$("telegramLinkGenerate"),wrap=$("telegramLinkCodeWrap");
- button.disabled=true;wrap.classList.add("hidden");
- setStatus("telegramLinkMessage","Generating a secure one-time code…");
- try{
-  const result=await cloudflareAdminRequest("/api/admin/telegram/link-code",{method:"POST",body:JSON.stringify({})});
-  if(!result.code)throw new Error("The API did not return a linking code.");
-  $("telegramLinkCode").value=result.code;
-  $("telegramLinkExpiry").textContent=result.expiresAt
-   ? "Expires: "+new Date(result.expiresAt).toLocaleString()
-   : "This code is temporary. Use it promptly.";
-  wrap.classList.remove("hidden");
-  setStatus("telegramLinkMessage","Code created. Send /link "+result.code+" to the Telegram bot.","ok");
- }catch(e){
-  console.error("Telegram link code error:",e);
-  setStatus("telegramLinkMessage","Could not create code yet: "+String(e.message||e)+". The Worker linking endpoint must be deployed first.","err");
- }finally{button.disabled=false;}
-});
-$("telegramLinkCopy").addEventListener("click",async()=>{
- const code=$("telegramLinkCode").value;
- if(!code)return;
- try{await navigator.clipboard.writeText(code);setStatus("telegramLinkMessage","Code copied. Send /link "+code+" to @BadassBigoPKNotifyBot.","ok");}
- catch(e){$("telegramLinkCode").focus();$("telegramLinkCode").select();setStatus("telegramLinkMessage","Select the code above and copy it manually.");}
-});
-
 $("logoutBtn").onclick=async()=>{await signOut(auth);};
 // Monthly slots are generated automatically by ensureMonthSlots(); manual slot creation is intentionally disabled.
 $("manualDate").addEventListener("change",refreshManualTimes);
