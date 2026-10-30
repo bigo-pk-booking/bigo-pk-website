@@ -429,7 +429,8 @@ async function loadCloudflareAdminBookings(){
    opponentAgencyName:b.opponent_agency_name||b.opponentAgencyName||"",
    opponentAgencyTelegram:b.opponent_agency_telegram||b.opponentAgencyTelegram||"",
    remarks:b.remarks||"",
-   bookingCode:b.booking_code||b.bookingCode||""
+   bookingCode:b.booking_code||b.bookingCode||"",
+   adminReviewed:Number(b.admin_reviewed)===1
   }));
   renderAdmin();
   setStatus("adminMessage","Loaded bookings from Cloudflare D1.","ok");
@@ -610,14 +611,7 @@ async function saveReportDetails(id){
    method:"PATCH",
    body:JSON.stringify(values)
   });
-  const nextStatus=values.opponentBigoId?"Opponent assigned":(b.status||"Approved");
-  if(nextStatus!==b.status){
-   await cloudflareAdminRequest("/api/admin/bookings/"+encodeURIComponent(id)+"/status",{
-    method:"PATCH",
-    body:JSON.stringify({status:nextStatus})
-   });
-  }
-  message.textContent="Booking details saved successfully.";
+  message.textContent="Booking details saved and marked as reviewed. Approval is a separate step.";
   setStatus("adminMessage","Booking details saved to Cloudflare D1. Refreshing slots…","ok");
   await loadCloudflareAdminBookings();
   const month=$("slotMonthFilter")?.value||values.date.slice(0,7);
@@ -645,7 +639,7 @@ function renderAdmin(){
  const bookingPages=Math.max(1,Math.ceil(filteredBookings.length/ADMIN_PAGE_SIZE));
  bookingPage=Math.min(bookingPage,bookingPages-1);
  const visibleBookings=filteredBookings.slice(bookingPage*ADMIN_PAGE_SIZE,(bookingPage+1)*ADMIN_PAGE_SIZE);
- const bookingTable=visibleBookings.length?`<table><thead><tr><th>DATE</th><th>TIME</th><th>BIGO NAME</th><th>BIGO ID</th><th>HOST LEVEL</th><th>AGENCY NAME</th><th>AGENCY TELEGRAM</th><th>OPK EVENT</th><th class="vs-head">VS</th><th>OPPONENT NAME</th><th>OPPONENT BIGO ID</th><th>LEVEL</th><th>OPPONENT AGENCY NAME</th><th>OPPONENT AGENCY TELEGRAM</th><th>REMARKS (WIN/LOSE)</th><th>STATUS</th><th>ACTIONS</th></tr></thead><tbody>${visibleBookings.map(b=>`<tr><td>${escapeHtml(b.date||"")}</td><td><b>${escapeHtml(b.time||"")}</b></td><td>${escapeHtml(b.name||"")}</td><td>${escapeHtml(b.bigoId||"")}</td><td>${escapeHtml(b.hostLevel||"")}</td><td>${escapeHtml(b.agencyName||"")}</td><td>${escapeHtml(b.agencyTelegram||"")}</td><td>${escapeHtml(b.opkEvent||"")}</td><td class="vs-cell">VS</td><td>${escapeHtml(b.opponentName||"")}</td><td>${escapeHtml(b.opponentBigoId||"")}</td><td>${escapeHtml(b.opponentLevel||"")}</td><td>${escapeHtml(b.opponentAgencyName||"")}</td><td>${escapeHtml(b.opponentAgencyTelegram||"")}</td><td>${escapeHtml(b.remarks||"")}</td><td><span class="pill ${b.opponentBigoId?"assigned":"full"}">${escapeHtml(b.status||"Reserved")}</span></td><td><button class="small booking-edit-trigger" data-edit-booking="${escapeHtml(b.id)}">Edit details</button> <button class="small" data-approve="${escapeHtml(b.id)}" ${b.status==="Approved"||b.status==="Opponent assigned"?"disabled":""}>Approve</button> <button class="small danger" data-cancel="${escapeHtml(b.id)}">Reject / cancel</button></td></tr>`).join("")}</tbody></table>`:'<div class="notice">No bookings for this month match your search.</div>';
+ const bookingTable=visibleBookings.length?`<table><thead><tr><th>DATE</th><th>TIME</th><th>BIGO NAME</th><th>BIGO ID</th><th>HOST LEVEL</th><th>AGENCY NAME</th><th>AGENCY TELEGRAM</th><th>OPK EVENT</th><th class="vs-head">VS</th><th>OPPONENT NAME</th><th>OPPONENT BIGO ID</th><th>LEVEL</th><th>OPPONENT AGENCY NAME</th><th>OPPONENT AGENCY TELEGRAM</th><th>REMARKS (WIN/LOSE)</th><th>STATUS</th><th>ACTIONS</th></tr></thead><tbody>${visibleBookings.map(b=>`<tr><td>${escapeHtml(b.date||"")}</td><td><b>${escapeHtml(b.time||"")}</b></td><td>${escapeHtml(b.name||"")}</td><td>${escapeHtml(b.bigoId||"")}</td><td>${escapeHtml(b.hostLevel||"")}</td><td>${escapeHtml(b.agencyName||"")}</td><td>${escapeHtml(b.agencyTelegram||"")}</td><td>${escapeHtml(b.opkEvent||"")}</td><td class="vs-cell">VS</td><td>${escapeHtml(b.opponentName||"")}</td><td>${escapeHtml(b.opponentBigoId||"")}</td><td>${escapeHtml(b.opponentLevel||"")}</td><td>${escapeHtml(b.opponentAgencyName||"")}</td><td>${escapeHtml(b.opponentAgencyTelegram||"")}</td><td>${escapeHtml(b.remarks||"")}</td><td><span class="pill ${b.opponentBigoId?"assigned":"full"}">${escapeHtml(b.status||"Reserved")}</span></td><td><button class="small booking-edit-trigger" data-edit-booking="${escapeHtml(b.id)}">Edit details</button> ${b.adminReviewed&&b.status!=="Approved"&&b.status!=="Opponent assigned"?'<button class="small" data-approve="'+escapeHtml(b.id)+'">Approve</button>':'<span class="muted">'+(b.adminReviewed?'Already reviewed':'Review required')+'</span>'} <button class="small danger" data-cancel="${escapeHtml(b.id)}">Reject / cancel</button></td></tr>`).join("")}</tbody></table>`:'<div class="notice">No bookings for this month match your search.</div>';
  const bookingPager=filteredBookings.length?`<div class="admin-pagination"><span>Showing ${bookingPage*ADMIN_PAGE_SIZE+1}–${Math.min((bookingPage+1)*ADMIN_PAGE_SIZE,filteredBookings.length)} of ${filteredBookings.length}</span><div><button class="secondary small" type="button" data-booking-prev ${bookingPage===0?"disabled":""}>Previous</button> <button class="secondary small" type="button" data-booking-next ${bookingPage>=bookingPages-1?"disabled":""}>Next</button></div></div>`:"";
  $("adminBookings").innerHTML=bookingTable+bookingPager;
  $("adminBookings").querySelectorAll("[data-edit-booking]").forEach(btn=>btn.onclick=()=>openBookingEdit(btn.dataset.editBooking));
@@ -1067,6 +1061,14 @@ $("manualCreateBtn").onclick=()=>{
 };
 async function approveBooking(id){
  const b=bookings.find(x=>x.id===id);if(!b)return;
+ if(!b.adminReviewed){
+  setStatus("adminMessage","Please edit and save this booking before approval.","err");
+  return;
+ }
+ if(b.status==="Approved"||b.status==="Opponent assigned"){
+  setStatus("adminMessage","This booking is already approved or assigned.","warn");
+  return;
+ }
  try{
   await cloudflareAdminRequest("/api/admin/bookings/"+encodeURIComponent(id)+"/status",{method:"PATCH",body:JSON.stringify({status:"Approved"})});
   b.status="Approved";renderAdmin();
