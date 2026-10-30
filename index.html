@@ -540,7 +540,7 @@ main{
     </button>
     <div id="bookingEditableContent" class="hidden">
     <div class="admin-head"><div><h3>Bookings & editable details</h3><p class="sub" style="margin:5px 0 0">Edit host and opponent information directly in this Admin section, then press Save changes.</p></div><input id="adminSearch" style="max-width:300px" placeholder="Search BIGO ID / name / date / time"></div>
-    <div class="row month-filter-row" style="margin-top:12px"><div><label for="bookingMonthFilter">Select month for bookings</label><select id="bookingMonthFilter" aria-label="Filter bookings by month"></select></div><div style="flex:0 0 auto;min-width:auto"><button id="downloadMonthExcelBtn" class="success" type="button">Download selected month Excel</button></div></div>
+
 
     <div id="adminBookings" class="table-wrap"><div class="notice">Loading bookings…</div></div>
     </div>
@@ -996,22 +996,22 @@ function updateAdminWelcomeGreeting(){
 function renderAdmin(){
  if(!isAdmin)return;
  refreshManualTimes();
- const bookingMonth=updateMonthPicker("bookingMonthFilter",bookings);
+ const bookingMonth="all";
  const slotMonth=updateMonthPicker("slotMonthFilter",adminSlots);
  const term=$("adminSearch").value.trim().toLowerCase();
 
  const filteredBookings=bookings
-  .filter(b=>!["Cancelled","Rejected"].includes(String(b.status||""))&&monthKey(b.date)===bookingMonth&&[b.date,b.time,b.name,b.bigoId,b.hostLevel,b.agencyName,b.agencyTelegram,b.opkEvent,b.opponentName,b.opponentBigoId,b.opponentLevel,b.opponentAgencyName,b.opponentAgencyTelegram,b.remarks,b.status].some(v=>String(v||"").toLowerCase().includes(term)))
+  .filter(b=>!["Cancelled","Rejected"].includes(String(b.status||""))&&[b.date,b.time,b.name,b.bigoId,b.hostLevel,b.agencyName,b.agencyTelegram,b.opkEvent,b.opponentName,b.opponentBigoId,b.opponentLevel,b.opponentAgencyName,b.opponentAgencyTelegram,b.remarks,b.status].some(v=>String(v||"").toLowerCase().includes(term)))
   .sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time));
  const bookingPages=Math.max(1,Math.ceil(filteredBookings.length/ADMIN_PAGE_SIZE));
  bookingPage=Math.min(bookingPage,bookingPages-1);
  const visibleBookings=filteredBookings.slice(bookingPage*ADMIN_PAGE_SIZE,(bookingPage+1)*ADMIN_PAGE_SIZE);
  const bookingTable=visibleBookings.length?`<table><thead><tr><th>DATE</th><th>TIME</th><th>BIGO NAME</th><th>BIGO ID</th><th>HOST LEVEL</th><th>AGENCY NAME</th><th>AGENCY TELEGRAM</th><th>OPK EVENT</th><th class="vs-head">VS</th><th>OPPONENT NAME</th><th>OPPONENT BIGO ID</th><th>LEVEL</th><th>OPPONENT AGENCY NAME</th><th>OPPONENT AGENCY TELEGRAM</th><th>REMARKS (WIN/LOSE)</th><th>STATUS</th><th>ACTIONS</th></tr></thead><tbody>${visibleBookings.map(b=>`<tr><td>${escapeHtml(b.date||"")}</td><td><b>${escapeHtml(b.time||"")}</b></td><td>${escapeHtml(b.name||"")}</td><td>${escapeHtml(b.bigoId||"")}</td><td>${escapeHtml(b.hostLevel||"")}</td><td>${escapeHtml(b.agencyName||"")}</td><td>${escapeHtml(b.agencyTelegram||"")}</td><td>${escapeHtml(b.opkEvent||"")}</td><td class="vs-cell">VS</td><td>${escapeHtml(b.opponentName||"")}</td><td>${escapeHtml(b.opponentBigoId||"")}</td><td>${escapeHtml(b.opponentLevel||"")}</td><td>${escapeHtml(b.opponentAgencyName||"")}</td><td>${escapeHtml(b.opponentAgencyTelegram||"")}</td><td>${escapeHtml(b.remarks||"")}</td><td><span class="pill ${b.opponentBigoId?"assigned":"full"}">${escapeHtml(b.status||"Reserved")}</span></td><td><button class="small booking-edit-trigger" data-edit-booking="${escapeHtml(b.id)}">Edit details</button> ${b.adminReviewed&&!["Approved","Opponent assigned","Cancelled","Rejected"].includes(String(b.status||""))?'<button class="small" data-approve="'+escapeHtml(b.id)+'">Approve</button>':'<span class="muted">'+(["Cancelled","Rejected"].includes(String(b.status||""))?'Closed':b.adminReviewed?'Already reviewed':'Review required')+'</span>'} <button class="small danger" data-cancel="${escapeHtml(b.id)}">Reject / cancel</button></td></tr>`).join("")}</tbody></table>`:'<div class="notice">No bookings for this month match your search.</div>';
  const bookingPager=filteredBookings.length?`<div class="admin-pagination"><span>Showing ${bookingPage*ADMIN_PAGE_SIZE+1}–${Math.min((bookingPage+1)*ADMIN_PAGE_SIZE,filteredBookings.length)} of ${filteredBookings.length}</span><div><button class="secondary small" type="button" data-booking-prev ${bookingPage===0?"disabled":""}>Previous</button> <button class="secondary small" type="button" data-booking-next ${bookingPage>=bookingPages-1?"disabled":""}>Next</button></div></div>`:"";
- const missingOpponents=bookings.filter(b=>!["Cancelled","Rejected"].includes(String(b.status||""))&&monthKey(b.date)===bookingMonth&&!String(b.opponentBigoId||"").trim()).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+ const missingOpponents=bookings.filter(b=>!["Cancelled","Rejected"].includes(String(b.status||""))&&!String(b.opponentBigoId||"").trim()).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
  const reportDate=v=>{const p=String(v||"").split("-").map(Number);return p.length===3?new Date(p[0],p[1]-1,p[2]).toLocaleDateString("en-US",{month:"long",day:"numeric"}).toUpperCase():String(v||"");};
  const reportTime=v=>{const p=String(v||"").split(":");if(p.length!==2)return String(v||"");let h=Number(p[0]);const ap=h>=12?"PM":"AM";h=h%12||12;return h+":"+p[1]+" "+ap;};
- let reportLines=["LOOKING FOR ACTIVE OPPONENT FOR "+monthLabel(bookingMonth).toUpperCase()+"‼️",""];
+ let reportLines=["LOOKING FOR ACTIVE OPPONENT‼️",""];
  let lastDate="";
  missingOpponents.forEach(b=>{const d=reportDate(b.date);if(d!==lastDate){reportLines.push(d,"");lastDate=d;}reportLines.push("NAME : "+(b.name||"—"),"BIGO ID : "+(b.bigoId||"—"),"TIME : "+reportTime(b.time),"");});
  if(missingOpponents.length)reportLines.push("No PM, no match. Tara 😘");
