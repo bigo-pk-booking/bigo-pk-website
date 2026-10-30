@@ -363,6 +363,46 @@ main{
   -webkit-overflow-scrolling:touch;
 }
 
+
+/* FINAL FIX: make the entire Slot Management overlay the scroll container */
+#slotManagementModal{
+  display:block!important;
+  position:fixed!important;
+  inset:0!important;
+  width:100%!important;
+  height:100vh!important;
+  height:100dvh!important;
+  box-sizing:border-box!important;
+  padding:14px 12px 28px!important;
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+  -webkit-overflow-scrolling:touch!important;
+  overscroll-behavior-y:contain!important;
+  touch-action:pan-y!important;
+}
+#slotManagementModal > div{
+  display:block!important;
+  width:min(100%,950px)!important;
+  max-width:950px!important;
+  height:auto!important;
+  max-height:none!important;
+  min-height:0!important;
+  overflow:visible!important;
+  margin:0 auto 18px!important;
+  box-sizing:border-box!important;
+  touch-action:pan-y!important;
+}
+#slotManagementModal > div > div:first-child{
+  position:relative!important;
+  top:auto!important;
+}
+#slotManagementModal .table-wrap{
+  max-width:100%!important;
+  overflow-x:auto!important;
+  overflow-y:visible!important;
+  -webkit-overflow-scrolling:touch!important;
+}
+
 </style>
 </head>
 <body>
