@@ -188,6 +188,29 @@ body.admin-panel-open .pk-battle { display:none !important; }
 .booking-edit-actions{display:flex;gap:10px;margin-top:18px}.booking-edit-actions>*{flex:1}.booking-edit-save{background:#bd0000;border-color:#bd0000}
 .booking-edit-trigger{background:#fff;color:#a90000;border:1px solid #dfbaba}
 @media(max-width:520px){.booking-edit-grid{grid-template-columns:1fr}.booking-edit-grid .wide{grid-column:auto}.booking-edit-body{padding:14px}.booking-edit-head h2{font-size:18px}}
+
+/* Responsive wide layout + gentle booking form entrance */
+@media(min-width:801px){
+  main{width:100%;max-width:1500px;padding-left:clamp(22px,3vw,48px);padding-right:clamp(22px,3vw,48px)}
+  .head{max-width:1500px;padding-left:clamp(8px,2vw,28px);padding-right:clamp(8px,2vw,28px)}
+  #bookingView{grid-template-columns:minmax(0,1.12fr) minmax(320px,.88fr);align-items:start;gap:20px}
+  #bookingView>.card{width:100%}
+}
+@media(min-width:1300px){
+  main{max-width:1680px}
+  #bookingView{gap:24px}
+}
+#bookingFormCard:not(.hidden){
+  animation:bookingFormReveal .48s cubic-bezier(.2,.75,.25,1) both;
+  transform-origin:top center;
+}
+@keyframes bookingFormReveal{
+  from{opacity:0;transform:translateY(16px) scale(.985);filter:blur(2px)}
+  to{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}
+}
+@media(prefers-reduced-motion:reduce){
+  #bookingFormCard:not(.hidden){animation:none}
+}
 </style>
 </head>
 <body>
