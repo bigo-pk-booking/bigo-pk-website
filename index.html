@@ -703,7 +703,11 @@ async function startApp(){
     }
    }
   });
- }catch(e){console.error(e);$("configWarning").classList.remove("hidden");}
+ }catch(e){
+  console.error("BADASS Firebase initialization error:",e);
+  $("configWarning").classList.remove("hidden");
+  setStatus("loginMessage","Firebase initialization error: "+String(e?.message||e),"err");
+ }
 }
 $("filterDate").addEventListener("change",()=>{selectedSlot=null;$("chosenSlot").value="";$("bookBtn").disabled=true;loadCloudflareSlots($("filterDate").value);});
 $("refreshSlots").onclick=()=>loadCloudflareSlots($("filterDate").value||defaultScheduleDate);
