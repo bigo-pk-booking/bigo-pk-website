@@ -213,6 +213,70 @@ body.admin-panel-open .pk-battle { display:none !important; }
 @media(prefers-reduced-motion:reduce){
   #bookingFormCard:not(.hidden){animation:none}
 }
+
+/* BADASS crowd backdrop: darkened for readable content */
+html{min-height:100%;background:#080405}
+body{
+  min-height:100vh;
+  background:
+    linear-gradient(rgba(5,3,5,.58),rgba(5,3,5,.72)),
+    url("./assets/badass-crowd-bg.jpg") center center / cover fixed no-repeat,
+    #080405;
+  color:#f7eeee;
+}
+header{
+  width:100%;
+  background:rgba(5,4,6,.88);
+  border-bottom:2px solid #d40000;
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+}
+main{
+  width:100%;
+  max-width:none;
+  margin:0;
+  padding:clamp(12px,2.2vw,30px) clamp(10px,2.5vw,38px) 48px;
+}
+.head{
+  width:100%;
+  max-width:none;
+  margin:0;
+  padding-left:clamp(0px,1vw,14px);
+  padding-right:clamp(0px,1vw,14px);
+}
+.sheet-title{display:none!important}
+.pk-battle,.card{
+  background:rgba(12,8,10,.76);
+  color:#fff;
+  border:1px solid rgba(255,55,65,.72);
+  border-radius:12px;
+  box-shadow:0 10px 32px rgba(0,0,0,.28);
+  backdrop-filter:blur(9px);
+  -webkit-backdrop-filter:blur(9px);
+}
+.pk-battle{width:100%;margin-left:0;margin-right:0}
+.pk-battle-note,.pk-battle-kicker,.battle-side small{color:#ffd5d5}
+.card h3,.card .sub,.card label,.footer{color:#f4e9e9}
+.card input,.card select,.card textarea{background:rgba(255,255,255,.96);color:#211c1c}
+.legend{background:rgba(0,0,0,.28);color:#fff;border-color:#7e292e}
+.slot{color:#d8ffe3}
+@media(min-width:601px){
+  #bookingView{width:100%;grid-template-columns:minmax(0,1.12fr) minmax(320px,.88fr);gap:clamp(14px,2vw,28px);align-items:stretch}
+  #bookingView>.card{width:100%;min-width:0}
+}
+@media(max-width:800px){
+  body{background-attachment:scroll}
+  #bookingView{grid-template-columns:minmax(0,1fr);width:100%}
+  .pk-battle{padding:16px 10px}
+}
+@media(max-width:600px){
+  main{padding:10px 8px 32px}
+  header{padding:10px 9px}
+  .head{gap:9px}
+  .card{padding:13px}
+  .battle-arena{gap:5px}
+  .battle-vs{width:46px;height:46px;font-size:18px}
+}
 </style>
 </head>
 <body>
