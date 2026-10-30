@@ -277,6 +277,32 @@ main{
   .battle-arena{gap:5px}
   .battle-vs{width:46px;height:46px;font-size:18px}
 }
+
+/* Responsive OPK schedule: use the whole row when no booking form is open */
+#bookingView{
+  display:grid;
+  grid-template-columns:minmax(0,1fr)!important;
+  width:100%;
+  max-width:none;
+  gap:clamp(14px,2vw,24px);
+}
+#bookingView>.card{width:100%;min-width:0;max-width:none}
+#bookingView>section:first-child{grid-column:1/-1;width:100%}
+#slotsArea{width:100%;max-width:none;overflow-x:auto}
+#slotsArea table{width:100%;min-width:0}
+@media(min-width:1100px){
+  #bookingView:has(#bookingFormCard:not(.hidden)){
+    grid-template-columns:minmax(0,1.12fr) minmax(320px,.88fr)!important;
+    align-items:start;
+  }
+  #bookingView:has(#bookingFormCard:not(.hidden))>section:first-child{grid-column:auto}
+}
+@media(max-width:800px){
+  #bookingView{grid-template-columns:minmax(0,1fr)!important}
+  #bookingView>.card{grid-column:1/-1}
+  #slotsArea{overflow-x:auto}
+  #slotsArea table{min-width:100%}
+}
 </style>
 </head>
 <body>
