@@ -458,6 +458,9 @@ const $ = id => document.getElementById(id);
 const configured = FIREBASE_CONFIG.apiKey && !FIREBASE_CONFIG.apiKey.includes("PASTE_") && FIREBASE_CONFIG.projectId && !FIREBASE_CONFIG.projectId.includes("PASTE_");
 let app, auth, db, currentUser=null, isAdmin=false, slots=[], adminSlots=[], bookings=[], selectedSlot=null, stopSlots=null, stopBookings=null;
 let bookingPage=0, slotPage=0;
+// Telegram direct-edit deep link: ?edit=<booking UUID>
+const requestedEditBookingId = new URLSearchParams(window.location.search).get("edit") || "";
+if (requestedEditBookingId) showView("admin");
 const ADMIN_PAGE_SIZE=10;
 const escapeHtml = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const dateToday = () => {const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;};
@@ -678,7 +681,25 @@ async function startApp(){
    if(stopSlots)stopSlots();stopSlots=null;
    // Cloudflare D1 is the single source of truth for slot availability.
    await loadCloudflareSlots($("filterDate").value||defaultScheduleDate);
-   if(stopBookings)stopBookings();stopBookings=null;if(isAdmin){await loadCloudflareAdminBookings();}else{bookings=[];}
+   if(stopBookings)stopBookings();stopBookings=null;if(isAdmin){
+    await loadCloudflareAdminBookings();
+    if(requestedEditBookingId){
+     const targetBooking=bookings.find(b=>String(b.id)===requestedEditBookingId);
+     if(targetBooking){
+      openBookingEdit(requestedEditBookingId);
+      history.replaceState(null,"",window.location.pathname);
+     }else{
+      setStatus("adminMessage","The requested booking could not be found. Refresh the admin bookings list and try again.","err");
+     }
+    }
+   }else{
+    bookings=[];
+    if(requestedEditBookingId){
+     showView("admin");
+     $("adminEmail")?.focus();
+     setStatus("loginMessage","Sign in with your admin email and password to edit the selected PK booking.");
+    }
+   }
   });
  }catch(e){console.error(e);$("configWarning").classList.remove("hidden");}
 }
