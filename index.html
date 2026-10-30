@@ -250,7 +250,7 @@ body.admin-panel-open .pk-battle { display:none !important; }
     <button id="loginBtn" class="full">Sign in as admin</button><div id="loginMessage" class="status"></div>
   </div>
   <div class="card hidden" id="adminDashboard">
-    <div class="admin-head"><div><h3>Admin dashboard</h3><p class="sub" style="margin:5px 0 0">Manage schedule, assign opponents, and download the report.</p></div><button id="logoutBtn" class="secondary small">Sign out</button></div>
+    <div class="admin-head"><div><h3>Welcome, Badass Admin!</h3><p id="adminWelcomeGreeting" class="sub" style="margin:5px 0 0">Welcome back. Have a great day!</p></div><button id="logoutBtn" class="secondary small">Sign out</button></div>
     <div class="card" id="telegramLinkCard" style="margin-top:14px;padding:14px">
       <h3>🔗 Link Telegram Account</h3>
       <p class="sub">Generate a short-lived code while signed in to the website, then send <code>/link YOUR_CODE</code> to @BadassBigoPKNotifyBot. Never send your website password to Telegram.</p>
@@ -640,6 +640,12 @@ async function saveReportDetails(id){
   saveButton.disabled=false;
  }
 }
+function updateAdminWelcomeGreeting(){
+ const hour=new Date().getHours();
+ const greeting=hour>=5&&hour<12?"Good morning!":hour>=12&&hour<17?"Good afternoon!":"Good evening!";
+ const el=$("adminWelcomeGreeting");
+ if(el)el.textContent=greeting+" Welcome back. Have a great day!";
+}
 function renderAdmin(){
  if(!isAdmin)return;
  refreshManualTimes();
@@ -685,7 +691,7 @@ async function startApp(){
    if(!user){isAdmin=false;try{await signInAnonymously(auth)}catch(e){console.error(e);setStatus("bookingMessage","Could not start a session. Check Firebase Anonymous Authentication settings.","err");}return;}
    isAdmin=false;
    if(!user.isAnonymous){try{const a=await getDoc(doc(db,"admins",user.uid));isAdmin=a.exists()&&a.data().enabled===true;}catch(e){console.error(e)}}
-   $("adminLogin").classList.toggle("hidden",isAdmin);$("adminDashboard").classList.toggle("hidden",!isAdmin);
+   $("adminLogin").classList.toggle("hidden",isAdmin);$("adminDashboard").classList.toggle("hidden",!isAdmin);if(isAdmin)updateAdminWelcomeGreeting();
    if(stopSlots)stopSlots();stopSlots=null;
    // Cloudflare D1 is the single source of truth for slot availability.
    await loadCloudflareSlots($("filterDate").value||defaultScheduleDate);
