@@ -605,7 +605,7 @@ async function loadPublicOpenMonths(){
   const response=await fetch(BIGO_API_BASE+"/api/months/open",{cache:"no-store"});
   const data=await response.json();
   if(!response.ok||!data.ok)throw new Error(data.error||"Could not load open months");
-  publicOpenMonths=Array.isArray(data.months)?data.months.filter(m=>/^\\d{4}-(0[1-9]|1[0-2])$/.test(m)).sort():[];
+  publicOpenMonths=Array.isArray(data.months)?data.months.filter(m=>/^\d{4}-(0[1-9]|1[0-2])$/.test(m)).sort():[];
   const dateInput=$("filterDate");
   if(!publicOpenMonths.length){
    dateInput.disabled=true;dateInput.removeAttribute("min");dateInput.removeAttribute("max");
