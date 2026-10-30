@@ -495,6 +495,16 @@ main{
   </div>
   <div class="card hidden" id="adminDashboard">
     <div class="admin-head"><div><h3>Welcome, Badass Admin!</h3><p id="adminWelcomeGreeting" class="sub" style="margin:5px 0 0">Welcome back. Have a great day!</p></div></div>
+    <section id="opponentSearchReport" style="margin:14px 0">
+      <button id="toggleOpponentReportBtn" type="button" class="secondary full" style="display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left">
+        <span>🔎 Looking for Active Opponents</span>
+        <span id="opponentReportCount" style="display:inline-flex;min-width:30px;height:30px;padding:0 9px;align-items:center;justify-content:center;border-radius:18px;background:#c90012;color:#fff;font-weight:900">0</span>
+      </button>
+      <div id="opponentReportPanel" class="hidden card" style="margin-top:10px;padding:14px">
+        <div class="admin-head"><div><h3>Opponent Search Report</h3><p class="sub">Copy this list and post it to find opponents. It updates automatically when an opponent is saved.</p></div><button id="copyOpponentReportBtn" type="button" class="success">Copy report</button></div>
+        <div id="opponentReportContent" style="margin-top:10px"></div><div id="opponentReportStatus" class="status"></div>
+      </div>
+    </section>
     <div class="admin-grid" style="margin-top:14px">
       <div class="card manual-pk-card" style="padding:14px">
         <h3>Manual PK booking</h3>
@@ -527,16 +537,7 @@ main{
     <hr>
     <div class="admin-head"><div><h3>Bookings & editable details</h3><p class="sub" style="margin:5px 0 0">Edit host and opponent information directly in this Admin section, then press Save changes.</p></div><input id="adminSearch" style="max-width:300px" placeholder="Search BIGO ID / name / date / time"></div>
     <div class="row month-filter-row" style="margin-top:12px"><div><label for="bookingMonthFilter">Select month for bookings</label><select id="bookingMonthFilter" aria-label="Filter bookings by month"></select></div><div style="flex:0 0 auto;min-width:auto"><button id="downloadMonthExcelBtn" class="success" type="button">Download selected month Excel</button></div></div>
-    <section id="opponentSearchReport" style="margin:14px 0">
-      <button id="toggleOpponentReportBtn" type="button" class="secondary full" style="display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left">
-        <span>🔎 Looking for Active Opponents</span>
-        <span id="opponentReportCount" style="display:inline-flex;min-width:30px;height:30px;padding:0 9px;align-items:center;justify-content:center;border-radius:18px;background:#c90012;color:#fff;font-weight:900">0</span>
-      </button>
-      <div id="opponentReportPanel" class="hidden card" style="margin-top:10px;padding:14px">
-        <div class="admin-head"><div><h3>Opponent Search Report</h3><p class="sub">Copy this list and post it to find opponents. It updates automatically when an opponent is saved.</p></div><button id="copyOpponentReportBtn" type="button" class="success">Copy report</button></div>
-        <div id="opponentReportContent" style="margin-top:10px"></div><div id="opponentReportStatus" class="status"></div>
-      </div>
-    </section>
+
     <div id="adminBookings" class="table-wrap"><div class="notice">Loading bookings…</div></div>
     <hr>
     <div class="card" style="margin:12px 0;padding:14px">
