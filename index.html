@@ -919,8 +919,9 @@ async function startApp(){
    if(!user.isAnonymous){try{const a=await getDoc(doc(db,"admins",user.uid));isAdmin=a.exists()&&a.data().enabled===true;}catch(e){console.error(e)}}
    $("adminLogin").classList.toggle("hidden",isAdmin);$("adminDashboard").classList.toggle("hidden",!isAdmin);$("showAdminBtn").classList.toggle("hidden",isAdmin);$("logoutBtn").classList.toggle("hidden",!isAdmin);if(isAdmin)updateAdminWelcomeGreeting();
    if(stopSlots)stopSlots();stopSlots=null;
-   // Cloudflare D1 is the single source of truth for slot availability.
-   await loadCloudflareSlots($("filterDate").value||defaultScheduleDate);
+   // Load public monthly settings before checking slots, so the first page load matches the Set OPK button behavior.
+   const hasOpenMonths=await loadPublicOpenMonths();
+   if(hasOpenMonths) await loadCloudflareSlots($("filterDate").value||defaultScheduleDate);
    if(stopBookings)stopBookings();stopBookings=null;if(isAdmin){
     await loadCloudflareAdminBookings();
     if(requestedEditBookingId){
