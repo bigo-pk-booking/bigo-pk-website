@@ -296,17 +296,31 @@ body.admin-panel-open .pk-battle { display:none !important; }
     <div class="admin-head"><div><h3>Bookings & editable details</h3><p class="sub" style="margin:5px 0 0">Edit host and opponent information directly in this Admin section, then press Save changes.</p></div><input id="adminSearch" style="max-width:300px" placeholder="Search BIGO ID / name / date / time"></div>
     <div class="row month-filter-row" style="margin-top:12px"><div><label for="bookingMonthFilter">Select month for bookings</label><select id="bookingMonthFilter" aria-label="Filter bookings by month"></select></div><div style="flex:0 0 auto;min-width:auto"><button id="downloadMonthExcelBtn" class="success" type="button">Download selected month Excel</button></div></div>
     <div id="adminBookings" class="table-wrap"><div class="notice">Loading bookings…</div></div>
-    <hr><h3>Slot management</h3><p class="sub">Close an available slot or reopen a closed slot. Booked slots must be cancelled before reopening.</p>
-    <div class="row month-filter-row" style="margin-top:12px">
-      <div><label for="slotMonthFilter">Select month for slots</label><select id="slotMonthFilter" aria-label="Filter slots by month"></select></div>
-      <div><label for="slotStatusFilter">Filter by status</label><select id="slotStatusFilter" aria-label="Filter slots by status">
-        <option value="all">All statuses</option>
-        <option value="available">Available</option>
-        <option value="full">Already set this date by another host</option>
-        <option value="closed">Closed</option>
-      </select></div>
+    <hr>
+    <div class="card" style="margin:12px 0;padding:14px">
+      <h3>Slot management</h3>
+      <p class="sub">Manage available, booked, and closed PK time slots in a popup.</p>
+      <button id="openSlotManagement" type="button" class="full">⚙️ Open Slot Management</button>
     </div>
-    <div id="adminSlots" class="table-wrap"><div class="notice">Loading slots…</div></div>
+    <div id="slotManagementModal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="slotManagementTitle" style="position:fixed;inset:0;z-index:12000;background:rgba(0,0,0,.78);display:flex;align-items:center;justify-content:center;padding:12px">
+      <div style="width:min(100%,950px);max-height:90vh;overflow:auto;background:#fff;border:2px solid #c90012;border-radius:12px;padding:16px;color:#202428;box-shadow:0 20px 60px #0008">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;position:sticky;top:-16px;background:#fff;padding:4px 0 12px;z-index:2;border-bottom:1px solid #ddd">
+          <div><h3 id="slotManagementTitle" style="margin:0">Slot Management</h3><p class="sub" style="margin:4px 0 0">Close an available slot or reopen a closed slot. Booked slots must be cancelled first.</p></div>
+          <button id="closeSlotManagement" type="button" class="secondary" aria-label="Close slot management">✕</button>
+        </div>
+        <div class="row month-filter-row" style="margin-top:12px">
+          <div><label for="slotMonthFilter">Select month for slots</label><select id="slotMonthFilter" aria-label="Filter slots by month"></select></div>
+          <div><label for="slotStatusFilter">Filter by status</label><select id="slotStatusFilter" aria-label="Filter slots by status">
+            <option value="all">All statuses</option>
+            <option value="available">Available</option>
+            <option value="full">Already set this date by another host</option>
+            <option value="closed">Closed</option>
+          </select></div>
+        </div>
+        <div id="adminSlots" class="table-wrap"><div class="notice">Loading slots…</div></div>
+        <div style="display:flex;justify-content:flex-end;margin-top:14px"><button id="closeSlotManagementBottom" type="button" class="secondary">Close</button></div>
+      </div>
+    </div>
     <div id="adminMessage" class="status"></div>
   </div>
 </section>
@@ -1114,6 +1128,17 @@ $("adminSearch").addEventListener("input",()=>{bookingPage=0;renderAdmin();});
 $("bookingMonthFilter").addEventListener("change",()=>{bookingPage=0;renderAdmin();});
 $("slotMonthFilter").addEventListener("change",()=>{slotPage=0;loadCloudflareAdminSlots($("slotMonthFilter").value);});
 $("slotStatusFilter").addEventListener("change",()=>{slotPage=0;renderAdmin();});
+(function(){
+ const modal=$("slotManagementModal");
+ const open=$("openSlotManagement");
+ const closeButtons=[$("closeSlotManagement"),$("closeSlotManagementBottom")];
+ if(!modal||!open)return;
+ const close=()=>{modal.classList.add("hidden");document.body.style.overflow="";};
+ open.addEventListener("click",()=>{modal.classList.remove("hidden");document.body.style.overflow="hidden";});
+ closeButtons.forEach(button=>button?.addEventListener("click",close));
+ modal.addEventListener("click",event=>{if(event.target===modal)close();});
+ document.addEventListener("keydown",event=>{if(event.key==="Escape"&&!modal.classList.contains("hidden"))close();});
+})();
 $("downloadMonthExcelBtn").addEventListener("click",()=>$("exportExcelBtn").click());
 function exportRows(){const selectedMonth=$("bookingMonthFilter")?.value||dateToday().slice(0,7);return bookings.filter(b=>monthKey(b.date)===selectedMonth).map(b=>({"DATE":b.date||"","TIME":b.time||"","BIGO NAME":b.name||"","BIGO ID":b.bigoId||"","HOST LEVEL":b.hostLevel||"","AGENCY NAME":b.agencyName||"","AGENCY TELEGRAM":b.agencyTelegram||"","OPK EVENT":b.opkEvent||"","VS":"VS","OPPONENT NAME":b.opponentName||"","OPPONENT BIGO ID":b.opponentBigoId||"","LEVEL":b.opponentLevel||"","OPPONENT AGENCY NAME":b.opponentAgencyName||"","OPPONENT AGENCY TELEGRAM":b.opponentAgencyTelegram||"","REMARKS (WIN/LOSE)":b.remarks||b.status||""})).sort((a,b)=>(a.DATE+a.TIME).localeCompare(b.DATE+b.TIME));}
 function downloadBlob(content,type,name){const blob=new Blob([content],{type});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
