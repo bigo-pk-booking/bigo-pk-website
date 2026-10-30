@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#078f89">
 <title>BADASS • BIGO PK Slots</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%231f2328%22/%3E%3Cpath d=%22M32 7l5 11 12 2-9 8 2 12-10-6-10 6 2-12-9-8 12-2z%22 fill=%22white%22/%3E%3Ctext x=%2232%22 y=%2255%22 font-size=%2217%22 font-weight=%22900%22 text-anchor=%22middle%22 fill=%22white%22%3EB%3C/text%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Cdefs%3E%3ClinearGradient id=%22g%22 x2=%220%22 y2=%221%22%3E%3Cstop stop-color=%22%2300c8ff%22/%3E%3Cstop offset=%221%22 stop-color=%22%23006bdb%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width=%2264%22 height=%2264%22 rx=%2216%22 fill=%22%2306060a%22 stroke=%22%23ef202b%22 stroke-width=%223%22/%3E%3Cpath d=%22M10 27 52 11 42 53 29 38 22 47 23 33z%22 fill=%22url(%23g)%22 stroke=%22white%22 stroke-width=%222%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22m8 14 5-8 5 8 5-8 5 8%22 fill=%22none%22 stroke=%22%23ffd34d%22 stroke-width=%223%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <style>
  :root{--bg:#f5f6f7;--panel:#ffffff;--panel2:#f0f1f2;--line:#d9dde1;--text:#202428;--muted:#687078;--green:#e6f4eb;--red:#fbe9e9;--gold:#f8f0dc;--blue:#6b7280}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--text);min-height:100vh}
@@ -407,6 +407,24 @@ main{
 /* FIX: allow the Slot Management modal to close; hidden must override its ID display rule */
 #slotManagementModal.hidden{display:none!important}
 
+
+/* Telegram announcement hero + continuous snake-style marquee */
+.tg-announcement{position:relative;isolation:isolate;overflow:hidden;margin:0 0 18px;border:2px solid #a90000;border-radius:10px;background:radial-gradient(ellipse at 18% 50%,#3c0808 0%,#160707 48%,#050505 100%);color:#fff;box-shadow:0 8px 24px #7d000033}
+.tg-hero-row{display:flex;align-items:center;gap:15px;padding:16px 17px 12px}
+.tg-mark{flex:0 0 66px;width:66px;height:66px;display:grid;place-items:center;border-radius:50%;background:linear-gradient(145deg,#23c8ff,#0066d8);border:3px solid #fff;box-shadow:0 0 0 4px #00aaff55,0 0 22px #00aaff99;font-size:35px}
+.tg-copy{min-width:0}.tg-title{margin:0;font-size:clamp(22px,4vw,34px);line-height:1;font-weight:1000;letter-spacing:.015em;text-transform:uppercase;text-shadow:2px 2px 0 #970000,0 0 15px #ff2020}.tg-title span{color:#24caff}.tg-copy p{margin:7px 0 0;color:#ffe0e0;font-size:13px;line-height:1.4;font-weight:650}
+.tg-join{display:inline-flex;margin:0 17px 13px 98px;padding:8px 13px;border:1px solid #52d9ff;border-radius:6px;background:#006c9c;color:#fff;text-decoration:none;font-size:12px;font-weight:900;letter-spacing:.04em;box-shadow:0 0 12px #00aaff55}
+.tg-join:hover{background:#0088bd}
+.tg-marquee{overflow:hidden;border-top:1px solid #ff3535;border-bottom:1px solid #ff3535;background:linear-gradient(90deg,#650000,#170707 50%,#650000);padding:8px 0;white-space:nowrap}
+.tg-marquee-track{display:flex;width:max-content;animation:tgSnakeScroll 25s linear infinite}
+.tg-marquee-set{display:flex;flex:0 0 auto;align-items:center;gap:10px;padding-right:10px}
+.tg-tile{display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border:1px solid #ff555588;border-radius:5px;background:linear-gradient(135deg,#300707,#710000);color:#fff;font-size:11px;font-weight:950;letter-spacing:.09em;text-transform:uppercase;box-shadow:inset 0 0 10px #ff222222}
+.tg-tile b{color:#ffd34d;font-size:15px}
+@keyframes tgSnakeScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.tg-announcement:hover .tg-marquee-track{animation-play-state:paused}
+@media(max-width:520px){.tg-hero-row{gap:11px;padding:13px 11px 10px}.tg-mark{width:52px;height:52px;flex-basis:52px;font-size:28px}.tg-title{font-size:clamp(20px,6vw,27px)}.tg-copy p{font-size:11px}.tg-join{margin:0 11px 11px 74px;font-size:11px}.tg-tile{font-size:10px;padding:5px 8px}}
+@media(prefers-reduced-motion:reduce){.tg-marquee-track{animation:none!important;transform:none!important}.tg-marquee{overflow-x:auto}}
+
 </style>
 </head>
 <body>
@@ -432,6 +450,22 @@ main{
   </div>
   <div class="battle-energy" aria-hidden="true"></div>
   <p class="pk-battle-note"><b>Let’s support every PK match!</b> Every cheer counts—let’s help one another reach our target quota. ❤️</p>
+</section>
+<section class="tg-announcement" aria-label="Telegram announcements">
+  <div class="tg-hero-row">
+    <div class="tg-mark" aria-hidden="true">➤</div>
+    <div class="tg-copy">
+      <h2 class="tg-title"><span>TG</span> ANNOUNCEMENT</h2>
+      <p>Join our Telegram Group for the latest OPK schedules, updates and announcements!</p>
+    </div>
+  </div>
+  <a class="tg-join" href="https://t.me/+RPxCoUZ1MctjYmZl" target="_blank" rel="noopener noreferrer">➤ JOIN TELEGRAM GROUP</a>
+  <div class="tg-marquee" aria-label="BIGO PK updates and announcements">
+    <div class="tg-marquee-track">
+      <div class="tg-marquee-set"><span class="tg-tile"><b>♛</b> BIGO PK</span><span class="tg-tile"><b>♛</b> UPDATES</span><span class="tg-tile"><b>♛</b> OPK SCHEDULES</span><span class="tg-tile"><b>♛</b> ANNOUNCEMENTS</span><span class="tg-tile"><b>♛</b> JOIN NOW</span></div>
+      <div class="tg-marquee-set" aria-hidden="true"><span class="tg-tile"><b>♛</b> BIGO PK</span><span class="tg-tile"><b>♛</b> UPDATES</span><span class="tg-tile"><b>♛</b> OPK SCHEDULES</span><span class="tg-tile"><b>♛</b> ANNOUNCEMENTS</span><span class="tg-tile"><b>♛</b> JOIN NOW</span></div>
+    </div>
+  </div>
 </section>
 <div id="configWarning" class="notice warn hidden">Firebase setup is incomplete. Open <b>README-SETUP.txt</b> in the project folder and add your Firebase web configuration before publishing.</div>
 <div class="grid" id="bookingView">
