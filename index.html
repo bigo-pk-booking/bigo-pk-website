@@ -828,7 +828,7 @@ async function generateMonthlySchedule(){
 async function loadCloudflareAdminSlots(monthKeyValue){
  if(!isAdmin)return;
  const month=monthKeyValue||$("slotMonthFilter")?.value||selectedHeaderMonth();
- if(/^\\d{4}-(0[1-9]|1[0-2])$/.test(month)){try{const key="badass_admin_slot_months_seen_v1";const saved=JSON.parse(localStorage.getItem(key)||"[]");const seen=Array.isArray(saved)?saved:[];if(!seen.includes(month)){seen.push(month);localStorage.setItem(key,JSON.stringify(seen));}}catch(e){console.warn("Could not save admin slot month history",e);}}
+ if(/^\d{4}-(0[1-9]|1[0-2])$/.test(month)){try{const key="badass_admin_slot_months_seen_v1";const saved=JSON.parse(localStorage.getItem(key)||"[]");const seen=Array.isArray(saved)?saved:[];if(!seen.includes(month)){seen.push(month);localStorage.setItem(key,JSON.stringify(seen));}}catch(e){console.warn("Could not save admin slot month history",e);}}
  await loadMonthlySettings(month);
  if(!/^\d{4}-\d{2}$/.test(month))return;
  const [year,monthNum]=month.split("-").map(Number);
@@ -854,7 +854,7 @@ function slotId(date,time){return `${date}_${time.replace(":","")}`;}
 function selectedHeaderMonth(){const d=$("filterDate").value||defaultScheduleDate;return d.slice(0,7);}
 function monthTitle(key){const d=new Date(key+"-01T12:00:00");return d.toLocaleDateString("en-US",{month:"long",year:"numeric"});}
 async function ensureMonthSlots(monthKeyValue){
- if(!isAdmin||!db||!/^\\d{4}-\\d{2}$/.test(monthKeyValue))return;
+ if(!isAdmin||!db||!/^\d{4}-\d{2}$/.test(monthKeyValue))return;
  const title=monthTitle(monthKeyValue);const label=$("autoScheduleMonth");if(label)label.textContent=title;
  setStatus("scheduleMessage",`Preparing available OPK slots for ${title}…`);
  try{
@@ -1537,7 +1537,7 @@ function exportRows(){const selectedMonth=$("bookingMonthFilter")?.value||dateTo
 function downloadBlob(content,type,name){const blob=new Blob([content],{type});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 $("exportExcelBtn").onclick=async()=>{if(!isAdmin)return;if(!window.ExcelJS){setStatus("exportMessage","Excel formatting library did not load. Check your internet connection, then try again.","err");return;}try{
  const ExcelJS=window.ExcelJS;const wb=new ExcelJS.Workbook();wb.creator="BADASS";wb.subject="BIGO OPK Match Schedule";wb.title="BADASS OPK Match Report";wb.created=new Date();
- const now=new Date();const seenKey="badass_admin_slot_months_seen_v1";let seenMonths=[];try{const saved=JSON.parse(localStorage.getItem(seenKey)||"[]");if(Array.isArray(saved))seenMonths=saved.filter(m=>/^\\d{4}-(0[1-9]|1[0-2])$/.test(m));}catch(e){console.warn("Could not read saved admin slot months",e);}const monthSet=new Set([now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0"),...seenMonths,...bookings.map(b=>monthKey(b.date)).filter(m=>/^\\d{4}-(0[1-9]|1[0-2])$/.test(m))]);const months=Array.from(monthSet).sort();
+ const now=new Date();const seenKey="badass_admin_slot_months_seen_v1";let seenMonths=[];try{const saved=JSON.parse(localStorage.getItem(seenKey)||"[]");if(Array.isArray(saved))seenMonths=saved.filter(m=>/^\d{4}-(0[1-9]|1[0-2])$/.test(m));}catch(e){console.warn("Could not read saved admin slot months",e);}const monthSet=new Set([now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0"),...seenMonths,...bookings.map(b=>monthKey(b.date)).filter(m=>/^\d{4}-(0[1-9]|1[0-2])$/.test(m))]);const months=Array.from(monthSet).sort();
  const headers=["DATE","TIME","BIGO NAME","BIGO ID","HOST LEVEL","AGENCY NAME","AGENCY TELEGRAM","OPK EVENT","VS","OPPONENT NAME","OPPONENT BIGO ID","LEVEL","OPPONENT AGENCY NAME","OPPONENT AGENCY TELEGRAM","REMARKS (WIN/LOSE)"];
  const widths=[19,13,20,18,12,20,22,18,6,21,21,12,23,25,20];
  months.forEach(month=>{
