@@ -811,8 +811,10 @@ function updateMonthPicker(id,records){
  const currentMonth=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
  const nextDate=new Date(now.getFullYear(),now.getMonth()+1,1);
  const nextMonth=`${nextDate.getFullYear()}-${String(nextDate.getMonth()+1).padStart(2,"0")}`;
- // Only show this month and next month; this rolls forward automatically each new month.
- const keys=[currentMonth,nextMonth];
+ // Slot Management shows this month plus the next two months; other filters keep two.
+ const thirdDate=new Date(now.getFullYear(),now.getMonth()+2,1);
+ const thirdMonth=String(thirdDate.getFullYear())+"-"+String(thirdDate.getMonth()+1).padStart(2,"0");
+ const keys=id==="slotMonthFilter"?[currentMonth,nextMonth,thirdMonth]:[currentMonth,nextMonth];
  const selected=keys.includes(current)?current:currentMonth;
  el.innerHTML=keys.map(k=>`<option value="${k}">${escapeHtml(monthLabel(k))}</option>`).join("");
  el.value=selected;
