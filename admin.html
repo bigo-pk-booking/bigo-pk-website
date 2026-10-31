@@ -729,6 +729,8 @@ body.admin-page-mode .site-footer{display:none!important}
   </div>
   <div class="card hidden" id="adminDashboard">
     <div class="admin-head"><div><h3>Welcome, Badass Admin!</h3><p id="adminWelcomeGreeting" class="sub" style="margin:5px 0 0">Welcome back. Have a great day!</p></div></div>
+
+    <section class="card announcement-admin-card" id="announcementManager" style="margin:14px 0;padding:16px"><div class="admin-head"><div><h3>📢 Announcement Manager</h3><p class="sub">Publish an announcement to the website and the official Telegram group.</p></div><button id="refreshAnnouncementsBtn" class="secondary small" type="button">Refresh</button></div><label for="announcementTitle">Announcement title</label><input id="announcementTitle" maxlength="120" placeholder="Enter announcement title"><label for="announcementMessage">Announcement message</label><textarea id="announcementMessage" rows="5" maxlength="3500" placeholder="Write your announcement here..." style="width:100%;resize:vertical"></textarea><label style="display:flex;align-items:center;gap:9px;margin:12px 0"><input id="announcementSendTelegram" type="checkbox" checked style="width:auto"> Also send to Telegram group</label><button id="publishAnnouncementBtn" class="full" type="button">Publish Announcement</button><div id="announcementAdminStatus" class="status" aria-live="polite"></div><h3 style="margin-top:18px">Published announcements</h3><div id="announcementAdminList"><div class="notice">Loading announcements…</div></div></section>
     <div class="admin-grid" style="margin-top:14px">
       <div class="card manual-pk-card" style="padding:14px">
         <h3>Manual PK booking</h3>
@@ -894,6 +896,51 @@ const FIREBASE_CONFIG = {
 };
 const TIMES = ["20:00","20:15","20:30","20:45","21:00","21:15","21:30","21:45","22:00"];
 const BIGO_API_BASE = "https://bigo-pk-api.wandering-forest-74e9.workers.dev";
+
+const ANNOUNCEMENT_API_BASE = "https://bigo-pk-announcement.wandering-forest-74e9.workers.dev";
+async function announcementAdminRequest(path,options={}){
+ if(!currentUser||currentUser.isAnonymous)throw new Error("Please sign in as Admin first.");
+ const token=await currentUser.getIdToken();
+ const response=await fetch(ANNOUNCEMENT_API_BASE+path,{...options,headers:{"Authorization":"Bearer "+token,"Content-Type":"application/json",...(options.headers||{})},cache:"no-store"});
+ let result={};try{result=await response.json();}catch{}
+ if(!response.ok||!result.ok)throw new Error(result.error||"Announcement request failed.");
+ return result;
+}
+async function loadAdminAnnouncements(){
+ const list=$("announcementAdminList");if(!list||!isAdmin)return;
+ list.innerHTML='<div class="notice">Loading announcements…</div>';
+ try{
+  const response=await fetch(ANNOUNCEMENT_API_BASE+"/api/announcements",{cache:"no-store"});
+  const data=await response.json();if(!response.ok||!data.ok)throw new Error(data.error||"Could not load announcements.");
+  const rows=data.announcements||[];
+  if(!rows.length){list.innerHTML='<div class="notice">No active announcements yet.</div>';return;}
+  list.innerHTML=rows.map(a=>'<div class="notice" style="margin-top:9px"><strong>'+escapeHtml(a.title)+'</strong><p style="white-space:pre-wrap;margin:7px 0">'+escapeHtml(a.message)+'</p><small>Published: '+escapeHtml(a.created_at||"")+' · '+(a.telegram_sent_at?'Telegram sent':'Telegram not sent')+'</small><div class="row" style="margin-top:8px"><button class="secondary small" type="button" data-announcement-retry="'+Number(a.id)+'">Retry Telegram</button><button class="danger small" type="button" data-announcement-archive="'+Number(a.id)+'">Archive</button></div></div>').join("");
+ }catch(error){list.innerHTML='<div class="notice err">'+escapeHtml(error.message||String(error))+'</div>';}
+}
+function setupAnnouncementManager(){
+ const publish=$("publishAnnouncementBtn");if(!publish||publish.dataset.bound==="1")return;publish.dataset.bound="1";
+ publish.addEventListener("click",async()=>{
+  const title=$("announcementTitle").value.trim(),message=$("announcementMessage").value.trim(),sendTelegram=$("announcementSendTelegram").checked,status=$("announcementAdminStatus");
+  if(!title||!message){status.textContent="Please enter both title and message.";status.className="status err";return;}
+  publish.disabled=true;publish.textContent="Publishing…";status.textContent="";
+  try{
+   const result=await announcementAdminRequest("/api/admin/announcements",{method:"POST",body:JSON.stringify({title,message,sendTelegram})});
+   status.textContent=result.telegramSent?"Published on website and sent to Telegram.":(result.telegramError?"Published on website, but Telegram failed: "+result.telegramError:"Published on website.");status.className="status "+(result.telegramSent||!sendTelegram?"ok":"warn");
+   $("announcementTitle").value="";$("announcementMessage").value="";await loadAdminAnnouncements();
+  }catch(error){status.textContent=error.message||String(error);status.className="status err";}
+  finally{publish.disabled=false;publish.textContent="Publish Announcement";}
+ });
+ $("refreshAnnouncementsBtn")?.addEventListener("click",loadAdminAnnouncements);
+ $("announcementAdminList")?.addEventListener("click",async event=>{
+  const retry=event.target.closest("[data-announcement-retry]"),archive=event.target.closest("[data-announcement-archive]");if(!retry&&!archive)return;
+  const id=retry?retry.dataset.announcementRetry:archive.dataset.announcementArchive;
+  try{
+   if(retry){await announcementAdminRequest("/api/admin/announcements/"+id+"/telegram",{method:"POST"});$("announcementAdminStatus").textContent="Telegram notification sent.";}
+   else{if(!confirm("Archive this announcement? It will no longer appear on the website."))return;await announcementAdminRequest("/api/admin/announcements/"+id,{method:"DELETE"});$("announcementAdminStatus").textContent="Announcement archived.";}
+   $("announcementAdminStatus").className="status ok";await loadAdminAnnouncements();
+  }catch(error){$("announcementAdminStatus").textContent=error.message||String(error);$("announcementAdminStatus").className="status err";}
+ });
+}
 async function cloudflareAdminRequest(path, options={}){
  if(!currentUser||currentUser.isAnonymous)throw new Error("Please sign in as admin first.");
  const token=await currentUser.getIdToken();
@@ -1323,6 +1370,7 @@ async function detectCloudflareRole(){
 }
 async function applyRoleAccess(){
  const loggedIn=isAdmin||isSuperadmin;
+ if(isAdmin){setupAnnouncementManager();loadAdminAnnouncements();}
  $("adminLogin").classList.toggle("hidden",loggedIn);
  $("adminDashboard").classList.toggle("hidden",!isAdmin);
  $("superadminDashboard")?.classList.toggle("hidden",!isSuperadmin);
