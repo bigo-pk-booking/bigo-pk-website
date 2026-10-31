@@ -906,24 +906,26 @@ async function generateMonthlySchedule(){
 async function loadCloudflareAdminSlots(monthKeyValue){
  if(!isAdmin)return;
  const month=monthKeyValue||$("slotMonthFilter")?.value||selectedHeaderMonth();
- if(/^\d{4}-(0[1-9]|1[0-2])$/.test(month)){try{const key="badass_admin_slot_months_seen_v1";const saved=JSON.parse(localStorage.getItem(key)||"[]");const seen=Array.isArray(saved)?saved:[];if(!seen.includes(month)){seen.push(month);localStorage.setItem(key,JSON.stringify(seen));}}catch(e){console.warn("Could not save admin slot month history",e);}}
- await loadMonthlySettings(month);
- if(!/^\d{4}-\d{2}$/.test(month))return;
- const [year,monthNum]=month.split("-").map(Number);
- const days=new Date(year,monthNum,0).getDate();
- setStatus("adminMessage","Loading "+monthTitle(month)+" slots from Cloudflare D1…");
+ if(!/^\\d{4}-(0[1-9]|1[0-2])$/.test(month))return;
  try{
-  const dates=Array.from({length:days},(_,i)=>year+"-"+String(monthNum).padStart(2,"0")+"-"+String(i+1).padStart(2,"0"));
-  const results=await Promise.all(dates.map(async date=>{
-   const response=await fetch(BIGO_API_BASE+"/api/slots?date="+encodeURIComponent(date),{cache:"no-store"});
-   const data=await response.json();
-   if(!response.ok||!data.ok)throw new Error(data.error||("Could not load "+date));
-   return (data.slots||[]).map(s=>({...s,bookingId:s.booking_id??s.bookingId,hostName:s.hostName||s.host_name||"",hostBigoId:s.hostBigoId||s.host_bigo_id||""}));
-  }));
-  adminSlots=results.flat();
+  const key="badass_admin_slot_months_seen_v1";
+  const saved=JSON.parse(localStorage.getItem(key)||"[]");
+  const seen=Array.isArray(saved)?saved:[];
+  if(!seen.includes(month)){seen.push(month);localStorage.setItem(key,JSON.stringify(seen));}
+ }catch(e){console.warn("Could not save admin slot month history",e);}
+ setStatus("adminMessage","Loading "+monthTitle(month)+" slots from Cloudflare D1…");
+ const table=$("adminSlots");
+ if(table)table.innerHTML='<div class="notice">Loading slot data…</div>';
+ try{
+  const result=await cloudflareAdminRequest("/api/admin/slots?month="+encodeURIComponent(month));
+  adminSlots=(result.slots||[]).map(s=>({...s,bookingId:s.booking_id??s.bookingId,hostName:s.hostName||s.host_name||"",hostBigoId:s.hostBigoId||s.host_bigo_id||""}));
   renderAdmin();
   setStatus("adminMessage","Loaded "+adminSlots.length+" slots from Cloudflare D1 for "+monthTitle(month)+".","ok");
- }catch(e){console.error("Cloudflare admin slots failed:",e);setStatus("adminMessage","Could not load D1 slot-management data: "+String(e.message||e),"err");}
+ }catch(e){
+  console.error("Cloudflare admin slots failed:",e);
+  if(table)table.innerHTML='<div class="notice">Could not load slot data: '+escapeHtml(String(e.message||e))+'</div>';
+  setStatus("adminMessage","Could not load D1 slot-management data: "+String(e.message||e),"err");
+ }
 }
 $("showBookingBtn").onclick=async()=>{showView("booking");if(await loadPublicOpenMonths())await loadCloudflareSlots($("filterDate").value||defaultScheduleDate);};
 $("showLookupBtn").onclick=()=>showView("lookup");
