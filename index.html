@@ -436,8 +436,25 @@ body:has(#adminView:not(.hidden)) .tg-top-strip{display:none!important;}
 .head{position:relative!important;flex-wrap:nowrap!important;align-items:center!important;gap:10px!important;}
 .head>.brand{flex:1 1 auto!important;min-width:0!important;}
 .head>.nav{width:auto!important;flex:0 0 auto!important;flex-wrap:nowrap!important;justify-content:flex-end!important;margin-left:auto!important;}
-.head>.nav #logoutBtn{display:inline-flex!important;flex:0 0 auto!important;width:auto!important;min-width:0!important;max-width:none!important;min-height:36px!important;padding:7px 13px!important;margin:0!important;font-size:13px!important;line-height:1.2!important;white-space:nowrap!important;border-radius:6px!important;}
+.head>.nav #logoutBtn{display:none!important;flex:0 0 auto!important;width:auto!important;min-width:0!important;max-width:none!important;min-height:36px!important;padding:7px 13px!important;margin:0!important;font-size:13px!important;line-height:1.2!important;white-space:nowrap!important;border-radius:6px!important;}
 @media(max-width:480px){.head{gap:7px!important;padding-right:0!important}.head>.brand{gap:7px!important}.head>.brand .brand-logo-img{width:clamp(92px,30vw,142px)!important}.head>.brand .brand-tagline{font-size:clamp(10px,3vw,14px)!important;letter-spacing:.1em!important}.head>.nav{gap:0!important}.head>.nav #logoutBtn{padding:6px 10px!important;font-size:12px!important;}}
+
+/* FINAL MOBILE READABILITY + NAV VISIBILITY FIX */
+#logoutBtn:not(.hidden){display:inline-flex!important}
+#superadminAdminsList .table-wrap{background:#160909!important;border:1px solid #a92b35!important;border-radius:8px!important;overflow-x:auto!important}
+#superadminAdminsList table{min-width:620px!important;width:100%!important;background:#160909!important;color:#fff!important;border-collapse:collapse!important}
+#superadminAdminsList thead th{background:#a90008!important;color:#fff!important;-webkit-text-fill-color:#fff!important;font-weight:800!important}
+#superadminAdminsList tbody td{background:#241010!important;color:#fff!important;-webkit-text-fill-color:#fff!important;font-weight:600!important;border:1px solid #63343a!important;padding:12px!important}
+#superadminAdminsList tbody tr:nth-child(even) td{background:#321313!important;color:#fff!important;-webkit-text-fill-color:#fff!important}
+#superadminAdminsList .notice{color:#fff!important}
+#slotManagementModal.hidden{display:none!important}
+#slotManagementModal:not(.hidden){display:block!important;z-index:12000!important}
+#slotManagementModal>div{background:#160909!important;color:#fff!important;border-color:#c90012!important}
+#slotManagementModal>div h3,#slotManagementModal>div p,#slotManagementModal>div label,#slotManagementModal>div .sub,#slotManagementModal>div .status{color:#fff!important;-webkit-text-fill-color:#fff!important}
+#slotManagementModal>div .table-wrap{background:#fff!important;color:#202428!important}
+#slotManagementModal>div .table-wrap td{color:#202428!important;-webkit-text-fill-color:#202428!important}
+#slotManagementModal>div .table-wrap th{color:#fff!important;-webkit-text-fill-color:#fff!important}
+
 </style>
 </head>
 <body>
@@ -1116,7 +1133,7 @@ async function loadSuperadminAdmins(){
   const rows=result.admins||[];
   if(!rows.length){box.innerHTML='<div class="notice">No Admin accounts found.</div>';return;}
   box.innerHTML='<div class="table-wrap"><table style="min-width:560px"><thead><tr><th>Email</th><th>UID</th><th>Status</th><th>Action</th></tr></thead><tbody>'+
-   rows.map(a=>'<tr><td>'+escapeHtml(a.email||"")+'</td><td style="max-width:180px;overflow-wrap:anywhere">'+escapeHtml(a.uid||"")+'</td><td>'+(Number(a.enabled)===1||a.enabled===true?'Enabled':'Disabled')+'</td><td>'+(a.role==="superadmin"?'Protected Superadmin':'<button class="small secondary" type="button" data-admin-toggle="'+escapeHtml(a.uid||"")+'" data-enabled="'+(Number(a.enabled)===1||a.enabled===true?'1':'0')+'">'+(Number(a.enabled)===1||a.enabled===true?'Disable':'Enable')+'</button> <button class="small danger" type="button" data-admin-delete="'+escapeHtml(a.uid||"")+'">Delete</button>')+'</td></tr>').join("")+
+   rows.map(a=>'<tr><td>'+escapeHtml(a.email||"")+'</td><td style="max-width:180px;overflow-wrap:anywhere">'+escapeHtml(a.firebase_uid||a.uid||"")+'</td><td>'+(Number(a.enabled)===1||a.enabled===true?'Enabled':'Disabled')+'</td><td>'+(a.role==="superadmin"?'Protected Superadmin':'<button class="small secondary" type="button" data-admin-toggle="'+escapeHtml(a.uid||"")+'" data-enabled="'+(Number(a.enabled)===1||a.enabled===true?'1':'0')+'">'+(Number(a.enabled)===1||a.enabled===true?'Disable':'Enable')+'</button> <button class="small danger" type="button" data-admin-delete="'+escapeHtml(a.uid||"")+'">Delete</button>')+'</td></tr>').join("")+
    '</tbody></table></div>';
   box.querySelectorAll("[data-admin-toggle]").forEach(btn=>btn.onclick=async()=>{
    const enabled=btn.dataset.enabled!=="1";
@@ -1651,7 +1668,7 @@ $("slotStatusFilter").addEventListener("change",()=>{slotPage=0;renderAdmin();})
   modal.setAttribute("aria-hidden","true");
   document.body.style.overflow="";
  };
- const show=event=>{
+ const show=async event=>{
   event?.preventDefault();
   event?.stopPropagation();
   modal.classList.remove("hidden");
@@ -1659,6 +1676,13 @@ $("slotStatusFilter").addEventListener("change",()=>{slotPage=0;renderAdmin();})
   modal.setAttribute("aria-hidden","false");
   document.body.style.overflow="hidden";
   modal.scrollTop=0;
+  const month=$("slotMonthFilter")?.value||selectedHeaderMonth();
+  if(isAdmin){
+    const table=$("adminSlots");
+    if(table)table.innerHTML='<div class="notice">Loading slot data… please wait.</div>';
+    await loadCloudflareAdminSlots(month);
+    await loadMonthlySettings(month);
+  }
  };
  // Use the button's direct click handler to avoid delegated/overlapping click handlers.
  open.onclick=show;
