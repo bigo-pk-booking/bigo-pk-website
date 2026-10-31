@@ -1215,8 +1215,8 @@ function refreshOpponentNotificationUI(){
  const month=$("bookingMonthFilter")?.value||dateToday().slice(0,7);
  const missing=[...new Map(bookings.filter(b=>
   monthKey(b.date)===month &&
-  !isClosedExportBooking(b) &&
-  !String(b.opponentBigoId||"").trim()
+  isActiveOpponentBooking(b) &&
+  !String(b.opponentBigoId||b.opponent_bigo_id||"").trim()
  ).map((b,i)=>[String(b.id||[b.date,b.time,b.bigoId||b.name||i].join("|")),b])).values()]
  .sort((a,b)=>(String(a.date||"")+String(a.time||"")).localeCompare(String(b.date||"")+String(b.time||"")));
  const button=$("opponentNavBtn");
@@ -1619,6 +1619,7 @@ function renderAdmin(){
  const bookingTable=visibleBookings.length?`<table><thead><tr><th>DATE</th><th>TIME</th><th>BIGO NAME</th><th>BIGO ID</th><th>HOST LEVEL</th><th>AGENCY NAME</th><th>AGENCY TELEGRAM</th><th>OPK EVENT</th><th class="vs-head">VS</th><th>OPPONENT NAME</th><th>OPPONENT BIGO ID</th><th>LEVEL</th><th>OPPONENT AGENCY NAME</th><th>OPPONENT AGENCY TELEGRAM</th><th>REMARKS (WIN/LOSE)</th><th>STATUS</th><th>ACTIONS</th></tr></thead><tbody>${visibleBookings.map(b=>`<tr><td>${escapeHtml(b.date||"")}</td><td><b>${escapeHtml(b.time||"")}</b></td><td>${escapeHtml(b.name||"")}</td><td>${escapeHtml(b.bigoId||"")}</td><td>${escapeHtml(b.hostLevel||"")}</td><td>${escapeHtml(b.agencyName||"")}</td><td>${escapeHtml(b.agencyTelegram||"")}</td><td>${escapeHtml(b.opkEvent||"")}</td><td class="vs-cell">VS</td><td>${escapeHtml(b.opponentName||"")}</td><td>${escapeHtml(b.opponentBigoId||"")}</td><td>${escapeHtml(b.opponentLevel||"")}</td><td>${escapeHtml(b.opponentAgencyName||"")}</td><td>${escapeHtml(b.opponentAgencyTelegram||"")}</td><td>${escapeHtml(b.remarks||"")}</td><td><span class="pill ${b.opponentBigoId?"assigned":"full"}">${escapeHtml(b.status||"Reserved")}</span></td><td><button class="small booking-edit-trigger" data-edit-booking="${escapeHtml(b.id)}">Edit details</button> ${b.adminReviewed&&!["Approved","Opponent assigned","Cancelled","Rejected"].includes(String(b.status||""))?'<button class="small" data-approve="'+escapeHtml(b.id)+'">Approve</button>':'<span class="muted">'+(["Cancelled","Rejected"].includes(String(b.status||""))?'Closed':b.adminReviewed?'Already reviewed':'Review required')+'</span>'} <button class="small danger" data-cancel="${escapeHtml(b.id)}">Reject / cancel</button></td></tr>`).join("")}</tbody></table>`:'<div class="notice">No bookings for this month match your search.</div>';
  const bookingPager=filteredBookings.length?`<div class="admin-pagination"><span>Showing ${bookingPage*ADMIN_PAGE_SIZE+1}–${Math.min((bookingPage+1)*ADMIN_PAGE_SIZE,filteredBookings.length)} of ${filteredBookings.length}</span><div><button class="secondary small" type="button" data-booking-prev ${bookingPage===0?"disabled":""}>Previous</button> <button class="secondary small" type="button" data-booking-next ${bookingPage>=bookingPages-1?"disabled":""}>Next</button></div></div>`:"";
  // Use the same single source for badge, popup report, and Copy action.
+ refreshOpponentNotificationUI();
  refreshOpponentNotificationUI();
  $("adminBookings").innerHTML=bookingTable+bookingPager;
  $("adminBookings").querySelectorAll("[data-edit-booking]").forEach(btn=>btn.onclick=()=>openBookingEdit(btn.dataset.editBooking));
@@ -2247,10 +2248,16 @@ $("slotStatusFilter").addEventListener("change",()=>{slotPage=0;renderAdmin();})
 ;
 $("downloadMonthExcelBtn").addEventListener("click",()=>$("exportExcelBtn").click());
 function isClosedExportBooking(b){
- const values=[b.status,b.booking_status,b.bookingStatus,b.remarks,b.slot_status,b.slotStatus]
+ const values=[b.status,b.booking_status,b.bookingStatus,b.slot_status,b.slotStatus]
   .map(v=>String(v??"").trim().toLowerCase());
- return values.some(v=>v==="cancel"||v==="cancelled"||v==="canceled"||v==="rejected"||v.startsWith("cancel ")||v.startsWith("rejected "))
+ return values.some(v=>["cancel","cancelled","canceled","rejected"].includes(v))
   || b.cancelled===true||b.is_cancelled===true||b.isCancelled===true||Boolean(b.cancelled_at||b.cancelledAt);
+}
+function isActiveOpponentBooking(b){
+ const status=String(b.status||b.booking_status||b.bookingStatus||"").trim().toLowerCase();
+ return !["cancel","cancelled","canceled","rejected"].includes(status)
+  && b.cancelled!==true&&b.is_cancelled!==true&&b.isCancelled!==true
+  && !b.cancelled_at&&!b.cancelledAt;
 }
 function exportRows(){const selectedMonth=$("bookingMonthFilter")?.value||dateToday().slice(0,7);return bookings.filter(b=>monthKey(b.date)===selectedMonth&&!isClosedExportBooking(b)).map(b=>({"DATE":b.date||"","TIME":b.time||"","BIGO NAME":b.name||"","BIGO ID":b.bigoId||"","HOST LEVEL":b.hostLevel||"","AGENCY NAME":b.agencyName||"","AGENCY TELEGRAM":b.agencyTelegram||"","OPK EVENT":b.opkEvent||"","VS":"VS","OPPONENT NAME":b.opponentName||"","OPPONENT BIGO ID":b.opponentBigoId||"","LEVEL":b.opponentLevel||"","OPPONENT AGENCY NAME":b.opponentAgencyName||"","OPPONENT AGENCY TELEGRAM":b.opponentAgencyTelegram||"","REMARKS (WIN/LOSE)":b.remarks||b.status||""})).sort((a,b)=>(a.DATE+a.TIME).localeCompare(b.DATE+b.TIME));}
 function downloadBlob(content,type,name){const blob=new Blob([content],{type});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
