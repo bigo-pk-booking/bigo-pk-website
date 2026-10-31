@@ -1220,16 +1220,12 @@ function refreshOpponentNotificationUI(){
  ).map((b,i)=>[String(b.id||[b.date,b.time,b.bigoId||b.name||i].join("|")),b])).values()]
  .sort((a,b)=>(String(a.date||"")+String(a.time||"")).localeCompare(String(b.date||"")+String(b.time||"")));
  const button=$("opponentNavBtn");
+ const badge=$("opponentNavCount");
+ if(badge)badge.textContent=String(missing.length);
  if(button){
-  let badge=button.querySelector(".opponent-count");
-  if(!badge){
-   badge=document.createElement("b");
-   badge.className="opponent-count";
-   button.appendChild(badge);
-  }
-  badge.textContent=String(missing.length);
   button.classList.remove("hidden");
   button.setAttribute("aria-label","Looking for Opponent: "+missing.length+" bookings need an opponent");
+  button.dataset.missingOpponentCount=String(missing.length);
  }
  const dateLabel=v=>{const p=String(v||"").split("-").map(Number);return p.length===3?new Date(p[0],p[1]-1,p[2]).toLocaleDateString("en-US",{month:"long",day:"numeric"}).toUpperCase():String(v||"");};
  const timeLabel=v=>{const p=String(v||"").split(":");if(p.length!==2)return String(v||"");let h=Number(p[0]);const ap=h>=12?"PM":"AM";h=h%12||12;return h+":"+p[1]+" "+ap;};
@@ -1635,7 +1631,11 @@ function renderAdmin(){
  // The navbar badge is rendered as a <b> inside the button (not a separately-ID'd node).
  const navCount=$("opponentNavCount")||navBtn?.querySelector("b");
  if(navCount)navCount.textContent=String(missingOpponents.length);
- if(navBtn){navBtn.classList.toggle("hidden",!isAdmin);navBtn.setAttribute("aria-label","Looking for Opponent: "+missingOpponents.length+" bookings need an opponent");const badge=navBtn.querySelector(".opponent-count")||navBtn.querySelector("b");if(badge)badge.textContent=String(missingOpponents.length);}
+ if(navBtn){
+  navBtn.classList.toggle("hidden",!isAdmin);
+  navBtn.setAttribute("aria-label","Looking for Opponent: "+missingOpponents.length+" bookings need an opponent");
+  navBtn.dataset.missingOpponentCount=String(missingOpponents.length);
+ }
  const popupContent=$("opponentPopupContent");if(popupContent)popupContent.innerHTML=reportText?'<textarea id="opponentPopupText" readonly rows="10" style="width:100%;background:#fff;color:#202428;padding:10px;border-radius:8px"></textarea><p class="sub">'+missingOpponents.length+' booking(s) still need an opponent.</p>':'<div class="notice ok">All active bookings this month already have an opponent.</div>';
  const popupText=$("opponentPopupText");if(popupText)popupText.value=reportText;
  const popupCopy=$("opponentPopupCopy");if(popupCopy){popupCopy.disabled=!reportText;popupCopy.onclick=async()=>{if(!reportText)return;try{await navigator.clipboard.writeText(reportText);$("opponentPopupStatus").textContent="Report copied. Paste it into Telegram.";}catch(e){const t=$("opponentPopupText");t?.focus();t?.select();$("opponentPopupStatus").textContent="Select the report above and copy it.";}};}
@@ -2256,7 +2256,7 @@ function toggleAdminAccordion(panelId,buttonId,label,icon){
  }
  if(opening&&panelId==="managementOpkPanel"){bookingPage=0;renderAdmin();}
 }
-$("opponentNavBtn")?.addEventListener("click",()=>{$("opponentNavPopup")?.classList.toggle("hidden");});
+$("opponentNavBtn")?.addEventListener("click",()=>{refreshOpponentNotificationUI();$("opponentNavPopup")?.classList.toggle("hidden");});
 $("opponentPopupClose")?.addEventListener("click",()=> $("opponentNavPopup")?.classList.add("hidden"));
 $("opponentPopupCloseBottom")?.addEventListener("click",()=> $("opponentNavPopup")?.classList.add("hidden"));
 $("toggleSlotManagementBtn")?.addEventListener("click",()=>toggleAdminAccordion("slotManagementPanel","toggleSlotManagementBtn","Slot Management","⚙️"));
@@ -2269,7 +2269,8 @@ $("generateMonthlyScheduleBtn").addEventListener("click",generateMonthlySchedule
 $("slotStatusFilter").addEventListener("change",()=>{slotPage=0;renderAdmin();});
 ;
 $("downloadMonthExcelBtn").addEventListener("click",()=>$("exportExcelBtn").click());
-function exportRows(){const selectedMonth=$("bookingMonthFilter")?.value||dateToday().slice(0,7);return bookings.filter(b=>monthKey(b.date)===selectedMonth).map(b=>({"DATE":b.date||"","TIME":b.time||"","BIGO NAME":b.name||"","BIGO ID":b.bigoId||"","HOST LEVEL":b.hostLevel||"","AGENCY NAME":b.agencyName||"","AGENCY TELEGRAM":b.agencyTelegram||"","OPK EVENT":b.opkEvent||"","VS":"VS","OPPONENT NAME":b.opponentName||"","OPPONENT BIGO ID":b.opponentBigoId||"","LEVEL":b.opponentLevel||"","OPPONENT AGENCY NAME":b.opponentAgencyName||"","OPPONENT AGENCY TELEGRAM":b.opponentAgencyTelegram||"","REMARKS (WIN/LOSE)":b.remarks||b.status||""})).sort((a,b)=>(a.DATE+a.TIME).localeCompare(b.DATE+b.TIME));}
+function isClosedExportBooking(b){return ["cancelled","rejected"].includes(String(b.status||"").trim().toLowerCase());}
+function exportRows(){const selectedMonth=$("bookingMonthFilter")?.value||dateToday().slice(0,7);return bookings.filter(b=>monthKey(b.date)===selectedMonth&&!isClosedExportBooking(b)).map(b=>({"DATE":b.date||"","TIME":b.time||"","BIGO NAME":b.name||"","BIGO ID":b.bigoId||"","HOST LEVEL":b.hostLevel||"","AGENCY NAME":b.agencyName||"","AGENCY TELEGRAM":b.agencyTelegram||"","OPK EVENT":b.opkEvent||"","VS":"VS","OPPONENT NAME":b.opponentName||"","OPPONENT BIGO ID":b.opponentBigoId||"","LEVEL":b.opponentLevel||"","OPPONENT AGENCY NAME":b.opponentAgencyName||"","OPPONENT AGENCY TELEGRAM":b.opponentAgencyTelegram||"","REMARKS (WIN/LOSE)":b.remarks||b.status||""})).sort((a,b)=>(a.DATE+a.TIME).localeCompare(b.DATE+b.TIME));}
 function downloadBlob(content,type,name){const blob=new Blob([content],{type});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 $("exportExcelBtn").onclick=async()=>{if(!isAdmin)return;if(!window.ExcelJS){setStatus("exportMessage","Excel formatting library did not load. Check your internet connection, then try again.","err");return;}try{
  const ExcelJS=window.ExcelJS;const wb=new ExcelJS.Workbook();wb.creator="BADASS";wb.subject="BIGO OPK Match Schedule";wb.title="BADASS OPK Match Report";wb.created=new Date();
@@ -2280,7 +2281,7 @@ $("exportExcelBtn").onclick=async()=>{if(!isAdmin)return;if(!window.ExcelJS){set
   const monthDate=new Date(Number(month.slice(0,4)),Number(month.slice(5,7))-1,1);
   const tabName=monthDate.toLocaleDateString("en-US",{month:"long",year:"numeric"});
   const reportMonth=monthLabel(month).toUpperCase();
-  const rows=bookings.filter(b=>monthKey(b.date)===month).map(b=>({"DATE":b.date||"","TIME":b.time||"","BIGO NAME":b.name||"","BIGO ID":b.bigoId||"","HOST LEVEL":b.hostLevel||"","AGENCY NAME":b.agencyName||"","AGENCY TELEGRAM":b.agencyTelegram||"","OPK EVENT":b.opkEvent||"","VS":"VS","OPPONENT NAME":b.opponentName||"","OPPONENT BIGO ID":b.opponentBigoId||"","LEVEL":b.opponentLevel||"","OPPONENT AGENCY NAME":b.opponentAgencyName||"","OPPONENT AGENCY TELEGRAM":b.opponentAgencyTelegram||"","REMARKS (WIN/LOSE)":b.remarks||b.status||""})).sort((a,b)=>(a.DATE+a.TIME).localeCompare(b.DATE+b.TIME));
+  const rows=bookings.filter(b=>monthKey(b.date)===month&&!isClosedExportBooking(b)).map(b=>({"DATE":b.date||"","TIME":b.time||"","BIGO NAME":b.name||"","BIGO ID":b.bigoId||"","HOST LEVEL":b.hostLevel||"","AGENCY NAME":b.agencyName||"","AGENCY TELEGRAM":b.agencyTelegram||"","OPK EVENT":b.opkEvent||"","VS":"VS","OPPONENT NAME":b.opponentName||"","OPPONENT BIGO ID":b.opponentBigoId||"","LEVEL":b.opponentLevel||"","OPPONENT AGENCY NAME":b.opponentAgencyName||"","OPPONENT AGENCY TELEGRAM":b.opponentAgencyTelegram||"","REMARKS (WIN/LOSE)":b.remarks||b.status||""})).sort((a,b)=>(a.DATE+a.TIME).localeCompare(b.DATE+b.TIME));
   const ws=wb.addWorksheet(tabName,{views:[{state:"frozen",ySplit:6,xSplit:2,showGridLines:false}]});
   headers.forEach((h,i)=>ws.getColumn(i+1).width=widths[i]);
   ws.mergeCells(1,1,1,15);ws.getCell("A1").value="♛ BADASS  |  BIGO PK MATCH SCHEDULER";ws.getCell("A1").font={name:"Arial",size:16,bold:true,color:{argb:"FFFFFFFF"}};ws.getCell("A1").alignment={vertical:"middle",horizontal:"center"};ws.getRow(1).height=30;ws.getRow(1).eachCell(c=>c.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FFD40000"}});
