@@ -545,6 +545,12 @@ body.admin-panel-open .tg-group-nav{display:none!important}
  .header-links a{font-size:12px!important}
  .head>.menu-panel{left:10px!important}
 }
+
+/* Opponent alert is admin-only: never show it on public Set OPK / My OPK views. */
+@media all{
+ body:not(.admin-panel-open) #opponentNavWrap{display:none!important;visibility:hidden!important;pointer-events:none!important}
+ body.admin-panel-open #opponentNavWrap{display:block!important;visibility:visible!important;pointer-events:auto!important}
+}
 </style>
 <style id="slot-management-reference-layout">
 #slotManagementPanel{padding:14px!important;background:rgba(10,5,7,.88)!important;border:1px solid #9f101b!important;border-radius:14px!important}
