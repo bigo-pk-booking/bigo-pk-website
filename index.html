@@ -461,6 +461,31 @@ body:has(#adminView:not(.hidden)) .tg-top-strip{display:none!important;}
 #slotManagementModal>div .table-wrap td{color:#202428!important;-webkit-text-fill-color:#202428!important}
 #slotManagementModal>div .table-wrap th{color:#fff!important;-webkit-text-fill-color:#fff!important}
 
+
+/* Admin accordions: independent full-width sections, matching the reference layout. */
+.admin-accordion-toggle{
+ display:flex!important;align-items:center;justify-content:space-between;gap:12px;
+ text-align:left!important;padding:15px 18px!important;margin:12px 0 0!important;
+ color:#fff!important;background:linear-gradient(100deg,#650008,#d00012 52%,#650008)!important;
+ border:1px solid #f04450!important;border-radius:10px!important;font-weight:800!important;
+ box-shadow:0 0 14px rgba(220,0,20,.24);
+}
+.admin-accordion-toggle .accordion-chevron{font-size:25px;line-height:1;transition:transform .2s}
+.admin-accordion-toggle[aria-expanded="true"] .accordion-chevron{transform:rotate(90deg)}
+.admin-accordion-panel{padding:14px;margin:0 0 14px;border:1px solid rgba(235,50,60,.75);border-radius:0 0 12px 12px;background:rgba(10,6,8,.82)}
+.admin-accordion-panel.hidden{display:none!important}
+.slot-monthly-controls{margin:14px 0;padding:14px}
+.slot-actions-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:12px}
+.admin-slots-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:16px 0 8px}
+@media(max-width:700px){
+ .slot-actions-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .admin-accordion-panel{padding:10px}
+}
+
+
+@media(max-width:800px){#bookingFormCard{display:none!important}#bookingFormCard.mobile-booking-form-open{display:block!important}}
+@media(min-width:801px){#bookingFormCard{display:block!important}}
+
 </style>
 </head>
 <body>
@@ -503,7 +528,7 @@ body:has(#adminView:not(.hidden)) .tg-top-strip{display:none!important;}
     <div id="slotsArea"><div class="notice">Connect Firebase and add a schedule from the admin panel to show slots here.</div></div>
     <div id="slotStatus" class="status" aria-live="polite"></div>
   </section>
-  <section class="card hidden" id="bookingFormCard">
+  <section class="card" id="bookingFormCard">
     <h3>SET YOUR PK SLOT</h3><p class="sub">Enter your BIGO ID and name, then select a date and available time.</p>
     <label for="bigoId">BIGO ID</label><input id="bigoId" maxlength="40" autocomplete="off" placeholder="Enter BIGO ID">
     <label for="userName">Name</label><input id="userName" maxlength="80" autocomplete="name" placeholder="Enter your name">
@@ -583,52 +608,40 @@ body:has(#adminView:not(.hidden)) .tg-top-strip{display:none!important;}
       </div>
     </div>
     <hr>
-    <button id="toggleManagementOpkBtn" class="full" type="button" aria-expanded="false" style="margin:14px 0">📋 View Management OPK</button>
-    <div id="managementOpkPanel" class="hidden">
-    <div class="admin-head"><div><h3>OPK Booking</h3><p class="sub" style="margin:5px 0 0">View and edit host and opponent information.</p></div><input id="adminSearch" style="max-width:300px" placeholder="Search BIGO ID / name / date / time"></div>
-    <div id="opkBookingsPanel" style="margin-top:12px">
-      <div style="margin:12px 0"><label for="bookingMonthFilter">Select month of OPK</label><select id="bookingMonthFilter" aria-label="Select month of OPK"></select></div>
-      <div id="adminBookings" class="table-wrap"><div class="notice">Loading bookings…</div></div>
-      <button id="downloadMonthExcelBtn" class="success full" type="button" style="margin-top:12px">Download selected month Excel</button>
-    </div>
-    <hr>
-    <button id="toggleSlotManagementBtn" class="full" type="button" aria-expanded="false" style="margin:14px 0">⚙️ View Slot Management</button>
-    <div id="slotManagementPanel" class="hidden">
-    <div class="card" style="margin:12px 0;padding:14px">
-      <h3>Slot management</h3>
-      <p class="sub">Manage available, booked, and closed PK time slots.</p>
-      <button id="openSlotManagement" type="button" class="full">⚙️ Refresh Slot Management</button>
-    </div>
-    <section id="slotManagementModal" class="card" aria-labelledby="slotManagementTitle" style="display:block!important;position:static!important;width:100%;max-width:100%;height:auto!important;max-height:none!important;overflow:visible!important;background:#160909;border:1px solid #b52b36;border-radius:12px;padding:14px;margin:12px 0;color:#fff;box-sizing:border-box">
-      <div style="width:100%;max-width:100%;height:auto;max-height:none;overflow:visible;background:transparent;border:0;border-radius:0;padding:0;color:#fff;box-shadow:none">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;position:sticky;top:-16px;background:#fff;padding:4px 0 12px;z-index:2;border-bottom:1px solid #ddd">
-          <div><h3 id="slotManagementTitle" style="margin:0">Slot Management</h3><p class="sub" style="margin:4px 0 0">Close an available slot or reopen a closed slot. Booked slots must be cancelled first.</p></div>
-        </div>
-        <div class="row month-filter-row" style="margin-top:12px">
-          <div><label for="slotMonthFilter">Select month for slots</label><select id="slotMonthFilter" aria-label="Filter slots by month"></select></div>
-          <div><label for="slotStatusFilter">Filter by status</label><select id="slotStatusFilter" aria-label="Filter slots by status">
-            <option value="all">All statuses</option>
-            <option value="available">Available</option>
-            <option value="full">Already set this date by another host</option>
-            <option value="closed">Closed</option>
-          </select></div>
-        </div>
-        <section class="card" style="margin:14px 0;padding:14px;border:1px solid #d9a3a3">
-          <h3>Monthly Booking Controls</h3>
-          <p class="sub">Choose whether this month is open for public bookings and set the BIGO ID monthly limit.</p>
-          <div class="row">
-            <div><label for="monthlyOpenSelect">Monthly booking status</label><select id="monthlyOpenSelect"><option value="0">CLOSED</option><option value="1">OPEN</option></select></div>
-            <div><label for="monthlyLimitInput">Maximum bookings per BIGO ID</label><input id="monthlyLimitInput" type="number" min="1" max="1000" step="1" placeholder="Blank = no limit"></div>
-          </div>
-          <div class="row" style="margin-top:10px">
-            <button id="saveMonthlySettingsBtn" type="button">Save Monthly Settings</button>
-            <button id="generateMonthlyScheduleBtn" type="button" class="secondary">Generate / Refresh Month</button>
-          </div>
-          <div class="row" style="margin-top:10px"><button id="openAllSlotsBtn" type="button" class="success">Open All Closed Slots</button><button id="closeAllSlotsBtn" type="button" class="secondary">Close All Available Slots</button></div><p class="sub">Booked/full slots are protected from bulk actions.</p><div id="monthlySettingsMessage" class="status" aria-live="polite"></div>
-        </section>
-        <div id="adminSlots" class="table-wrap"><div class="notice">Loading slots…</div></div>
+    <button id="toggleManagementOpkBtn" class="admin-accordion-toggle full" type="button" aria-expanded="false" style="margin:14px 0">📄 View Management OPK <span class="accordion-chevron">›</span></button>
+    <div id="managementOpkPanel" class="hidden admin-accordion-panel">
+      <div class="admin-head"><div><h3>OPK Booking</h3><p class="sub" style="margin:5px 0 0">View and edit host and opponent information.</p></div><input id="adminSearch" style="max-width:300px" placeholder="Search BIGO ID / name / date / time"></div>
+      <div id="opkBookingsPanel" style="margin-top:12px">
+        <div style="margin:12px 0"><label for="bookingMonthFilter">Select month of OPK</label><select id="bookingMonthFilter" aria-label="Select month of OPK"></select></div>
+        <div id="adminBookings" class="table-wrap"><div class="notice">Loading bookings…</div></div>
+        <button id="downloadMonthExcelBtn" class="success full" type="button" style="margin-top:12px">Download selected month Excel</button>
       </div>
-    </section>
+    </div>
+    <button id="toggleSlotManagementBtn" class="admin-accordion-toggle full" type="button" aria-expanded="false" style="margin:14px 0">⚙️ View Slot Management <span class="accordion-chevron">›</span></button>
+    <div id="slotManagementPanel" class="hidden admin-accordion-panel">
+      <div class="row month-filter-row" style="margin-top:12px">
+        <div><label for="slotMonthFilter">Select month for slots</label><select id="slotMonthFilter" aria-label="Filter slots by month"></select></div>
+        <div><label for="slotStatusFilter">Filter by status</label><select id="slotStatusFilter" aria-label="Filter slots by status">
+          <option value="all">All statuses</option><option value="available">Available</option><option value="full">Already set this date by another host</option><option value="closed">Closed</option>
+        </select></div>
+      </div>
+      <section class="card slot-monthly-controls">
+        <h3>Monthly Booking Controls</h3>
+        <p class="sub">Choose whether this month is open for public bookings and set the BIGO ID monthly limit.</p>
+        <div class="row">
+          <div><label for="monthlyOpenSelect">Monthly booking status</label><select id="monthlyOpenSelect"><option value="0">CLOSED</option><option value="1">OPEN</option></select></div>
+          <div><label for="monthlyLimitInput">Maximum bookings per BIGO ID</label><input id="monthlyLimitInput" type="number" min="1" max="1000" step="1" placeholder="Blank = no limit"></div>
+        </div>
+        <div class="slot-actions-grid">
+          <button id="saveMonthlySettingsBtn" type="button">Save Monthly Settings</button>
+          <button id="generateMonthlyScheduleBtn" type="button" class="secondary">Generate / Refresh Month</button>
+          <button id="openAllSlotsBtn" type="button" class="success">Open All Closed Slots</button>
+          <button id="closeAllSlotsBtn" type="button" class="secondary">Close All Available Slots</button>
+        </div>
+        <p class="sub">Booked/full slots are protected from bulk actions.</p><div id="monthlySettingsMessage" class="status" aria-live="polite"></div>
+      </section>
+      <div class="admin-slots-heading"><h3 id="slotManagementTitle">Bookings &amp; Slots</h3><span id="slotManagementCount" class="sub"></span></div>
+      <div id="adminSlots" class="table-wrap"><div class="notice">Loading slots…</div></div>
     </div>
     <div id="adminMessage" class="status"></div>
     </div>
@@ -819,7 +832,7 @@ async function loadCloudflareSlots(date){
  if(!date)return;
  if(!publicOpenMonths.includes(date.slice(0,7))){
   slots=[];selectedSlot=null;bookingDateChosen=false;
-  $("bookingFormCard")?.classList.add("hidden");
+  $("bookingFormCard")?.classList.remove("mobile-booking-form-open");if(window.matchMedia("(min-width: 801px)").matches)$("bookingFormCard")?.classList.remove("hidden");if(window.matchMedia("(max-width: 800px)").matches)$("bookingFormCard")?.classList.add("mobile-booking-form-open");else $("bookingFormCard")?.classList.add("hidden");
   $("bookingResult")?.classList.add("hidden");
   $("chosenSlot").value="";$("bookBtn").disabled=true;
   $("slotsArea").innerHTML='<div class="notice err">Bookings for '+escapeHtml(monthTitle(date.slice(0,7)))+' are CLOSED. Please choose an OPEN month.</div>';
@@ -833,7 +846,9 @@ async function loadCloudflareSlots(date){
   slots=Array.isArray(data.slots)?data.slots.map(s=>({...s,bookingId:s.booking_id??s.bookingId,hostName:s.hostName||s.host_name||"",hostBigoId:s.hostBigoId||s.host_bigo_id||""})):[];
   renderSlots();
   const selectedAvailableSlot=bookingDateChosen&&slots.some(s=>s.id===selectedSlot&&s.status==="available");
-  $("bookingFormCard")?.classList.toggle("hidden",!selectedAvailableSlot);
+  if(window.matchMedia("(max-width: 800px)").matches){
+   $("bookingFormCard")?.classList.toggle("mobile-booking-form-open",!!selectedAvailableSlot);
+  }else{$("bookingFormCard")?.classList.remove("hidden","mobile-booking-form-open");}
   $("slotStatus").textContent="";
  }catch(e){
   console.error("Cloudflare slots failed:",e);
@@ -1675,53 +1690,26 @@ async function toggleSlot(id){
 }
 $("adminSearch").addEventListener("input",()=>{bookingPage=0;renderAdmin();});
 $("bookingMonthFilter").addEventListener("change",()=>{bookingPage=0;renderAdmin();});
-$("toggleSlotManagementBtn")?.addEventListener("click",()=>{
- const panel=$("slotManagementPanel"),button=$("toggleSlotManagementBtn");
+function toggleAdminAccordion(panelId,buttonId,label,icon){
+ const panel=$(panelId),button=$(buttonId);if(!panel||!button)return;
  const opening=panel.classList.contains("hidden");
- panel.classList.toggle("hidden",!opening);
- button.setAttribute("aria-expanded",String(opening));
- button.textContent=opening?"⚙️ Hide Slot Management":"⚙️ View Slot Management";
- if(opening){slotPage=0;const month=$("slotMonthFilter")?.value||selectedHeaderMonth();loadCloudflareAdminSlots(month);loadMonthlySettings(month);}
-});
-$("toggleManagementOpkBtn")?.addEventListener("click",()=>{
- const panel=$("managementOpkPanel"),button=$("toggleManagementOpkBtn");
- const opening=panel.classList.contains("hidden");
- panel.classList.toggle("hidden",!opening);
- button.setAttribute("aria-expanded",String(opening));
- button.textContent=opening?"📋 Hide Management OPK":"📋 View Management OPK";
- if(opening){bookingPage=0;slotPage=0;renderAdmin();}
-});
+ panel.classList.toggle("hidden",!opening);button.setAttribute("aria-expanded",String(opening));
+ button.innerHTML=icon+" "+(opening?"Hide ":"View ")+label+' <span class="accordion-chevron">›</span>';
+ if(opening&&panelId==="slotManagementPanel"){
+  slotPage=0;const month=$("slotMonthFilter")?.value||selectedHeaderMonth();
+  loadCloudflareAdminSlots(month);loadMonthlySettings(month);
+ }
+ if(opening&&panelId==="managementOpkPanel"){bookingPage=0;renderAdmin();}
+}
+$("toggleSlotManagementBtn")?.addEventListener("click",()=>toggleAdminAccordion("slotManagementPanel","toggleSlotManagementBtn","Slot Management","⚙️"));
+$("toggleManagementOpkBtn")?.addEventListener("click",()=>toggleAdminAccordion("managementOpkPanel","toggleManagementOpkBtn","Management OPK","📄"));
 $("slotMonthFilter").addEventListener("change",()=>{slotPage=0;loadCloudflareAdminSlots($("slotMonthFilter").value);});
 $("saveMonthlySettingsBtn").addEventListener("click",saveMonthlySettings);
 $("openAllSlotsBtn").addEventListener("click",()=>bulkToggleSlots("open"));
 $("closeAllSlotsBtn").addEventListener("click",()=>bulkToggleSlots("close"));
 $("generateMonthlyScheduleBtn").addEventListener("click",generateMonthlySchedule);
 $("slotStatusFilter").addEventListener("change",()=>{slotPage=0;renderAdmin();});
-(function(){
- const section=$("slotManagementModal");
- const open=$("openSlotManagement");
- if(!section||!open)return;
- open.onclick=async event=>{
-  event.preventDefault();
-  if(!isAdmin)return;
-  const month=$("slotMonthFilter")?.value||selectedHeaderMonth();
-  const table=$("adminSlots");
-  if(table)table.innerHTML='<div class="notice">Loading slot data…</div>';
-  open.disabled=true;
-  open.textContent="Loading slot management…";
-  try{
-   await loadCloudflareAdminSlots(month);
-   await loadMonthlySettings(month);
-   section.scrollIntoView({behavior:"smooth",block:"start"});
-  }catch(error){
-   console.error("Slot management load failed",error);
-   setStatus("adminMessage","Could not load slot management: "+String(error.message||error),"err");
-  }finally{
-   open.disabled=false;
-   open.textContent="⚙️ Refresh Slot Management";
-  }
- };
-})();
+;
 $("downloadMonthExcelBtn").addEventListener("click",()=>$("exportExcelBtn").click());
 function exportRows(){const selectedMonth=$("bookingMonthFilter")?.value||dateToday().slice(0,7);return bookings.filter(b=>monthKey(b.date)===selectedMonth).map(b=>({"DATE":b.date||"","TIME":b.time||"","BIGO NAME":b.name||"","BIGO ID":b.bigoId||"","HOST LEVEL":b.hostLevel||"","AGENCY NAME":b.agencyName||"","AGENCY TELEGRAM":b.agencyTelegram||"","OPK EVENT":b.opkEvent||"","VS":"VS","OPPONENT NAME":b.opponentName||"","OPPONENT BIGO ID":b.opponentBigoId||"","LEVEL":b.opponentLevel||"","OPPONENT AGENCY NAME":b.opponentAgencyName||"","OPPONENT AGENCY TELEGRAM":b.opponentAgencyTelegram||"","REMARKS (WIN/LOSE)":b.remarks||b.status||""})).sort((a,b)=>(a.DATE+a.TIME).localeCompare(b.DATE+b.TIME));}
 function downloadBlob(content,type,name){const blob=new Blob([content],{type});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
