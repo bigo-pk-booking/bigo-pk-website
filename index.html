@@ -1526,8 +1526,11 @@ function renderAdmin(){
  if(missingOpponents.length)reportLines.push("No PM, no match. Tara 😘");
  const reportText=missingOpponents.length?reportLines.join("\n"):"";
  const legacyOpponentCount=$("opponentReportCount");if(legacyOpponentCount)legacyOpponentCount.textContent=String(missingOpponents.length);
- const navCount=$("opponentNavCount");if(navCount)navCount.textContent=String(missingOpponents.length);
- const navBtn=$("opponentNavBtn");if(navBtn)navBtn.classList.toggle("hidden",!isAdmin);
+ const navBtn=$("opponentNavBtn");
+ // The navbar badge is rendered as a <b> inside the button (not a separately-ID'd node).
+ const navCount=$("opponentNavCount")||navBtn?.querySelector("b");
+ if(navCount)navCount.textContent=String(missingOpponents.length);
+ if(navBtn){navBtn.classList.toggle("hidden",!isAdmin);navBtn.setAttribute("aria-label","Looking for Opponent: "+missingOpponents.length+" bookings need an opponent");}
  const popupContent=$("opponentPopupContent");if(popupContent)popupContent.innerHTML=reportText?'<textarea id="opponentPopupText" readonly rows="10" style="width:100%;background:#fff;color:#202428;padding:10px;border-radius:8px"></textarea><p class="sub">'+missingOpponents.length+' booking(s) still need an opponent.</p>':'<div class="notice ok">All active bookings this month already have an opponent.</div>';
  const popupText=$("opponentPopupText");if(popupText)popupText.value=reportText;
  const popupCopy=$("opponentPopupCopy");if(popupCopy){popupCopy.disabled=!reportText;popupCopy.onclick=async()=>{if(!reportText)return;try{await navigator.clipboard.writeText(reportText);$("opponentPopupStatus").textContent="Report copied. Paste it into Telegram.";}catch(e){const t=$("opponentPopupText");t?.focus();t?.select();$("opponentPopupStatus").textContent="Select the report above and copy it.";}};}
