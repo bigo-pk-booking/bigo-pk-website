@@ -1208,15 +1208,17 @@ function refreshOpponentNotificationUI(){
   return;
  }
  wrap?.classList.remove("hidden");
- const month=$("bookingMonthFilter")?.value||dateToday().slice(0,7);
+ // Notification is independent of the collapsed Management OPK month selector.
+ // Include every active booking in the loaded D1 records, grouped by month in the report.
  const missing=[...new Map(bookings.filter(b=>{
   const statusValues=[b.status,b.booking_status,b.bookingStatus,b.slot_status,b.slotStatus]
    .map(v=>String(v??"").trim().toLowerCase());
   const closed=statusValues.some(v=>/cancel|reject/.test(v))
    ||b.cancelled===true||b.is_cancelled===true||b.isCancelled===true
+   ||["true","1","yes"].includes(String(b.cancelled??b.is_cancelled??b.isCancelled??"").trim().toLowerCase())
    ||Boolean(b.cancelled_at||b.cancelledAt);
   const opponentId=String(b.opponentBigoId||b.opponent_bigo_id||b.opponentBigoID||b.opponentId||b.opponent_id||"").trim();
-  return monthKey(b.date)===month&&!closed&&!opponentId;
+  return !closed&&!opponentId;
  }).map((b,i)=>[String(b.id||[b.date,b.time,b.bigoId||b.name||i].join("|")),b])).values()]
  .sort((a,b)=>(String(a.date||"")+String(a.time||"")).localeCompare(String(b.date||"")+String(b.time||"")));
  const count=missing.length;
@@ -1231,9 +1233,14 @@ function refreshOpponentNotificationUI(){
  const timeLabel=v=>{const p=String(v||"").split(":");if(p.length!==2)return String(v||"");let h=Number(p[0]);const ap=h>=12?"PM":"AM";h=h%12||12;return h+":"+p[1]+" "+ap;};
  let report="";
  if(count){
-  const lines=["LOOKING FOR ACTIVE OPPONENT FOR "+monthLabel(month).toUpperCase()+"‼️",""];
-  let last="";
-  missing.forEach(b=>{const d=dateLabel(b.date);if(d!==last){lines.push(d,"");last=d;}lines.push("NAME : "+(b.name||"—"),"BIGO ID : "+(b.bigoId||"—"),"TIME : "+timeLabel(b.time),"");});
+  const lines=["LOOKING FOR ACTIVE OPPONENT‼️",""];
+  let lastMonth="",lastDate="";
+  missing.forEach(b=>{
+   const m=monthKey(b.date),d=dateLabel(b.date);
+   if(m!==lastMonth){lines.push(monthLabel(m).toUpperCase(),"");lastMonth=m;lastDate="";}
+   if(d!==lastDate){lines.push(d,"");lastDate=d;}
+   lines.push("NAME : "+(b.name||"—"),"BIGO ID : "+(b.bigoId||"—"),"TIME : "+timeLabel(b.time),"");
+  });
   lines.push("No PM, no match. Tara 😘");
   report=lines.join("\n");
  }
