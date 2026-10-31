@@ -770,9 +770,8 @@ body.admin-page-mode .site-footer{display:none!important}
     </section>
     <div class="admin-grid" style="margin-top:14px">
       <div class="card manual-pk-card" style="padding:14px">
-        <h3>Manual PK booking</h3>
-        <p class="sub">Need to set a PK for a user? Open the form below.</p>
-        <button id="toggleManualPkForm" class="full" type="button" aria-expanded="false" aria-controls="manualPkFormFields">＋ Manual PK Booking</button>
+        <button id="toggleManualPkForm" class="admin-accordion-toggle full" type="button" aria-expanded="false" aria-controls="manualPkFormFields" style="margin:0;text-align:left">＋ Create a Manual PK Booking <span class="accordion-chevron">›</span></button>
+        <p class="sub" style="margin:9px 0 0">Create and approve a PK booking for a user by selecting an available slot and entering the booking details.</p>
         <div id="manualPkFormFields" class="hidden">
           <p class="sub" style="margin-top:14px">Admin can create and approve a booking for a user. Select an existing available slot first.</p>
           <label for="manualBigoId">User BIGO ID</label><input id="manualBigoId" maxlength="40" placeholder="User BIGO ID">
@@ -2098,7 +2097,7 @@ startApp();
     var opening=fields.classList.contains('hidden');
     fields.classList.toggle('hidden',!opening);
     toggle.setAttribute('aria-expanded',String(opening));
-    toggle.textContent=opening?'− Hide Manual PK Form':'＋ Manual PK Booking';
+    toggle.innerHTML=(opening?'− Hide Manual PK Form':'＋ Create a Manual PK Booking')+' <span class="accordion-chevron">'+(opening?'⌄':'›')+'</span>';
   });
 })();
 </script>
