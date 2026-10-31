@@ -500,6 +500,36 @@ body:has(#adminView:not(.hidden)) .tg-top-strip{display:none!important;}
 #slotManagementPanel .slot-management-table button{white-space:nowrap;margin:2px}
 @media(max-width:800px){#slotManagementPanel{padding:10px!important}#slotManagementPanel .month-filter-row{display:grid!important;grid-template-columns:1fr 1fr;gap:8px!important}#slotManagementPanel .slot-monthly-controls .row{display:grid!important;grid-template-columns:1fr 1fr;gap:10px!important}#slotManagementPanel .slot-actions-grid{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important}#slotManagementPanel .slot-actions-grid button{min-height:58px;padding:8px;font-size:13px}#slotManagementPanel .slot-management-table{min-width:690px}}
 </style>
+<style id="set-opk-reference-layout">
+/* SET OPK layout follows the supplied desktop/mobile reference */
+#bookingView{display:grid!important;grid-template-columns:minmax(0,1.15fr) minmax(320px,.85fr)!important;gap:16px!important;align-items:start!important;width:100%!important;max-width:1400px!important}
+#bookingView>.card{width:100%!important;min-width:0!important;max-width:none!important}
+#bookingView>section:first-child{grid-column:auto!important}
+#bookingView>section:nth-child(2){grid-column:auto!important}
+#bookingView .row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:10px}
+#bookingView #filterDate{width:100%}
+#bookingView #refreshSlots{min-width:130px}
+#bookingView .slots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px}
+#bookingView .slot{min-width:0;min-height:74px;padding:9px 5px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+#bookingView .slot span{display:block}
+#bookingView .slot-host-details{font-size:12px;line-height:1.25;overflow-wrap:anywhere}
+#bookingView .slot-host-details small{display:block}
+#bookingView #bookingFormCard{display:block}
+@media(max-width:800px){
+ #bookingView{grid-template-columns:minmax(0,1fr)!important;gap:12px!important}
+ #bookingView>section:first-child,#bookingView>section:nth-child(2){grid-column:1/-1!important}
+ #bookingView #bookingFormCard:not(.mobile-booking-form-open){display:none!important}
+ #bookingView .slots{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:2px}
+ #bookingView .slot{min-height:66px;padding:8px 4px}
+ #bookingView .row{grid-template-columns:minmax(0,1fr) auto;gap:8px}
+ #bookingView #refreshSlots{min-width:100px;padding-inline:12px}
+ #bookingView .card{padding:14px!important}
+}
+@media(max-width:380px){
+ #bookingView .row{grid-template-columns:1fr}
+ #bookingView #refreshSlots{width:100%}
+}
+</style>
 </head>
 <body>
 <header><div class="head">
