@@ -723,6 +723,34 @@ body.admin-page-mode .site-footer{display:none!important}
 <div class="row slot-date-controls"><div><label for="filterDate">Select PK date</label><input id="filterDate" type="date"></div><button id="refreshSlots" class="secondary" type="button">↻ Refresh slots</button></div>
 <div class="legend"><span><i class="dot green-dot"></i>Available</span><span><i class="dot red-dot"></i>Booked</span><span><i class="dot gold-dot"></i>Closed</span></div>
 <div id="slotsArea"><div class="slot-loading" role="status" aria-live="polite">Loading available PK slots…</div></div><div id="slotStatus" class="status" aria-live="polite"></div>
+<script>
+/* Public calendar watchdog: this classic script still runs if the ES module fails to parse or start. */
+(function(){
+  window.__publicCalendarStarted = false;
+  function showStartupFailure(message){
+    var area=document.getElementById("slotsArea");
+    if(!area || !area.querySelector(".slot-loading"))return;
+    area.innerHTML='<div class="notice err" style="white-space:normal">Booking calendar did not start correctly. '+message+' Please refresh the page and send this message if it continues.</div>';
+  }
+  window.addEventListener("error",function(event){
+    var target=event.target;
+    if(target && target.tagName==="SCRIPT" && target.type==="module"){
+      showStartupFailure("The booking JavaScript module could not be loaded.");
+    }else if(event.message){
+      showStartupFailure("JavaScript error: "+String(event.message).slice(0,180));
+    }
+  },true);
+  window.addEventListener("unhandledrejection",function(event){
+    var reason=event.reason;
+    showStartupFailure("Startup error: "+String(reason && (reason.message||reason)||"Unknown error").slice(0,180));
+  });
+  window.setTimeout(function(){
+    if(!window.__publicCalendarStarted){
+      showStartupFailure("The booking script never started (module startup failure).");
+    }
+  },18000);
+})();
+</script>
 </section>
 <section class="card" id="bookingFormCard">
     <h3>SET YOUR PK SLOT</h3><p class="sub">Enter your BIGO ID and name, then select a date and available time.</p>
@@ -2022,6 +2050,7 @@ $("exportExcelBtn").onclick=async()=>{if(!isAdmin)return;if(!window.ExcelJS){set
  }catch(e){console.error(e);setStatus("exportMessage","Could not create the Excel report. Please try again or use CSV export.","err");}};
 $("exportCsvBtn").onclick=()=>{if(!isAdmin)return;const rows=exportRows();const headers=rows.length?Object.keys(rows[0]):["DATE","TIME","BIGO NAME","BIGO ID","HOST LEVEL","AGENCY NAME","AGENCY TELEGRAM","OPK EVENT","VS","OPPONENT NAME","OPPONENT BIGO ID","LEVEL","OPPONENT AGENCY NAME","OPPONENT AGENCY TELEGRAM","REMARKS (WIN/LOSE)"];const quote=v=>`"${String(v??"").replace(/"/g,'""')}"`;const csv=[headers.map(quote).join(","),...rows.map(r=>headers.map(h=>quote(r[h])).join(","))].join("\r\n");const selectedMonth=$("bookingMonthFilter")?.value||dateToday().slice(0,7);downloadBlob("\ufeff"+csv,"text/csv;charset=utf-8",`BADASS-OPK-Match-Report-${selectedMonth}.csv`);setStatus("exportMessage",`CSV report downloaded for ${monthLabel(selectedMonth)}.`,"ok");};
 async function copyText(text){try{await navigator.clipboard.writeText(text);alert("Copied!");}catch{const t=document.createElement("textarea");t.value=text;document.body.appendChild(t);t.select();document.execCommand("copy");t.remove();alert("Copied!");}}
+window.__publicCalendarStarted = true;
 startApp();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
