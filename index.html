@@ -510,9 +510,9 @@ body:has(#adminView:not(.hidden)) .tg-top-strip{display:none!important;}
     <div class="admin-head"><div><h3>Superadmin • Admin Account Management</h3><p class="sub">Manage regular Admin access. Superadmin accounts are protected.</p></div><button id="refreshSuperadminAdmins" class="secondary small" type="button">Refresh</button></div>
     <div class="card" style="margin:12px 0;padding:14px">
       <h3>Add Admin account</h3>
-      <p class="sub">Create the user first in Firebase Authentication, then enter the exact Firebase UID and email below.</p>
-      <label for="newAdminEmail">Admin email</label><input id="newAdminEmail" type="email" placeholder="admin@example.com">
-      <label for="newAdminUid">Firebase UID</label><input id="newAdminUid" autocomplete="off" placeholder="Paste Firebase Authentication UID">
+      <p class="sub">Enter the new Admin's email and password. The Firebase account and D1 access record will be created automatically.</p>
+      <label for="newAdminEmail">Admin email</label><input id="newAdminEmail" type="email" autocomplete="off" placeholder="admin@example.com">
+      <label for="newAdminPassword">Temporary password</label><input id="newAdminPassword" type="password" autocomplete="new-password" minlength="6" placeholder="At least 6 characters">
       <button id="addAdminAccountBtn" class="full" type="button" style="margin-top:12px">Add Admin</button>
       <div id="superadminMessage" class="status" aria-live="polite"></div>
     </div>
@@ -696,7 +696,7 @@ const firebaseModuleLoad = await Promise.all([
   console.error("Firebase module load failed", error);
   throw error;
 });
-const [{ initializeApp }, { getAuth, onAuthStateChanged, signInAnonymously, signInWithEmailAndPassword, signOut }, { getFirestore, collection, doc, getDoc, getDocs, onSnapshot, query, where, orderBy, runTransaction, setDoc, updateDoc, deleteDoc, serverTimestamp, writeBatch }] = firebaseModuleLoad;
+const [{ initializeApp, deleteApp }, { getAuth, onAuthStateChanged, signInAnonymously, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut }, { getFirestore, collection, doc, getDoc, getDocs, onSnapshot, query, where, orderBy, runTransaction, setDoc, updateDoc, deleteDoc, serverTimestamp, writeBatch }] = firebaseModuleLoad;
 
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyC4wcnp9FmyL8Api2kvcLcV68gCpnn09xE",
@@ -1415,15 +1415,34 @@ $("loginBtn").addEventListener("click", async (event)=>{
 $("refreshSuperadminAdmins")?.addEventListener("click",loadSuperadminAdmins);
 $("addAdminAccountBtn")?.addEventListener("click",async()=>{
  if(!isSuperadmin)return;
- const email=$("newAdminEmail").value.trim(),uid=$("newAdminUid").value.trim(),msg=$("superadminMessage"),btn=$("addAdminAccountBtn");
- if(!email||!uid){msg.textContent="Enter both the Firebase email and UID.";return;}
- btn.disabled=true;msg.textContent="Verifying Firebase account and adding Admin…";
+ const email=$("newAdminEmail").value.trim(),password=$("newAdminPassword").value,msg=$("superadminMessage"),btn=$("addAdminAccountBtn");
+ if(!email||!password){msg.textContent="Enter both the Admin email and password.";return;}
+ if(password.length<6){msg.textContent="Firebase passwords must contain at least 6 characters.";return;}
+ btn.disabled=true;msg.textContent="Creating Firebase account and enabling Admin access…";
+ let creatorApp=null,creatorAuth=null;
  try{
+  creatorApp=initializeApp(FIREBASE_CONFIG,"admin-creator-"+Date.now());
+  creatorAuth=getAuth(creatorApp);
+  let credential;
+  try{
+   credential=await createUserWithEmailAndPassword(creatorAuth,email,password);
+  }catch(createError){
+   if(createError.code!=="auth/email-already-in-use")throw createError;
+   credential=await signInWithEmailAndPassword(creatorAuth,email,password);
+  }
+  const uid=credential.user.uid;
   await cloudflareAdminRequest("/api/superadmin/admins",{method:"POST",body:JSON.stringify({email,uid})});
-  $("newAdminEmail").value="";$("newAdminUid").value="";
-  msg.textContent="Admin account added successfully.";await loadSuperadminAdmins();
- }catch(e){msg.textContent="Could not add Admin: "+String(e.message||e);}
- finally{btn.disabled=false;}
+  $("newAdminEmail").value="";$("newAdminPassword").value="";
+  msg.textContent="Admin account created and enabled successfully. Share the login details with the new Admin securely.";
+  await loadSuperadminAdmins();
+ }catch(e){
+  console.error("Add Admin failed:",e);
+  msg.textContent="Could not add Admin: "+String(e.message||e);
+ }finally{
+  if(creatorAuth){try{await signOut(creatorAuth);}catch{}}
+  if(creatorApp){try{await deleteApp(creatorApp);}catch{}}
+  btn.disabled=false;
+ }
 });
 $("logoutBtn").onclick=async()=>{try{await signOut(auth);isAdmin=false;isSuperadmin=false;currentRole="";currentUser=null;adminSession.startedAt=null;adminSession.actions=[];await applyRoleAccess();}catch(e){console.error("Admin logout failed:",e);setStatus("adminMessage","Logout failed: "+String(e.message||e),"err");}};
 // Monthly slots are generated automatically by ensureMonthSlots(); manual slot creation is intentionally disabled.
