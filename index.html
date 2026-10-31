@@ -703,10 +703,11 @@ body:has(#infoView:not(.hidden)) .pk-battle{display:none!important}
 #aboutUsSection:not(.hidden),#contactUsSection:not(.hidden){display:block!important}
 #infoView{min-width:0!important;width:100%!important;overflow-x:hidden!important}
 @media(max-width:700px){
-#aboutUsSection .about-layout{grid-template-columns:minmax(0,1fr)!important;gap:12px!important;padding:0 12px!important}
-#aboutUsSection .about-male,#aboutUsSection .about-copy,#aboutUsSection .about-female{grid-column:1!important;grid-row:auto!important}
+#aboutUsSection .about-layout{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px 10px!important;padding:0 12px!important;align-items:end!important}
+#aboutUsSection .about-male,#aboutUsSection .about-female{grid-row:1!important;grid-column:auto!important;width:100%!important;min-width:0!important;overflow:hidden!important}
+#aboutUsSection .about-copy{grid-column:1 / -1!important;grid-row:2!important}
 #aboutUsSection .about-character-wrap{width:100%!important;max-height:none!important;overflow:visible!important}
-#aboutUsSection .about-info-image{width:100%!important;max-width:430px!important;max-height:none!important;height:auto!important;object-fit:contain!important;object-position:center!important}
+#aboutUsSection .about-info-image{width:100%!important;max-width:none!important;max-height:none!important;height:auto!important;object-fit:contain!important;object-position:center bottom!important}
 #aboutUsSection .about-copy{width:100%!important;padding:8px 4px 20px!important}
 #aboutUsSection .about-copy h3{font-size:clamp(25px,7vw,34px)!important}
 #aboutUsSection .about-copy p{font-size:clamp(17px,4.5vw,20px)!important;line-height:1.55!important}
@@ -992,8 +993,18 @@ document.addEventListener("click",function(event){
   function showInfo(id){
     showBadassView('info');
     var about=el('aboutUsSection'),contact=el('contactUsSection');
-    if(about)about.classList.toggle('hidden',id!=='aboutUsSection');
-    if(contact)contact.classList.toggle('hidden',id!=='contactUsSection');
+    if(about){
+      var showAbout=id==='aboutUsSection';
+      about.classList.toggle('hidden',!showAbout);
+      about.style.display=showAbout?'block':'none';
+      about.setAttribute('aria-hidden',String(!showAbout));
+    }
+    if(contact){
+      var showContact=id==='contactUsSection';
+      contact.classList.toggle('hidden',!showContact);
+      contact.style.display=showContact?'block':'none';
+      contact.setAttribute('aria-hidden',String(!showContact));
+    }
     var target=el(id);
     if(target)target.scrollIntoView({behavior:'smooth',block:'start'});
   }
