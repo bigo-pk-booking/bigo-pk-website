@@ -1964,7 +1964,7 @@ function openManualPkReview(initial){
   }finally{
    confirm.disabled=false;confirm.textContent="Confirm & Create PK";
    createBtn.disabled=false;createBtn.classList.remove("is-loading");
-   loadManualAvailableTimes();
+   manualSlotsMonth="";loadManualAvailableTimes();
   }
  };
 }
