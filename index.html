@@ -1238,7 +1238,7 @@ function renderAdmin(){
  missingOpponents.forEach(b=>{const d=reportDate(b.date);if(d!==lastDate){reportLines.push(d,"");lastDate=d;}reportLines.push("NAME : "+(b.name||"—"),"BIGO ID : "+(b.bigoId||"—"),"TIME : "+reportTime(b.time),"");});
  if(missingOpponents.length)reportLines.push("No PM, no match. Tara 😘");
  const reportText=missingOpponents.length?reportLines.join("\n"):"";
- $("opponentReportCount")?.textContent=String(missingOpponents.length);
+ const legacyOpponentCount=$("opponentReportCount");if(legacyOpponentCount)legacyOpponentCount.textContent=String(missingOpponents.length);
  const navCount=$("opponentNavCount");if(navCount)navCount.textContent=String(missingOpponents.length);
  const navBtn=$("opponentNavBtn");if(navBtn)navBtn.classList.toggle("hidden",!isAdmin);
  const popupContent=$("opponentPopupContent");if(popupContent)popupContent.innerHTML=reportText?'<textarea id="opponentPopupText" readonly rows="10" style="width:100%;background:#fff;color:#202428;padding:10px;border-radius:8px"></textarea><p class="sub">'+missingOpponents.length+' booking(s) still need an opponent.</p>':'<div class="notice ok">All active bookings this month already have an opponent.</div>';
