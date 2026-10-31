@@ -583,9 +583,10 @@ body:has(#adminView:not(.hidden)) .tg-top-strip{display:none!important;}
       </div>
     </div>
     <hr>
+    <button id="toggleManagementOpkBtn" class="full" type="button" aria-expanded="false" style="margin:14px 0">📋 View Management OPK</button>
+    <div id="managementOpkPanel" class="hidden">
     <div class="admin-head"><div><h3>OPK Booking</h3><p class="sub" style="margin:5px 0 0">View and edit host and opponent information.</p></div><input id="adminSearch" style="max-width:300px" placeholder="Search BIGO ID / name / date / time"></div>
-    <button id="toggleOpkBookingsBtn" class="full" type="button" aria-expanded="false" style="margin-top:12px">📋 View OPK Booking</button>
-    <div id="opkBookingsPanel" class="hidden" style="margin-top:12px">
+    <div id="opkBookingsPanel" style="margin-top:12px">
       <div style="margin:12px 0"><label for="bookingMonthFilter">Select month of OPK</label><select id="bookingMonthFilter" aria-label="Select month of OPK"></select></div>
       <div id="adminBookings" class="table-wrap"><div class="notice">Loading bookings…</div></div>
       <button id="downloadMonthExcelBtn" class="success full" type="button" style="margin-top:12px">Download selected month Excel</button>
@@ -594,7 +595,7 @@ body:has(#adminView:not(.hidden)) .tg-top-strip{display:none!important;}
     <div class="card" style="margin:12px 0;padding:14px">
       <h3>Slot management</h3>
       <p class="sub">Manage available, booked, and closed PK time slots directly below. No popup.</p>
-      <button id="openSlotManagement" type="button" class="full">⚙️ Load / Refresh Slot Management</button>
+      <button id="openSlotManagement" type="button" class="full">⚙️ Refresh Slot Management</button>
     </div>
     <section id="slotManagementModal" class="card" aria-labelledby="slotManagementTitle" style="display:block!important;position:static!important;width:100%;max-width:100%;height:auto!important;max-height:none!important;overflow:visible!important;background:#160909;border:1px solid #b52b36;border-radius:12px;padding:14px;margin:12px 0;color:#fff;box-sizing:border-box">
       <div style="width:100%;max-width:100%;height:auto;max-height:none;overflow:visible;background:transparent;border:0;border-radius:0;padding:0;color:#fff;box-shadow:none">
@@ -629,6 +630,7 @@ body:has(#adminView:not(.hidden)) .tg-top-strip{display:none!important;}
       </div>
     </section>
     <div id="adminMessage" class="status"></div>
+    </div>
   </div>
 </section>
 <div class="footer">BADASS BIGO PK Slots • Times shown in Philippine time • Keep your PK reference private.</div>
@@ -1672,13 +1674,13 @@ async function toggleSlot(id){
 }
 $("adminSearch").addEventListener("input",()=>{bookingPage=0;renderAdmin();});
 $("bookingMonthFilter").addEventListener("change",()=>{bookingPage=0;renderAdmin();});
-$("toggleOpkBookingsBtn")?.addEventListener("click",()=>{
- const panel=$("opkBookingsPanel"),button=$("toggleOpkBookingsBtn");
+$("toggleManagementOpkBtn")?.addEventListener("click",()=>{
+ const panel=$("managementOpkPanel"),button=$("toggleManagementOpkBtn");
  const opening=panel.classList.contains("hidden");
  panel.classList.toggle("hidden",!opening);
  button.setAttribute("aria-expanded",String(opening));
- button.textContent=opening?"📋 Hide OPK Booking":"📋 View OPK Booking";
- if(opening){bookingPage=0;renderAdmin();}
+ button.textContent=opening?"📋 Hide Management OPK":"📋 View Management OPK";
+ if(opening){bookingPage=0;slotPage=0;renderAdmin();}
 });
 $("slotMonthFilter").addEventListener("change",()=>{slotPage=0;loadCloudflareAdminSlots($("slotMonthFilter").value);});
 $("saveMonthlySettingsBtn").addEventListener("click",saveMonthlySettings);
