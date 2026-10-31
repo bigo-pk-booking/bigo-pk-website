@@ -878,18 +878,10 @@ document.addEventListener("click",function(event){
 </script>
 <script type="module">
 window.__badassFirebaseModuleLoaded = true;
-// Load Firebase modules dynamically so CDN/import failures are shown on the page.
-const firebaseModuleLoad = await Promise.all([
-  import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"),
-  import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"),
-  import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js")
-]).catch(error => {
-  const msg = document.getElementById("loginMessage");
-  if (msg) { msg.className = "status err"; msg.textContent = "Firebase module load failed: " + (error?.message || String(error)) + ". Check connection/content blockers and try Chrome. If this persists, send this exact message."; }
-  console.error("Firebase module load failed", error);
-  throw error;
-});
-const [{ initializeApp, deleteApp }, { getAuth, onAuthStateChanged, signInAnonymously, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut }, { getFirestore, collection, doc, getDoc, getDocs, onSnapshot, query, where, orderBy, runTransaction, setDoc, updateDoc, deleteDoc, serverTimestamp, writeBatch }] = firebaseModuleLoad;
+// Firebase SDK bindings load only after the public slot calendar request.
+let initializeApp, deleteApp;
+let getAuth, onAuthStateChanged, signInAnonymously, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut;
+let getFirestore, collection, doc, getDoc, getDocs, onSnapshot, query, where, orderBy, runTransaction, setDoc, updateDoc, deleteDoc, serverTimestamp, writeBatch;
 
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyC4wcnp9FmyL8Api2kvcLcV68gCpnn09xE",
@@ -1352,8 +1344,24 @@ async function loadSuperadminAdmins(){
  }catch(e){box.innerHTML='<div class="notice err">'+escapeHtml(e.message||"Could not load Admin accounts.")+'</div>';}
 }
 async function startApp(){
+ // Load the public calendar first; it must not wait for Firebase CDN imports.
+ try{
+  const hasOpenMonths=await loadPublicOpenMonths();
+  if(hasOpenMonths)await loadCloudflareSlots($("filterDate").value||defaultScheduleDate);
+ }catch(calendarError){
+  console.error("Public calendar bootstrap failed:",calendarError);
+  $("slotsArea").innerHTML='<div class="notice err">Could not start the booking calendar: '+escapeHtml(String(calendarError.message||calendarError))+'</div>';
+ }
  if(!configured){$("configWarning").classList.remove("hidden");return;}
  try{
+  const [appSdk,authSdk,firestoreSdk]=await Promise.all([
+   import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"),
+   import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"),
+   import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js")
+  ]);
+  ({initializeApp,deleteApp}=appSdk);
+  ({getAuth,onAuthStateChanged,signInAnonymously,signInWithEmailAndPassword,createUserWithEmailAndPassword,signOut}=authSdk);
+  ({getFirestore,collection,doc,getDoc,getDocs,onSnapshot,query,where,orderBy,runTransaction,setDoc,updateDoc,deleteDoc,serverTimestamp,writeBatch}=firestoreSdk);
   app=initializeApp(FIREBASE_CONFIG);auth=getAuth(app);db=getFirestore(app);
   onAuthStateChanged(auth,async user=>{
    currentUser=user;
