@@ -1162,6 +1162,57 @@ async function cloudflareAdminRequest(path, options={}){
  if(!response.ok||!result.ok)throw new Error(result.error||"Cloudflare admin request failed");
  return result;
 }
+
+/* Keep the navbar opponent count and report independent of the Management OPK accordion. */
+function refreshOpponentNotificationUI(){
+ if(!isAdmin)return;
+ const month=$("bookingMonthFilter")?.value||dateToday().slice(0,7);
+ const missing=[...new Map(bookings.filter(b=>
+  monthKey(b.date)===month &&
+  !["cancelled","rejected"].includes(String(b.status||"").trim().toLowerCase()) &&
+  !String(b.opponentBigoId||"").trim()
+ ).map((b,i)=>[String(b.id||[b.date,b.time,b.bigoId||b.name||i].join("|")),b])).values()]
+ .sort((a,b)=>(String(a.date||"")+String(a.time||"")).localeCompare(String(b.date||"")+String(b.time||"")));
+ const button=$("opponentNavBtn");
+ if(button){
+  let badge=button.querySelector(".opponent-count");
+  if(!badge){
+   badge=document.createElement("b");
+   badge.className="opponent-count";
+   button.appendChild(badge);
+  }
+  badge.textContent=String(missing.length);
+  button.classList.remove("hidden");
+  button.setAttribute("aria-label","Looking for Opponent: "+missing.length+" bookings need an opponent");
+ }
+ const dateLabel=v=>{const p=String(v||"").split("-").map(Number);return p.length===3?new Date(p[0],p[1]-1,p[2]).toLocaleDateString("en-US",{month:"long",day:"numeric"}).toUpperCase():String(v||"");};
+ const timeLabel=v=>{const p=String(v||"").split(":");if(p.length!==2)return String(v||"");let h=Number(p[0]);const ap=h>=12?"PM":"AM";h=h%12||12;return h+":"+p[1]+" "+ap;};
+ let report="";
+ if(missing.length){
+  const lines=["LOOKING FOR ACTIVE OPPONENT FOR "+monthLabel(month).toUpperCase()+"‼️",""];
+  let last="";
+  missing.forEach(b=>{const d=dateLabel(b.date);if(d!==last){lines.push(d,"");last=d;}lines.push("NAME : "+(b.name||"—"),"BIGO ID : "+(b.bigoId||"—"),"TIME : "+timeLabel(b.time),"");});
+  lines.push("No PM, no match. Tara 😘");
+  report=lines.join("\n");
+ }
+ const content=$("opponentPopupContent");
+ if(content){
+  content.innerHTML=report
+   ? '<textarea id="opponentPopupText" readonly rows="10" style="width:100%;background:#fff;color:#202428;padding:10px;border-radius:8px"></textarea><p class="sub">'+missing.length+' booking(s) still need an opponent.</p>'
+   : '<div class="notice ok">All active bookings this month already have an opponent.</div>';
+  const area=$("opponentPopupText");if(area)area.value=report;
+ }
+ const copy=$("opponentPopupCopy");
+ if(copy){
+  copy.disabled=!report;
+  copy.onclick=async()=>{
+   if(!report)return;
+   try{await navigator.clipboard.writeText(report);if($("opponentPopupStatus"))$("opponentPopupStatus").textContent="Report copied. Paste it into Telegram.";}
+   catch(e){const area=$("opponentPopupText");area?.focus();area?.select();if($("opponentPopupStatus"))$("opponentPopupStatus").textContent="Select the report above and copy it.";}
+  };
+ }
+}
+
 async function loadCloudflareAdminBookings(){
  try{
   const result=await cloudflareAdminRequest("/api/admin/bookings");
@@ -1187,6 +1238,7 @@ async function loadCloudflareAdminBookings(){
    adminReviewed:Number(b.admin_reviewed)===1
   }));
   renderAdmin();
+  refreshOpponentNotificationUI();
   setStatus("adminMessage","Loaded bookings from Cloudflare D1.","ok");
  }catch(e){
   console.error("Cloudflare admin bookings failed:",e);
@@ -1530,7 +1582,7 @@ function renderAdmin(){
  // The navbar badge is rendered as a <b> inside the button (not a separately-ID'd node).
  const navCount=$("opponentNavCount")||navBtn?.querySelector("b");
  if(navCount)navCount.textContent=String(missingOpponents.length);
- if(navBtn){navBtn.classList.toggle("hidden",!isAdmin);navBtn.setAttribute("aria-label","Looking for Opponent: "+missingOpponents.length+" bookings need an opponent");}
+ if(navBtn){navBtn.classList.toggle("hidden",!isAdmin);navBtn.setAttribute("aria-label","Looking for Opponent: "+missingOpponents.length+" bookings need an opponent");const badge=navBtn.querySelector(".opponent-count")||navBtn.querySelector("b");if(badge)badge.textContent=String(missingOpponents.length);}
  const popupContent=$("opponentPopupContent");if(popupContent)popupContent.innerHTML=reportText?'<textarea id="opponentPopupText" readonly rows="10" style="width:100%;background:#fff;color:#202428;padding:10px;border-radius:8px"></textarea><p class="sub">'+missingOpponents.length+' booking(s) still need an opponent.</p>':'<div class="notice ok">All active bookings this month already have an opponent.</div>';
  const popupText=$("opponentPopupText");if(popupText)popupText.value=reportText;
  const popupCopy=$("opponentPopupCopy");if(popupCopy){popupCopy.disabled=!reportText;popupCopy.onclick=async()=>{if(!reportText)return;try{await navigator.clipboard.writeText(reportText);$("opponentPopupStatus").textContent="Report copied. Paste it into Telegram.";}catch(e){const t=$("opponentPopupText");t?.focus();t?.select();$("opponentPopupStatus").textContent="Select the report above and copy it.";}};}
