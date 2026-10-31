@@ -756,7 +756,18 @@ body.admin-page-mode .site-footer{display:none!important}
   <div class="card hidden" id="adminDashboard">
     <div class="admin-head"><div><h3>Welcome, Badass Admin!</h3><p id="adminWelcomeGreeting" class="sub" style="margin:5px 0 0">Welcome back. Have a great day!</p></div></div>
 
-    <section class="card announcement-admin-card" id="announcementManager" style="margin:14px 0;padding:16px"><div class="admin-head"><div><h3>📢 Announcement Manager</h3><p class="sub">Publish an announcement to the website and the official Telegram group.</p></div><button id="refreshAnnouncementsBtn" class="secondary small" type="button">Refresh</button></div><label for="announcementTitle">Announcement title</label><input id="announcementTitle" maxlength="120" placeholder="Enter announcement title"><label for="announcementMessage">Announcement message</label><textarea id="announcementMessage" rows="5" maxlength="3500" placeholder="Write your announcement here..." style="width:100%;resize:vertical"></textarea><label style="display:flex;align-items:center;gap:9px;margin:12px 0"><input id="announcementSendTelegram" type="checkbox" checked style="width:auto"> Also send to Telegram group</label><button id="publishAnnouncementBtn" class="full" type="button">Publish Announcement</button><div id="announcementAdminStatus" class="status" aria-live="polite"></div><h3 style="margin-top:18px">Published announcements</h3><div id="announcementAdminList"><div class="notice">Loading announcements…</div></div></section>
+    <section class="card announcement-admin-card" id="announcementManager" style="margin:14px 0;padding:16px">
+      <button id="toggleAnnouncementManagerBtn" class="admin-accordion-toggle full" type="button" aria-expanded="false" aria-controls="announcementManagerContent" style="margin:0;text-align:left">📢 Make an Announcement <span class="accordion-chevron">›</span></button>
+      <p class="sub" style="margin:9px 0 0">Create and publish an update for the website and official Telegram group.</p>
+      <div id="announcementManagerContent" class="hidden" style="margin-top:16px">
+        <div class="admin-head"><div><h3>Announcement Editor</h3><p class="sub">Write your announcement and choose whether to share it on Telegram.</p></div><button id="refreshAnnouncementsBtn" class="secondary small" type="button">Refresh</button></div>
+        <label for="announcementTitle">Announcement title</label><input id="announcementTitle" maxlength="120" placeholder="Enter announcement title">
+        <label for="announcementMessage">Announcement message</label><textarea id="announcementMessage" rows="5" maxlength="3500" placeholder="Write your announcement here..." style="width:100%;resize:vertical"></textarea>
+        <label style="display:flex;align-items:center;gap:9px;margin:12px 0"><input id="announcementSendTelegram" type="checkbox" checked style="width:auto"> Also send to Telegram group</label>
+        <button id="publishAnnouncementBtn" class="full" type="button">Publish Announcement</button><div id="announcementAdminStatus" class="status" aria-live="polite"></div>
+        <h3 style="margin-top:18px">Published announcements</h3><div id="announcementAdminList"><div class="notice">Loading announcements…</div></div>
+      </div>
+    </section>
     <div class="admin-grid" style="margin-top:14px">
       <div class="card manual-pk-card" style="padding:14px">
         <h3>Manual PK booking</h3>
@@ -944,6 +955,17 @@ async function loadAdminAnnouncements(){
  }catch(error){list.innerHTML='<div class="notice err">'+escapeHtml(error.message||String(error))+'</div>';}
 }
 function setupAnnouncementManager(){
+ const toggle=$("toggleAnnouncementManagerBtn"),content=$("announcementManagerContent");
+ if(toggle&&content&&toggle.dataset.bound!=="1"){
+  toggle.dataset.bound="1";
+  toggle.addEventListener("click",()=>{
+   const opening=content.classList.contains("hidden");
+   content.classList.toggle("hidden",!opening);
+   toggle.setAttribute("aria-expanded",String(opening));
+   toggle.innerHTML=(opening?"📢 Hide Announcement Form":"📢 Make an Announcement")+' <span class="accordion-chevron">'+(opening?"⌄":"›")+'</span>';
+   if(opening)loadAdminAnnouncements();
+  });
+ }
  const publish=$("publishAnnouncementBtn");if(!publish||publish.dataset.bound==="1")return;publish.dataset.bound="1";
  publish.addEventListener("click",async()=>{
   const title=$("announcementTitle").value.trim(),message=$("announcementMessage").value.trim(),sendTelegram=$("announcementSendTelegram").checked,status=$("announcementAdminStatus");
