@@ -487,6 +487,19 @@ body:has(#adminView:not(.hidden)) .tg-top-strip{display:none!important;}
 @media(min-width:801px){#bookingFormCard{display:block!important}}
 
 </style>
+<style id="slot-management-reference-layout">
+#slotManagementPanel{padding:14px!important;background:rgba(10,5,7,.88)!important;border:1px solid #9f101b!important;border-radius:14px!important}
+#slotManagementPanel .slot-management-table{min-width:760px;width:100%;border-collapse:collapse;background:#080808;color:#f7f2f2}
+#slotManagementPanel .slot-management-table th{background:#a9000c;color:#fff;text-align:center;padding:10px 8px;font-size:13px}
+#slotManagementPanel .slot-management-table td{padding:9px 7px;border:1px solid #49383a;text-align:center;color:#f6eeee;font-size:13px}
+#slotManagementPanel .slot-management-table tbody tr:nth-child(even){background:#171012}
+#slotManagementPanel .slot-management-table .pill.available{background:#159447;color:#fff}
+#slotManagementPanel .slot-management-table .pill.full{background:#df2635;color:#fff}
+#slotManagementPanel .admin-slots-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:14px 0 8px}
+#slotManagementPanel .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+#slotManagementPanel .slot-management-table button{white-space:nowrap;margin:2px}
+@media(max-width:800px){#slotManagementPanel{padding:10px!important}#slotManagementPanel .month-filter-row{display:grid!important;grid-template-columns:1fr 1fr;gap:8px!important}#slotManagementPanel .slot-monthly-controls .row{display:grid!important;grid-template-columns:1fr 1fr;gap:10px!important}#slotManagementPanel .slot-actions-grid{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important}#slotManagementPanel .slot-actions-grid button{min-height:58px;padding:8px;font-size:13px}#slotManagementPanel .slot-management-table{min-width:690px}}
+</style>
 </head>
 <body>
 <header><div class="head">
@@ -1129,10 +1142,13 @@ function renderAdmin(){
  const slotPages=Math.max(1,Math.ceil(filteredSlots.length/ADMIN_PAGE_SIZE));
  slotPage=Math.min(slotPage,slotPages-1);
  const visibleSlots=filteredSlots.slice(slotPage*ADMIN_PAGE_SIZE,(slotPage+1)*ADMIN_PAGE_SIZE);
- const slotTable=visibleSlots.length?`<table><thead><tr><th>Date / time</th><th>Status</th><th>Action</th></tr></thead><tbody>${visibleSlots.map(s=>`<tr><td>${escapeHtml(s.date)}<br><b>${escapeHtml(s.time)}</b></td><td><span class="pill ${s.status==="available"?"available":s.status==="full"?"full":""}">${escapeHtml(slotStatus(s))}</span></td><td>${s.status==="full"?'<span class="muted">Cancel booking first</span>':`<button class="small secondary" data-toggle="${escapeHtml(s.id)}">${s.status==="closed"?"Reopen":"Close slot"}</button>`}</td></tr>`).join("")}</tbody></table>`:'<div class="notice">No slots match the selected month and status.</div>';
+ const slotTable=visibleSlots.length?`<div class="admin-slots-heading"><h3>Bookings (${escapeHtml(monthLabel(slotMonth))})</h3><span class="sub">Showing ${filteredSlots.length} slots</span></div><div class="table-wrap"><table class="slot-management-table"><thead><tr><th>Date</th><th>Time</th><th>Name</th><th>BIGO ID</th><th>Status</th><th>Action</th></tr></thead><tbody>${visibleSlots.map(s=>{const linkedBooking=bookings.find(b=>(s.bookingId&&String(b.id)===String(s.bookingId))||(b.date===s.date&&b.time===s.time&&!["Cancelled","Rejected"].includes(String(b.status||""))));const booked=s.status==="full"||!!linkedBooking;const label=booked?"Booked":s.status==="closed"?"Available":"Available";return `<tr><td>${escapeHtml(s.date||"")}</td><td><b>${escapeHtml(s.time||"")}</b></td><td>${escapeHtml(s.hostName||linkedBooking?.name||"—")}</td><td>${escapeHtml(s.hostBigoId||linkedBooking?.bigoId||"—")}</td><td><span class="pill ${booked?"full":s.status==="closed"?"":"available"}">${booked?"Booked":s.status==="closed"?"Closed":label}</span></td><td>${booked&&linkedBooking?`<button class="small secondary" title="View booking" data-slot-view="${escapeHtml(linkedBooking.id)}">View</button> <button class="small" title="Edit booking" data-slot-edit="${escapeHtml(linkedBooking.id)}">Edit</button> <button class="small danger" title="Delete booking" data-slot-delete="${escapeHtml(linkedBooking.id)}">Delete</button>`:`<button class="small secondary" data-toggle="${escapeHtml(s.id)}">${s.status==="closed"?"Open":"Close"}</button>`}</td></tr>`}).join("")}</tbody></table></div>`:'<div class="notice">No slots match the selected month and status.</div>';
  const slotPager=filteredSlots.length?`<div class="admin-pagination"><span>Showing ${slotPage*ADMIN_PAGE_SIZE+1}–${Math.min((slotPage+1)*ADMIN_PAGE_SIZE,filteredSlots.length)} of ${filteredSlots.length}</span><div><button class="secondary small" type="button" data-slot-prev ${slotPage===0?"disabled":""}>Previous</button> <button class="secondary small" type="button" data-slot-next ${slotPage>=slotPages-1?"disabled":""}>Next</button></div></div>`:"";
  $("adminSlots").innerHTML=slotTable+slotPager;
  $("adminSlots").querySelectorAll("[data-toggle]").forEach(btn=>btn.onclick=()=>toggleSlot(btn.dataset.toggle));
+ $("adminSlots").querySelectorAll("[data-slot-view]").forEach(btn=>btn.onclick=()=>openBookingEdit(btn.dataset.slotView));
+ $("adminSlots").querySelectorAll("[data-slot-edit]").forEach(btn=>btn.onclick=()=>openBookingEdit(btn.dataset.slotEdit));
+ $("adminSlots").querySelectorAll("[data-slot-delete]").forEach(btn=>btn.onclick=()=>cancelBooking(btn.dataset.slotDelete));
  $("adminSlots").querySelector("[data-slot-prev]")?.addEventListener("click",()=>{slotPage=Math.max(0,slotPage-1);renderAdmin();});
  $("adminSlots").querySelector("[data-slot-next]")?.addEventListener("click",()=>{slotPage++;renderAdmin();});
 }
