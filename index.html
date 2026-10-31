@@ -890,6 +890,30 @@ document.addEventListener("click",function(event){
     var target=el(id);
     if(target)target.scrollIntoView({behavior:'smooth',block:'start'});
   }
+  /* Handle public menu outside Firebase module startup. */
+  document.addEventListener('click',function(event){
+    var target=event.target;
+    var menuButton=target&&target.closest?target.closest('#menuToggleBtn'):null;
+    var aboutButton=target&&target.closest?target.closest('#openAboutBtn'):null;
+    var contactButton=target&&target.closest?target.closest('#openContactBtn'):null;
+    if(menuButton){
+      event.preventDefault();event.stopImmediatePropagation();
+      var panel=el('siteMenuPanel');
+      if(panel){
+        var opening=panel.classList.contains('hidden');
+        panel.classList.toggle('hidden',!opening);
+        menuButton.setAttribute('aria-expanded',String(opening));
+        menuButton.classList.toggle('active',opening);
+      }
+      return;
+    }
+    if(aboutButton||contactButton){
+      event.preventDefault();event.stopImmediatePropagation();
+      showInfo(aboutButton?'aboutUsSection':'contactUsSection');
+      closeMenu();
+      return;
+    }
+  },true);
   document.addEventListener('click',function(event){
     var target=event.target;
     var btn=target&&target.closest?target.closest('#showBookingBtn, #showLookupBtn, #showAdminBtn'):null;
@@ -2063,4 +2087,27 @@ startApp();
  </div>
 </div>
 <script>(function(){const modal=document.getElementById("bookingEditModal");if(!modal)return;const close=()=>{modal.classList.add("hidden");document.body.style.overflow="";};document.getElementById("bookingEditClose").addEventListener("click",()=>window.closeBookingEdit?.());document.getElementById("bookingEditCancel").addEventListener("click",()=>window.closeBookingEdit?.());modal.addEventListener("click",e=>{if(e.target===modal)window.closeBookingEdit?.();});document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!modal.classList.contains("hidden"))window.closeBookingEdit?.();});document.getElementById("bookingEditSave").addEventListener("click",()=>{const id=modal.dataset.bookingId;if(id)window.saveBookingEdit?.(id);});window.closeBookingEdit=close;})();</script>
+
+<footer id="siteFooter" class="site-footer" aria-label="Website footer">
+  <nav class="footer-links" aria-label="Footer navigation">
+    <button type="button" class="secondary" id="footerAboutBtn">ⓘ About Us</button>
+    <button type="button" class="secondary" id="footerContactBtn">✉ Contact Us</button>
+  </nav>
+  <div class="footer">© <span id="footerYear"></span> BIGO PK SLOTS · BADASS</div>
+</footer>
+<script>
+(function(){
+  var year=document.getElementById('footerYear');
+  if(year)year.textContent=String(new Date().getFullYear());
+  document.addEventListener('click',function(event){
+    var target=event.target;
+    if(target&&target.closest&&target.closest('#footerAboutBtn')){
+      event.preventDefault();document.getElementById('openAboutBtn')?.click();
+    }else if(target&&target.closest&&target.closest('#footerContactBtn')){
+      event.preventDefault();document.getElementById('openContactBtn')?.click();
+    }
+  },true);
+})();
+</script>
+
 </body></html>
