@@ -66,7 +66,8 @@ input,select{border-radius:3px;border-color:#c4d2d1}input:focus,select:focus{out
 .battle-countdown{font-size:15px;color:#fff;text-shadow:0 0 9px #ff3434;font-variant-numeric:tabular-nums}
 .battle-clash-track{position:relative;height:17px;overflow:hidden;border:1px solid #ffffff66;border-radius:20px;background:#080808;box-shadow:0 0 12px #ff262688,inset 0 0 5px #000}
 .battle-clash-side{position:absolute;top:0;bottom:0;width:0;transition:width .55s cubic-bezier(.2,.8,.2,1),opacity .25s}
-.pk-battle.phase-build .battle-clash-side{width:50%}
+.pk-battle.phase-opponent .battle-clash-side.blue{width:100%;transition:width 7s linear}
+.pk-battle.phase-opponent .battle-clash-side.red{width:0}
 .battle-clash-side.red{left:0;background:linear-gradient(90deg,#760000,#ff1717 70%,#ffb000);box-shadow:inset -3px 0 8px #ffd04a}
 .battle-clash-side.blue{right:0;background:linear-gradient(270deg,#08234d,#168bff 70%,#8be8ff);box-shadow:inset 3px 0 8px #b8efff}
 .battle-clash-flash{position:absolute;z-index:3;left:50%;top:50%;display:grid;place-items:center;width:27px;height:27px;transform:translate(-50%,-50%);border-radius:50%;background:#fff4a8;color:#fff;font-size:21px;font-weight:1000;text-shadow:0 0 5px #ff4b00;box-shadow:0 0 5px 3px #fff,0 0 13px 6px #ff8c00;animation:clashSpark .22s ease-in-out infinite alternate}
@@ -2567,7 +2568,9 @@ startApp();
  const format=n=>"00:"+String(n).padStart(2,"0");
  function resetRound(){
   elapsed=0;finished=false;winHold=0;
-  banner.classList.remove("is-finished","phase-build","phase-red","phase-blue");
+  banner.classList.remove("is-finished","phase-build","phase-red","phase-blue","phase-opponent");
+  void banner.offsetWidth;
+  banner.classList.add("phase-opponent");
   opponentFaces.forEach(face=>face.textContent=face.dataset.normal);
   opponentCaption.textContent="Ready to battle";
   badassCaption.textContent="Fight together";
@@ -2576,7 +2579,7 @@ startApp();
  }
  function finishRound(){
   finished=true;winHold=WIN_SECONDS;
-  banner.classList.remove("phase-blue","phase-red");
+  banner.classList.remove("phase-blue","phase-red","phase-opponent","phase-build");
   banner.classList.add("is-finished");
   opponentFaces.forEach(face=>face.textContent=face.dataset.cry);
   opponentCaption.textContent="😭 DEFEATED • CRYING!";
@@ -2594,19 +2597,16 @@ startApp();
   elapsed++;
   const remaining=Math.max(0,ROUND_SECONDS-elapsed);
   countdown.textContent=format(remaining);
-  // 0–5s: lightning clashes at the center; 5–7s: BADASS surges.
+  // 0–7s: opponent blue energy expands from the center; then each team
+  // takes the full bar in sudden surges at 7s, 10s and 13s.
   if(elapsed>=7&&elapsed<10){
-   banner.classList.add("phase-red");banner.classList.remove("phase-blue");
+   banner.classList.add("phase-red");banner.classList.remove("phase-blue","phase-opponent");
    result.textContent="🔴 BADASS IS PUSHING!";
   }else if(elapsed>=10&&elapsed<13){
-   banner.classList.add("phase-blue");banner.classList.remove("phase-red");
+   banner.classList.add("phase-blue");banner.classList.remove("phase-red","phase-opponent");
    result.textContent="🔵 OPPONENT COUNTERATTACK!";
-  }else if(elapsed>=5&&elapsed<7){
-   banner.classList.add("phase-build");banner.classList.remove("phase-red","phase-blue");
-   result.textContent="🔥 BOTH TEAMS ARE SURGING!";
-  }else if(elapsed<5){
-   banner.classList.remove("phase-build","phase-red","phase-blue");
-   result.textContent="⚡ ENERGY CLASH • FIGHTING AT THE CENTER";
+  }else if(elapsed<7){
+   result.textContent=elapsed<5?"⚡ LIGHTNING CLASH • OPPONENT ENERGY RISING":"🔥 OPPONENT IS PUSHING!";
   }
   if(elapsed>=13)finishRound();
  },1000);
