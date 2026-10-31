@@ -884,22 +884,16 @@ document.addEventListener("click",function(event){
   }
   function showInfo(id){
     showBadassView('info');
+    var about=el('aboutUsSection'),contact=el('contactUsSection');
+    if(about)about.classList.toggle('hidden',id!=='aboutUsSection');
+    if(contact)contact.classList.toggle('hidden',id!=='contactUsSection');
     var target=el(id);
     if(target)target.scrollIntoView({behavior:'smooth',block:'start'});
   }
   document.addEventListener('click',function(event){
     var target=event.target;
-    var btn=target&&target.closest?target.closest('#showBookingBtn, #showLookupBtn, #showAdminBtn, #menuToggleBtn, #openAboutBtn, #openContactBtn'):null;
+    var btn=target&&target.closest?target.closest('#showBookingBtn, #showLookupBtn, #showAdminBtn'):null;
     if(!btn)return;
-    if(btn.id==='menuToggleBtn'){
-      event.preventDefault();event.stopImmediatePropagation();
-      var panel=el('siteMenuPanel'),open=panel&&panel.classList.contains('hidden');
-      if(panel)panel.classList.toggle('hidden',!open);
-      btn.setAttribute('aria-expanded',String(!!open));btn.classList.toggle('active',!!open);
-      return;
-    }
-    if(btn.id==='openAboutBtn'){event.preventDefault();event.stopImmediatePropagation();showInfo('aboutUsSection');return;}
-    if(btn.id==='openContactBtn'){event.preventDefault();event.stopImmediatePropagation();showInfo('contactUsSection');return;}
     if(btn.id==='showBookingBtn'){showBadassView('booking');return;}
     if(btn.id==='showLookupBtn'){showBadassView('lookup');return;}
     if(btn.id==='showAdminBtn'){showBadassView('admin');}
@@ -1103,7 +1097,7 @@ function recordAdminAction(label){adminSession.actions.push(label);}
 function showLogoutSummary(){const mins=adminSession.startedAt?Math.max(0,Math.round((Date.now()-adminSession.startedAt)/60000)):0;const counts=adminSession.actions.reduce((a,x)=>(a[x]=(a[x]||0)+1,a),{});const lines=Object.entries(counts).map(([k,v])=>v+" × "+k).join("\n");return confirm("ADMIN SESSION SUMMARY\nDuration: "+mins+" minute(s)\nActions: "+adminSession.actions.length+"\n"+(lines||"No tracked actions") +"\n\nLog out now?");}
 async function bulkToggleSlots(action){const month=$("slotMonthFilter")?.value||selectedHeaderMonth();const verb=action==="open"?"OPEN ALL CLOSED SLOTS":"CLOSE ALL AVAILABLE SLOTS";if(!confirm(verb+" for "+monthTitle(month)+"? Booked slots will not change."))return;const buttons=[$("openAllSlotsBtn"),$("closeAllSlotsBtn")];buttons.forEach(b=>b.disabled=true);try{const result=await cloudflareAdminRequest("/api/admin/slots/bulk",{method:"PATCH",body:JSON.stringify({month,action})});recordAdminAction(action==="open"?"Bulk opened slots":"Bulk closed slots");await loadCloudflareAdminSlots(month);setStatus("monthlySettingsMessage",result.affected+" slot(s) "+(action==="open"?"opened":"closed")+". Booked slots were protected.","ok");}catch(e){setStatus("monthlySettingsMessage","Bulk action failed: "+String(e.message||e),"err");}finally{buttons.forEach(b=>b.disabled=false);}}
 function showView(name){$("bookingView").classList.toggle("hidden",name!=="booking");$("lookupView").classList.toggle("hidden",name!=="lookup");$("adminView").classList.toggle("hidden",name!=="admin");$("infoView")?.classList.add("hidden");document.body.classList.toggle("admin-panel-open",name==="admin");$("showBookingBtn")?.classList.toggle("active",name==="booking");$("showLookupBtn")?.classList.toggle("active",name==="lookup");$("menuToggleBtn")?.classList.remove("active");$("siteMenuPanel")?.classList.add("hidden");$("menuToggleBtn")?.setAttribute("aria-expanded","false");}
-function showInfoSection(section){$("bookingView").classList.add("hidden");$("lookupView").classList.add("hidden");$("adminView").classList.add("hidden");$("infoView").classList.remove("hidden");$("showBookingBtn")?.classList.remove("active");$("showLookupBtn")?.classList.remove("active");$("menuToggleBtn")?.classList.add("active");$("siteMenuPanel")?.classList.add("hidden");$("menuToggleBtn")?.setAttribute("aria-expanded","false");document.getElementById(section)?.scrollIntoView({behavior:"smooth",block:"start"});}
+function showInfoSection(section){$("bookingView").classList.add("hidden");$("lookupView").classList.add("hidden");$("adminView").classList.add("hidden");$("infoView").classList.remove("hidden");$("aboutUsSection")?.classList.toggle("hidden",section!=="aboutUsSection");$("contactUsSection")?.classList.toggle("hidden",section!=="contactUsSection");$("showBookingBtn")?.classList.remove("active");$("showLookupBtn")?.classList.remove("active");$("menuToggleBtn")?.classList.remove("active");$("siteMenuPanel")?.classList.add("hidden");$("menuToggleBtn")?.setAttribute("aria-expanded","false");document.getElementById(section)?.scrollIntoView({behavior:"smooth",block:"start"});}
 /* Refresh the admin booking list and opponent counter when returning to the page. */
 let adminRefreshTimer=null;
 function startAdminAutoRefresh(){
