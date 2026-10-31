@@ -64,8 +64,18 @@ input,select{border-radius:3px;border-color:#c4d2d1}input:focus,select:focus{out
 .battle-progress-wrap{max-width:700px;margin:0 auto 7px}
 .battle-countdown-row{display:flex;justify-content:space-between;align-items:center;margin:0 1px 4px;color:#ffd5d5;font-size:10px;font-weight:900;letter-spacing:.08em}
 .battle-countdown{font-size:15px;color:#fff;text-shadow:0 0 9px #ff3434;font-variant-numeric:tabular-nums}
-.battle-progress-track{height:9px;overflow:hidden;border:1px solid #ff9c45;border-radius:20px;background:#18090a;box-shadow:0 0 9px #ff262688}
-.battle-energy{height:100%;width:100%;border-radius:20px;background:linear-gradient(90deg,#ff1d1d 0%,#ffb300 48%,#ff1d1d 100%);background-size:200% 100%;animation:battleEnergy 1.5s linear infinite;transition:width 1s linear}
+.battle-clash-track{position:relative;height:15px;overflow:hidden;border:1px solid #ffffff55;border-radius:20px;background:#080808;box-shadow:0 0 12px #ff262688,inset 0 0 5px #000}
+.battle-clash-side{position:absolute;top:0;bottom:0;width:50%;transition:all .7s ease}
+.battle-clash-side.red{left:0;background:linear-gradient(90deg,#760000,#ff1717 70%,#ff8b00);transform-origin:right center;animation:redPush .75s ease-in-out infinite alternate;box-shadow:inset -3px 0 8px #ffd04a}
+.battle-clash-side.blue{right:0;background:linear-gradient(270deg,#08234d,#168bff 70%,#8be8ff);transform-origin:left center;animation:bluePush .75s ease-in-out infinite alternate;box-shadow:inset 3px 0 8px #b8efff}
+.battle-clash-flash{position:absolute;z-index:2;left:50%;top:50%;width:17px;height:17px;transform:translate(-50%,-50%);border-radius:50%;background:#fff4a8;box-shadow:0 0 5px 3px #fff,0 0 13px 6px #ff8c00;animation:clashSpark .35s ease-in-out infinite alternate}
+.pk-battle.is-finished .battle-clash-side.red{left:0;width:100%;transform:scaleX(1);animation:winnerBar .7s ease-in-out infinite alternate;z-index:1}
+.pk-battle.is-finished .battle-clash-side.blue{width:0;opacity:0;animation:none}
+.pk-battle.is-finished .battle-clash-flash{left:96%;background:#ffe15c;box-shadow:0 0 8px 4px #ffe15c;animation:none}
+@keyframes redPush{from{transform:scaleX(.91)}to{transform:scaleX(1.08)}}
+@keyframes bluePush{from{transform:scaleX(.91)}to{transform:scaleX(1.08)}}
+@keyframes clashSpark{from{opacity:.65;box-shadow:0 0 4px 2px #fff,0 0 9px 4px #ff8c00}to{opacity:1;box-shadow:0 0 7px 4px #fff,0 0 17px 8px #ff8c00}}
+@keyframes winnerBar{to{filter:brightness(1.45)}}
 .battle-result{min-height:19px;margin:0 0 5px;color:#ffd5d5;font-size:11px;font-weight:1000;letter-spacing:.1em}
 .pk-battle-note{margin:0;color:#ffe1e1;font-size:11px;line-height:1.4}.pk-battle-note b{color:#fff}
 .pk-battle.is-finished .battle-side.left{border-color:#ffd54a;background:#3a210b88;box-shadow:0 0 16px #ffb30055;animation:winnerCelebrate .55s ease-in-out infinite alternate}
@@ -818,7 +828,9 @@ body:has(#infoView:not(.hidden)) .pk-battle{display:none!important}
   </div>
   <div class="battle-progress-wrap">
     <div class="battle-countdown-row"><span>PK BATTLE COUNTDOWN</span><span class="battle-countdown" id="battleCountdown">00:15</span></div>
-    <div class="battle-progress-track"><div class="battle-energy" id="battleProgress"></div></div>
+    <div class="battle-clash-track" role="img" aria-label="Red BADASS energy and blue challenger energy clash in the center">
+      <div class="battle-clash-side red"></div><div class="battle-clash-side blue"></div><span class="battle-clash-flash"></span>
+    </div>
   </div>
   <p class="battle-result" id="battleResult" aria-live="polite">⚔️ BATTLE IN PROGRESS</p>
   <p class="pk-battle-note"><b>Let’s support every PK match!</b> Every cheer counts—let’s help one another reach our target quota. ❤️</p>
@@ -2542,7 +2554,6 @@ startApp();
  if(!banner||banner.dataset.timerReady==="1")return;
  banner.dataset.timerReady="1";
  const countdown=document.getElementById("battleCountdown");
- const progress=document.getElementById("battleProgress");
  const result=document.getElementById("battleResult");
  const opponentFaces=banner.querySelectorAll(".battle-side.right .battle-char");
  const opponentCaption=banner.querySelector(".battle-side.right .battle-side-caption");
@@ -2557,7 +2568,6 @@ startApp();
   opponentCaption.textContent="Ready to battle";
   badassCaption.textContent="Fight together";
   countdown.textContent=format(remaining);
-  progress.style.width="100%";
   result.textContent="⚔️ BATTLE IN PROGRESS";
  }
  function finishRound(){
@@ -2567,7 +2577,6 @@ startApp();
   opponentCaption.textContent="😭 DEFEATED • CRYING!";
   badassCaption.textContent="🏆 BADASS WINS!";
   countdown.textContent="00:00";
-  progress.style.width="0%";
   result.textContent="🏆 BADASS WINS! • PK BATTLE COMPLETE";
  }
  resetRound();
@@ -2575,7 +2584,6 @@ startApp();
   if(finished){resetRound();return;}
   remaining=Math.max(0,remaining-1);
   countdown.textContent=format(remaining);
-  progress.style.width=(remaining/ROUND_SECONDS*100)+"%";
   if(remaining===0)finishRound();
  },1000);
 })();
