@@ -686,18 +686,27 @@ body:has(#infoView:not(.hidden)) .pk-battle{display:none!important}
 </style>
 
 <style id="about-us-full-artwork">
-/* About Us uses the supplied complete BADASS artwork only in this view. */
-/* Keep the full artwork inside the phone width so no text or illustration is cut off. */
-#aboutUsSection.about-info-card{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;margin:0!important;padding:0!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;overflow:visible!important}
-#aboutUsSection .about-us-heading{margin:8px 0 12px!important;padding:0!important;text-align:center!important;color:#fff!important;font-size:clamp(22px,3vw,30px)!important}
-#aboutUsSection .about-info-image{display:block!important;width:100%!important;max-width:100%!important;height:auto!important;min-height:0!important;max-height:none!important;object-fit:contain!important;object-position:center!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;order:initial!important}
+#aboutUsSection.about-info-card{display:block!important;width:100%!important;max-width:100%!important;margin:0!important;padding:0!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;overflow:visible!important}
+#aboutUsSection .about-us-heading{margin:8px 0 18px!important;text-align:center!important;color:#fff!important;font-size:clamp(22px,3vw,30px)!important}
+#aboutUsSection .about-layout{display:grid!important;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr)!important;align-items:center!important;gap:clamp(16px,3vw,36px)!important;width:100%!important;max-width:1200px!important;margin:0 auto!important;padding:0 12px!important;box-sizing:border-box!important}
+#aboutUsSection .about-character-wrap{display:flex!important;align-items:center!important;justify-content:center!important;min-width:0!important}
+#aboutUsSection .about-info-image{display:block!important;width:100%!important;max-width:620px!important;height:auto!important;max-height:none!important;min-height:0!important;object-fit:contain!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+#aboutUsSection .about-copy{min-width:0!important;color:#fff!important;text-align:left!important}
+#aboutUsSection .about-copy h3{margin:0 0 12px!important;color:#fff!important;font-size:clamp(22px,3vw,38px)!important;line-height:1.12!important;font-weight:900!important;text-shadow:0 2px 8px #000!important}
+#aboutUsSection .about-copy h3 span{color:#ff1738!important}
+#aboutUsSection .about-copy p{margin:0 0 26px!important;color:#fff!important;font-size:clamp(16px,1.7vw,21px)!important;line-height:1.55!important;text-shadow:0 2px 7px #000!important}
+#aboutUsSection .about-copy .about-brand-title{margin-top:28px!important;font-size:clamp(26px,3.5vw,42px)!important}
 #aboutUsSection.hidden,#contactUsSection.hidden{display:none!important}
 #aboutUsSection:not(.hidden),#contactUsSection:not(.hidden){display:block!important}
 #infoView{min-width:0!important;width:100%!important;overflow-x:hidden!important}
-@media(max-width:600px){
-#aboutUsSection.about-info-card{padding:0!important;margin:0!important;overflow:hidden!important}
-#aboutUsSection .about-info-image{display:block!important;width:100%!important;max-width:100%!important;height:clamp(420px,112vw,520px)!important;min-height:420px!important;max-height:520px!important;margin:0!important;object-fit:cover!important;object-position:left center!important}
-#aboutUsSection .about-us-heading{margin:8px 0 10px!important}
+@media(max-width:700px){
+#aboutUsSection .about-layout{grid-template-columns:minmax(0,1fr)!important;gap:8px!important;padding:0 16px!important}
+#aboutUsSection .about-character-wrap{width:100%!important;max-height:58vh!important;overflow:hidden!important}
+#aboutUsSection .about-info-image{width:100%!important;max-width:480px!important;max-height:58vh!important;object-fit:contain!important;object-position:center bottom!important}
+#aboutUsSection .about-copy{width:100%!important;padding:8px 4px 20px!important}
+#aboutUsSection .about-copy h3{font-size:clamp(25px,7vw,34px)!important}
+#aboutUsSection .about-copy p{font-size:clamp(17px,4.5vw,20px)!important;line-height:1.55!important}
+#aboutUsSection .about-copy .about-brand-title{margin-top:20px!important;font-size:clamp(29px,8vw,38px)!important}
 }
 </style>
 </head>
@@ -795,7 +804,17 @@ body:has(#infoView:not(.hidden)) .pk-battle{display:none!important}
 <section id="infoView" class="info-view hidden" aria-live="polite">
   <section id="aboutUsSection" class="info-card about-info-card">
     <h2 class="about-us-heading">About Us</h2>
-    <img class="about-info-image" src="assets/badass-about-us-new.jpg" alt="BADASS — We Are One BADASS Family in BIGO. BIGO PK SLOTS is a scheduler created to make OPK booking and PK planning easier for our hosts." loading="lazy" decoding="async">
+    <div class="about-layout">
+      <div class="about-character-wrap">
+        <img class="about-info-image" src="assets/badass-character-transparent.png" alt="BADASS cartoon woman holding a phone showing a BIGO PK battle screen" loading="lazy" decoding="async">
+      </div>
+      <div class="about-copy">
+        <h3 class="about-family-title">WE ARE ONE <span>BADASS</span> FAMILY IN BIGO.</h3>
+        <p>We fight as one in every battle, support one another, and give our best together so we can win every PK.</p>
+        <h3 class="about-brand-title">BIGO <span>PK SLOTS</span></h3>
+        <p>is a scheduler created to make OPK booking and PK planning easier for our hosts.</p>
+      </div>
+    </div>
   </section>
   <section id="contactUsSection" class="info-card contact-info-card">
     <span class="section-kicker">WE'RE HERE TO HELP</span>
