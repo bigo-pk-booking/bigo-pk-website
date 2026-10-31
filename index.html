@@ -1045,9 +1045,10 @@ async function loadCloudflareAdminBookings(){
 let publicOpenMonths=[];
 async function loadPublicOpenMonths(){
  try{
-  const response=await fetch(BIGO_API_BASE+"/api/months/open",{cache:"no-store"});
-  const data=await response.json();
-  if(!response.ok||!data.ok)throw new Error(data.error||"Could not load open months");
+  const response=await fetch(BIGO_API_BASE+"/api/months/open",{cache:"no-store",signal:AbortSignal.timeout(12000)});
+  const raw=await response.text();
+  let data;try{data=JSON.parse(raw);}catch(_){throw new Error("Open-month API returned an invalid response (HTTP "+response.status+").");}
+  if(!response.ok||!data.ok)throw new Error(data.error||("Open-month API failed (HTTP "+response.status+")."));
   publicOpenMonths=Array.isArray(data.months)?data.months.filter(m=>/^\d{4}-(0[1-9]|1[0-2])$/.test(m)).sort():[];
   const dateInput=$("filterDate");
   if(!publicOpenMonths.length){
@@ -1072,7 +1073,8 @@ async function loadPublicOpenMonths(){
   return true;
  }catch(e){
   console.error("Could not load public open months:",e);
-  $("slotsArea").innerHTML='<div class="notice err">Could not check the booking calendar. Please tap Refresh slots to try again.</div>';
+  $("filterDate").disabled=true;
+  $("slotsArea").innerHTML='<div class="notice err">Could not load open booking dates: '+escapeHtml(String(e.message||e))+'. Tap Refresh slots to try again.</div>';
   return false;
  }
 }
@@ -1089,9 +1091,10 @@ async function loadCloudflareSlots(date){
  $("slotsArea").innerHTML='<div class="slot-loading" role="status" aria-live="polite">Loading available PK slots…</div>';
  setStatus("slotStatus","Loading slots…");
  try{
-  const response=await fetch(BIGO_API_BASE+"/api/slots?date="+encodeURIComponent(date),{cache:"no-store"});
-  const data=await response.json();
-  if(!response.ok||!data.ok)throw new Error(data.error||"Could not load slots");
+  const response=await fetch(BIGO_API_BASE+"/api/slots?date="+encodeURIComponent(date),{cache:"no-store",signal:AbortSignal.timeout(12000)});
+  const raw=await response.text();
+  let data;try{data=JSON.parse(raw);}catch(_){throw new Error("Slots API returned an invalid response (HTTP "+response.status+").");}
+  if(!response.ok||!data.ok)throw new Error(data.error||("Slots API failed (HTTP "+response.status+")."));
   slots=Array.isArray(data.slots)?data.slots.map(s=>({...s,bookingId:s.booking_id??s.bookingId,hostName:s.hostName||s.host_name||"",hostBigoId:s.hostBigoId||s.host_bigo_id||""})):[];
   renderSlots();
   const selectedAvailableSlot=bookingDateChosen&&slots.some(s=>s.id===selectedSlot&&s.status==="available");
@@ -1454,6 +1457,9 @@ async function loadSuperadminAdmins(){
  }catch(e){box.innerHTML='<div class="notice err">'+escapeHtml(e.message||"Could not load Admin accounts.")+'</div>';}
 }
 async function startApp(){
+ // Public calendar loads independently of Firebase authentication.
+ try{const hasOpenMonths=await loadPublicOpenMonths();if(hasOpenMonths)await loadCloudflareSlots($("filterDate").value||defaultScheduleDate);}
+ catch(calendarError){console.error("Public calendar bootstrap failed:",calendarError);}
  if(!configured){$("configWarning").classList.remove("hidden");return;}
  try{
   app=initializeApp(FIREBASE_CONFIG);auth=getAuth(app);db=getFirestore(app);
@@ -1467,9 +1473,6 @@ async function startApp(){
    await applyRoleAccess();
    if(isAdmin){if(!adminSession.startedAt){adminSession.startedAt=new Date();adminSession.actions=[];}updateAdminWelcomeGreeting();}
    if(stopSlots)stopSlots();stopSlots=null;
-   // Load public monthly settings before checking slots, so the first page load matches the Set OPK button behavior.
-   const hasOpenMonths=await loadPublicOpenMonths();
-   if(hasOpenMonths) await loadCloudflareSlots($("filterDate").value||defaultScheduleDate);
    if(stopBookings)stopBookings();stopBookings=null;if(isAdmin){
     await loadCloudflareAdminBookings();
     if(requestedEditBookingId){
