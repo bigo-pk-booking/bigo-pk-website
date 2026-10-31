@@ -907,17 +907,17 @@ async function cloudflareAdminRequest(path, options={}){
  return result;
 }
 function updateOpponentNavCount(){
- if(!isAdmin)return;
- const selectedMonth=$("bookingMonthFilter")?.value||new Date().toISOString().slice(0,7);
+ const navBtn=$("opponentNavBtn");
+ if(!isAdmin){
+  navBtn?.classList.add("hidden");
+  return;
+ }
  const count=bookings.filter(b=>
-  !["cancelled","rejected"].includes(String(b.status||"").trim().toLowerCase())&&
-  monthKey(b.date)===selectedMonth&&
-  !String(b.opponentBigoId||"").trim()
+  String(b.status||"").trim().toLowerCase()==="pending approval"
  ).length;
  const countEl=$("opponentNavCount");
  if(countEl)countEl.textContent=String(count);
- const navBtn=$("opponentNavBtn");
- if(navBtn)navBtn.classList.remove("hidden");
+ navBtn?.classList.remove("hidden");
 }
 async function loadCloudflareAdminBookings(){
  try{
@@ -1330,8 +1330,16 @@ async function applyRoleAccess(){
  $("logoutBtn").classList.toggle("hidden",!loggedIn);
  $("showBookingBtn").classList.toggle("hidden",loggedIn);
  $("showLookupBtn").classList.toggle("hidden",loggedIn);
- if(isAdmin)startAdminAutoRefresh();
-  if(isSuperadmin){showView("admin");await loadSuperadminAdmins();}
+ const opponentNavBtn=$("opponentNavBtn");
+ if(isAdmin){
+  opponentNavBtn?.classList.remove("hidden");
+  const opponentNavCount=$("opponentNavCount");
+  if(opponentNavCount)opponentNavCount.textContent=String(bookings.filter(b=>String(b.status||"").trim().toLowerCase()==="pending approval").length);
+  startAdminAutoRefresh();
+ }else{
+  opponentNavBtn?.classList.add("hidden");
+ }
+ if(isSuperadmin){showView("admin");await loadSuperadminAdmins();}
 }
 async function loadSuperadminAdmins(){
  if(!isSuperadmin)return;
