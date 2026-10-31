@@ -89,19 +89,19 @@ input,select{border-radius:3px;border-color:#c4d2d1}input:focus,select:focus{out
 .battle-progress-wrap{max-width:700px;margin:0 auto 7px}
 .battle-countdown-row{display:flex;justify-content:space-between;align-items:center;margin:0 1px 4px;color:#ffd5d5;font-size:10px;font-weight:900;letter-spacing:.08em}
 .battle-countdown{font-size:15px;color:#fff;text-shadow:0 0 9px #ff3434;font-variant-numeric:tabular-nums}
-.battle-clash-track{position:relative;height:18px;overflow:hidden;border:0;border-radius:2px;background:#08101a;box-shadow:0 0 12px #36baff55,inset 0 0 5px #000}
-.battle-clash-side{position:absolute;top:0;bottom:0;width:50%;transition:width .55s cubic-bezier(.2,.8,.2,1),opacity .25s}
-.battle-clash-side.red{left:0;right:auto;background:linear-gradient(90deg,#0875df 0%,#24a9ff 75%,#70e8ff 100%);box-shadow:inset -2px 0 5px #b9f5ff}
-.battle-clash-side.blue{right:0;left:auto;background:linear-gradient(270deg,#f2a900 0%,#ffda35 75%,#fff18a 100%);box-shadow:inset 2px 0 5px #fff4b0}
+.battle-clash-track{position:relative;height:18px;overflow:hidden;border:1px solid #ffffff55;border-radius:3px;background:#08101a;box-shadow:0 0 12px #36baff55,inset 0 0 5px #000}
+.battle-clash-side{position:absolute;top:0;bottom:0;width:50%;opacity:1;transition:width .55s cubic-bezier(.2,.8,.2,1),opacity .2s}
+.battle-clash-side.red{left:0;right:auto;background:linear-gradient(90deg,#780000 0%,#ef1717 72%,#ff6969 100%);box-shadow:inset -2px 0 6px #ffc1c1}
+.battle-clash-side.blue{right:0;left:auto;background:linear-gradient(270deg,#064caa 0%,#168bff 72%,#7ddcff 100%);box-shadow:inset 2px 0 6px #c0f4ff}
 .battle-clash-flash{position:absolute;z-index:4;left:50%;top:50%;display:grid;place-items:center;width:25px;height:25px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,#fff 0%,#fff7a8 28%,#ffd21d 54%,transparent 72%);color:#fff;font-size:24px;font-weight:1000;text-shadow:0 0 5px #fff,0 0 12px #ffc400;filter:drop-shadow(0 0 7px #fff);animation:clashSpark .22s ease-in-out infinite alternate}
-.pk-battle.phase-opponent .battle-clash-side.red{width:100%;transition:width 7s linear}
-.pk-battle.phase-opponent .battle-clash-side.blue{width:0}
-.pk-battle.phase-red .battle-clash-side.red{width:0;opacity:0}
-.pk-battle.phase-red .battle-clash-side.blue{width:100%;z-index:2;opacity:1;animation:winnerBar .35s ease-in-out infinite alternate}
-.pk-battle.phase-blue .battle-clash-side.red{width:100%;z-index:2;opacity:1;animation:blueSurge .4s ease-in-out infinite alternate}
-.pk-battle.phase-blue .battle-clash-side.blue{width:0;opacity:0}
-.pk-battle.is-finished .battle-clash-side.red{width:0;opacity:0}
-.pk-battle.is-finished .battle-clash-side.blue{width:100%;z-index:2;opacity:1;animation:winnerBar .5s ease-in-out infinite alternate}
+.pk-battle.phase-opponent .battle-clash-side.red{width:0}
+.pk-battle.phase-opponent .battle-clash-side.blue{width:100%;transition:width 7s linear}
+.pk-battle.phase-red .battle-clash-side.red{width:100%;z-index:2;opacity:1;animation:winnerBar .35s ease-in-out infinite alternate}
+.pk-battle.phase-red .battle-clash-side.blue{width:0;opacity:1}
+.pk-battle.phase-blue .battle-clash-side.red{width:0;opacity:1}
+.pk-battle.phase-blue .battle-clash-side.blue{width:100%;z-index:2;opacity:1;animation:blueSurge .4s ease-in-out infinite alternate}
+.pk-battle.is-finished .battle-clash-side.red{width:100%;z-index:2;opacity:1;animation:winnerBar .5s ease-in-out infinite alternate}
+.pk-battle.is-finished .battle-clash-side.blue{width:0;opacity:1}
 .pk-battle.is-finished .battle-clash-flash{left:96%;background:#fff4a8;box-shadow:0 0 8px 4px #ffe15c;animation:none}
 @keyframes clashSpark{from{opacity:.65;filter:drop-shadow(0 0 4px #fff)}to{opacity:1;filter:drop-shadow(0 0 12px #fff) drop-shadow(0 0 8px #ffd21d)}}
 @keyframes winnerBar{to{filter:brightness(1.5)}}
