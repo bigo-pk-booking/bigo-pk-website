@@ -1007,8 +1007,10 @@ async function loadCloudflareAdminBookings(){
    bookingCode:b.booking_code||b.bookingCode||"",
    adminReviewed:Number(b.admin_reviewed)===1
   }));
-  renderAdmin();
+  // Update the navbar report immediately from the freshly loaded D1 records.
+  // Keep this independent of renderAdmin(), which also builds the collapsed Management OPK table.
   updateOpponentNavCount();
+  renderAdmin();
   setStatus("adminMessage","Loaded bookings from Cloudflare D1.","ok");
  }catch(e){
   console.error("Cloudflare admin bookings failed:",e);
