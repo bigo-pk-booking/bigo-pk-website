@@ -684,6 +684,14 @@ body:has(#infoView:not(.hidden)) .pk-battle{display:none!important}
 #siteMenuPanel.hidden{display:none!important}
 #siteMenuPanel:not(.hidden){display:flex!important}
 </style>
+
+<style id="about-us-full-artwork">
+/* About Us uses the supplied complete BADASS artwork only in this view. */
+#aboutUsSection.about-info-card{display:block!important;width:100%!important;padding:10px!important;background:#080304!important;border:1px solid #a90c20!important;overflow:hidden!important}
+#aboutUsSection .about-us-heading{margin:4px 4px 10px!important;text-align:center!important;color:#fff!important;font-size:clamp(20px,3vw,28px)!important}
+#aboutUsSection .about-info-image{display:block!important;width:100%!important;height:auto!important;min-height:0!important;max-height:none!important;object-fit:contain!important;object-position:center!important;border:0!important;border-radius:7px!important;background:none!important;box-shadow:0 0 20px #d0002433!important;order:initial!important}
+@media(max-width:600px){#aboutUsSection.about-info-card{padding:6px!important}#aboutUsSection .about-info-image{width:100%!important;height:auto!important;min-height:0!important;object-fit:contain!important}}
+</style>
 </head>
 <body>
 <header>
@@ -778,13 +786,8 @@ body:has(#infoView:not(.hidden)) .pk-battle{display:none!important}
 
 <section id="infoView" class="info-view hidden" aria-live="polite">
   <section id="aboutUsSection" class="info-card about-info-card">
-    <div class="info-copy">
-      <span class="section-kicker">BADASS · PK BATTLE SPIRIT</span>
-      <h2>About Us</h2>
-      <p>BIGO PK SLOTS is a scheduler created to make OPK booking and PK planning easier for our hosts.</p>
-      <p>We are one BADASS family in BIGO. We fight as one in every battle, support one another, and give our best together so we can win every PK.</p>
-    </div>
-    <div class="about-info-image" role="img" aria-label="BADASS team standing together in a red dramatic PK battle landscape"></div>
+    <h2 class="about-us-heading">About Us</h2>
+    <img class="about-info-image" src="assets/badass-about-us.jpg" alt="BADASS — We Are One BADASS Family in BIGO. BIGO PK SLOTS is a scheduler created to make OPK booking and PK planning easier for our hosts." loading="lazy" decoding="async">
   </section>
   <section id="contactUsSection" class="info-card contact-info-card">
     <span class="section-kicker">WE'RE HERE TO HELP</span>
