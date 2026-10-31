@@ -1031,13 +1031,13 @@ document.addEventListener("click",function(event){
     if(about){
       var showAbout=id==='aboutUsSection';
       about.classList.toggle('hidden',!showAbout);
-      about.style.display=showAbout?'block':'none';
+      about.style.setProperty('display',showAbout?'block':'none','important');
       about.setAttribute('aria-hidden',String(!showAbout));
     }
     if(contact){
       var showContact=id==='contactUsSection';
       contact.classList.toggle('hidden',!showContact);
-      contact.style.display=showContact?'block':'none';
+      contact.style.setProperty('display',showContact?'block':'none','important');
       contact.setAttribute('aria-hidden',String(!showContact));
     }
     var target=el(id);
