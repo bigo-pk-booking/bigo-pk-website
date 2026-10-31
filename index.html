@@ -58,6 +58,31 @@ input,select{border-radius:3px;border-color:#c4d2d1}input:focus,select:focus{out
 .battle-char{display:grid;place-items:center;width:43px;height:48px;border-radius:12px 12px 8px 8px;background:linear-gradient(145deg,#30070b,#090909);border:1px solid #ff3434;color:#fff;font-size:30px;line-height:1;filter:drop-shadow(0 0 7px #ff1818);animation:battleBounce 1.5s ease-in-out infinite}
 .battle-char:nth-child(2){animation-delay:.25s}
 .battle-side.right .battle-char{background:linear-gradient(145deg,#16345d,#08111f);border-color:#54aaff;filter:drop-shadow(0 0 7px #278dff)}
+/* Free layered character motion prototype */
+.battle-arena{position:relative}
+.battle-characters{position:relative;z-index:1;perspective:300px}
+.battle-char{position:relative;transform-origin:50% 85%;will-change:transform,filter;animation:characterBreath 1.8s ease-in-out infinite}
+.battle-char:after{content:"";position:absolute;inset:-5px;border-radius:14px;pointer-events:none;background:radial-gradient(ellipse, #ff292933,transparent 68%);opacity:.7;animation:characterAura 1.4s ease-in-out infinite alternate}
+.battle-side.right .battle-char:after{background:radial-gradient(ellipse,#269dff44,transparent 68%)}
+.battle-side.left .battle-char:nth-child(2){animation-delay:.3s}
+.battle-side.right .battle-char:nth-child(2){animation-delay:.5s}
+.battle-arena:before,.battle-arena:after{content:"";position:absolute;z-index:2;top:50%;left:50%;width:3px;height:62px;opacity:0;pointer-events:none;background:linear-gradient(transparent,#fff,#ffe45b,transparent);filter:drop-shadow(0 0 5px #fff) drop-shadow(0 0 10px #ffbd00);transform:translate(-50%,-50%) rotate(28deg) scaleY(.2)}
+.battle-arena:after{transform:translate(-50%,-50%) rotate(-28deg) scaleY(.2)}
+.pk-battle.phase-opponent .battle-arena:before,.pk-battle.phase-opponent .battle-arena:after{opacity:.9;animation:arenaLightning .65s steps(2,end) infinite}
+.pk-battle.phase-red .battle-side.left .battle-char,.pk-battle.phase-blue .battle-side.right .battle-char{animation:characterAttack .38s ease-in-out infinite alternate}
+.pk-battle.phase-red .battle-side.right .battle-char,.pk-battle.phase-blue .battle-side.left .battle-char{animation:characterRecoil .32s ease-in-out infinite alternate}
+.pk-battle.is-finished .battle-side.left .battle-char{animation:characterVictory .65s ease-in-out infinite alternate}
+.pk-battle.is-finished .battle-side.right .battle-char{animation:characterCry .38s ease-in-out infinite alternate}
+.pk-battle.is-finished .battle-side.right .battle-char:after{background:radial-gradient(ellipse,#62baff55,transparent 68%)}
+.pk-battle.is-finished .battle-arena:before,.pk-battle.is-finished .battle-arena:after{opacity:1;background:linear-gradient(transparent,#ffe45b,#fff,transparent);animation:arenaLightning .45s steps(2,end) infinite}
+@keyframes characterBreath{0%,100%{transform:translateY(0) rotate(0) scale(1)}50%{transform:translateY(-3px) rotate(-1deg) scale(1.025)}}
+@keyframes characterAura{from{opacity:.25;transform:scale(.88)}to{opacity:.85;transform:scale(1.12)}}
+@keyframes characterAttack{from{transform:translateX(0) rotate(-4deg) scale(1)}to{transform:translateX(7px) rotate(5deg) scale(1.1)}}
+@keyframes characterRecoil{from{transform:translateX(0) rotate(2deg)}to{transform:translateX(5px) rotate(10deg) scale(.94)}}
+@keyframes characterVictory{from{transform:translateY(0) rotate(-4deg) scale(1)}to{transform:translateY(-9px) rotate(5deg) scale(1.12)}}
+@keyframes characterCry{from{transform:translateY(0) rotate(-5deg)}to{transform:translateY(4px) rotate(6deg) scale(.94)}}
+@keyframes arenaLightning{0%{opacity:.1;transform:translate(-50%,-50%) rotate(28deg) scaleY(.2)}35%{opacity:1;transform:translate(-50%,-50%) rotate(38deg) scaleY(1.2)}70%{opacity:.25;transform:translate(-50%,-50%) rotate(18deg) scaleY(.55)}100%{opacity:.9;transform:translate(-50%,-50%) rotate(28deg) scaleY(1)}}
+
 .battle-side strong{font-size:clamp(10px,2.5vw,14px);letter-spacing:.08em;overflow-wrap:anywhere}
 .battle-side small{color:#ffb9b9;font-size:9px;letter-spacing:.06em;text-transform:uppercase}
 .battle-vs{position:relative;z-index:1;display:grid;place-items:center;width:48px;height:48px;border:2px solid #ff3a3a;border-radius:50%;background:#090909;color:#fff;font-size:19px;font-weight:1000;font-style:italic;box-shadow:0 0 0 4px #ff17171c,0 0 18px #ff1717aa;animation:battlePulse 1.25s ease-in-out infinite}
@@ -98,7 +123,7 @@ input,select{border-radius:3px;border-color:#c4d2d1}input:focus,select:focus{out
 @keyframes opponentCry{to{transform:translateY(3px) rotate(1.5deg)}}
 @keyframes cryShake{from{transform:translateY(0) rotate(-5deg)}to{transform:translateY(3px) rotate(5deg)}}
 @media(max-width:420px){.pk-battle{padding:10px 7px}.battle-arena{gap:4px}.battle-side{min-height:100px;padding:6px 2px}.battle-char{width:35px;height:42px;font-size:25px}.battle-vs{width:40px;height:40px;font-size:16px}.battle-side small{font-size:8px}}
-@media(prefers-reduced-motion:reduce){.pk-battle:before,.pk-battle:after,.battle-char,.battle-vs,.battle-energy,.pk-battle.is-finished .battle-side{animation-duration:3s!important}}
+@media(prefers-reduced-motion:reduce){.pk-battle:before,.pk-battle:after,.battle-char,.battle-vs,.battle-energy,.battle-arena:before,.battle-arena:after,.pk-battle.is-finished .battle-side{animation:none!important}}
 
 
 /* PK success celebration: CSS-only so it cannot interrupt Firebase startup */
