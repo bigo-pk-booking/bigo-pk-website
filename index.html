@@ -804,15 +804,18 @@ body:has(#infoView:not(.hidden)) .pk-battle{display:none!important}
 <section id="infoView" class="info-view hidden" aria-live="polite">
   <section id="aboutUsSection" class="info-card about-info-card">
     <h2 class="about-us-heading">About Us</h2>
-    <div class="about-layout">
-      <div class="about-character-wrap">
-        <img class="about-info-image" src="assets/badass-character-transparent.png" alt="BADASS cartoon woman holding a phone showing a BIGO PK battle screen" loading="lazy" decoding="async">
+    <div class="about-layout about-three-column">
+      <div class="about-character-wrap about-male">
+        <img class="about-info-image" src="assets/badass-male-phone.png" alt="BADASS cartoon man holding a phone showing the BIGO PK Slots booking screen" loading="lazy" decoding="async">
       </div>
       <div class="about-copy">
         <h3 class="about-family-title">WE ARE ONE <span>BADASS</span> FAMILY IN BIGO.</h3>
         <p>We fight as one in every battle, support one another, and give our best together so we can win every PK.</p>
         <h3 class="about-brand-title">BIGO <span>PK SLOTS</span></h3>
         <p>is a scheduler created to make OPK booking and PK planning easier for our hosts.</p>
+      </div>
+      <div class="about-character-wrap about-female">
+        <img class="about-info-image" src="assets/badass-female-phone.png" alt="BADASS cartoon woman holding a phone showing a BIGO PK battle screen" loading="lazy" decoding="async">
       </div>
     </div>
   </section>
@@ -918,7 +921,31 @@ body:has(#infoView:not(.hidden)) .pk-battle{display:none!important}
 </section>
 
 
-<style>#siteAnnouncementOverlay{position:fixed;inset:0;z-index:10050;background:#000b;display:flex;align-items:center;justify-content:center;padding:18px}#siteAnnouncementOverlay.hidden{display:none!important}#siteAnnouncementBox{width:min(560px,100%);max-height:85vh;overflow:auto;background:#111827;color:#fff;border:1px solid #e13b3b;border-radius:16px;padding:22px;box-shadow:0 20px 70px #0009}#siteAnnouncementBox h2{margin:0 36px 12px 0;color:#ff6464}#siteAnnouncementBody{white-space:pre-wrap;line-height:1.6;overflow-wrap:anywhere}#siteAnnouncementClose{float:right;background:#b91c1c;color:white;border:0;border-radius:8px;padding:8px 13px;font-weight:800}</style><div id="siteAnnouncementOverlay" class="hidden" role="dialog" aria-modal="true" aria-labelledby="siteAnnouncementTitle"><div id="siteAnnouncementBox"><button id="siteAnnouncementClose" type="button">Close ✕</button><span class="section-kicker">BIGO PK SLOTS • ANNOUNCEMENT</span><h2 id="siteAnnouncementTitle"></h2><div id="siteAnnouncementBody"></div></div></div>
+<style>#siteAnnouncementOverlay{position:fixed;inset:0;z-index:10050;background:#000b;display:flex;align-items:center;justify-content:center;padding:18px}#siteAnnouncementOverlay.hidden{display:none!important}#siteAnnouncementBox{width:min(560px,100%);max-height:85vh;overflow:auto;background:#111827;color:#fff;border:1px solid #e13b3b;border-radius:16px;padding:22px;box-shadow:0 20px 70px #0009}#siteAnnouncementBox h2{margin:0 36px 12px 0;color:#ff6464}#siteAnnouncementBody{white-space:pre-wrap;line-height:1.6;overflow-wrap:anywhere}#siteAnnouncementClose{float:right;background:#b91c1c;color:white;border:0;border-radius:8px;padding:8px 13px;font-weight:800}
+/* BADASS About Us: male left, selectable HTML copy center, female right */
+#aboutUsSection.about-info-card{display:block!important;width:100%!important;max-width:100%!important;margin:0!important;padding:14px 8px!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important}
+#aboutUsSection .about-us-heading{text-align:center!important;margin:0 0 12px!important;color:#fff!important}
+#aboutUsSection .about-layout.about-three-column{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(260px,1.05fr) minmax(0,1fr)!important;align-items:center!important;gap:10px!important;width:100%!important}
+#aboutUsSection .about-character-wrap{display:flex!important;align-items:center!important;justify-content:center!important;min-width:0!important}
+#aboutUsSection .about-info-image{display:block!important;width:100%!important;height:auto!important;min-height:0!important;max-height:none!important;object-fit:contain!important;object-position:center!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+#aboutUsSection .about-copy{min-width:0!important;text-align:center!important;padding:12px 8px!important;background:linear-gradient(145deg,rgba(8,2,5,.88),rgba(35,0,10,.62))!important;border:1px solid rgba(190,0,35,.42)!important;border-radius:14px!important}
+#aboutUsSection .about-copy p{max-width:none!important;font-size:clamp(14px,1.35vw,18px)!important;line-height:1.55!important;color:#fff!important}
+#aboutUsSection .about-family-title{font-size:clamp(20px,2vw,30px)!important;line-height:1.12!important;color:#fff!important}
+#aboutUsSection .about-family-title span,#aboutUsSection .about-brand-title span{color:#f01836!important}
+#aboutUsSection .about-brand-title{margin:20px 0 4px!important;font-size:clamp(23px,2.3vw,34px)!important;color:#fff!important}
+@media(max-width:700px){
+#aboutUsSection.about-info-card{padding:8px 4px!important}
+#aboutUsSection .about-layout.about-three-column{grid-template-columns:minmax(0,1fr)!important;gap:2px!important}
+#aboutUsSection .about-male{order:1!important}
+#aboutUsSection .about-copy{order:2!important;width:100%!important;margin:0 auto!important;padding:18px 16px!important}
+#aboutUsSection .about-female{order:3!important}
+#aboutUsSection .about-character-wrap{max-width:100%!important;max-height:360px!important;overflow:hidden!important}
+#aboutUsSection .about-info-image{width:min(100%,430px)!important;max-height:360px!important;object-fit:contain!important}
+#aboutUsSection .about-copy p{font-size:16px!important;line-height:1.6!important}
+#aboutUsSection .about-family-title{font-size:25px!important}
+#aboutUsSection .about-brand-title{font-size:29px!important}
+}
+</style><div id="siteAnnouncementOverlay" class="hidden" role="dialog" aria-modal="true" aria-labelledby="siteAnnouncementTitle"><div id="siteAnnouncementBox"><button id="siteAnnouncementClose" type="button">Close ✕</button><span class="section-kicker">BIGO PK SLOTS • ANNOUNCEMENT</span><h2 id="siteAnnouncementTitle"></h2><div id="siteAnnouncementBody"></div></div></div>
 </main>
 <script>
 /* Reliable mobile close handler for Slot Management. */
