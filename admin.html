@@ -1067,7 +1067,7 @@ async function generateMonthlySchedule(){
 async function loadCloudflareAdminSlots(monthKeyValue){
  if(!isAdmin)return;
  const month=monthKeyValue||$("slotMonthFilter")?.value||selectedHeaderMonth();
- if(!/^\\d{4}-(0[1-9]|1[0-2])$/.test(month))return;
+ if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(month))return;
  try{
   const key="badass_admin_slot_months_seen_v1";
   const saved=JSON.parse(localStorage.getItem(key)||"[]");
