@@ -694,7 +694,11 @@ body:has(#infoView:not(.hidden)) .pk-battle{display:none!important}
 #aboutUsSection.hidden,#contactUsSection.hidden{display:none!important}
 #aboutUsSection:not(.hidden),#contactUsSection:not(.hidden){display:block!important}
 #infoView{min-width:0!important;width:100%!important;overflow-x:hidden!important}
-@media(max-width:600px){#aboutUsSection.about-info-card{padding:0!important;margin:0!important}#aboutUsSection .about-info-image{width:100%!important;max-width:100%!important;height:auto!important;margin:0!important;object-fit:contain!important}#aboutUsSection .about-us-heading{margin:8px 0 10px!important}}
+@media(max-width:600px){
+#aboutUsSection.about-info-card{padding:0!important;margin:0!important;overflow:hidden!important}
+#aboutUsSection .about-info-image{display:block!important;width:100%!important;max-width:100%!important;height:clamp(420px,112vw,520px)!important;min-height:420px!important;max-height:520px!important;margin:0!important;object-fit:cover!important;object-position:left center!important}
+#aboutUsSection .about-us-heading{margin:8px 0 10px!important}
+}
 </style>
 </head>
 <body>
