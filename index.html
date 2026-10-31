@@ -1142,7 +1142,8 @@ async function applyRoleAccess(){
  $("logoutBtn").classList.toggle("hidden",!loggedIn);
  $("showBookingBtn").classList.toggle("hidden",loggedIn);
  $("showLookupBtn").classList.toggle("hidden",loggedIn);
- if(isAdmin)startAdminAutoRefresh();\n if(isSuperadmin){showView("admin");await loadSuperadminAdmins();}
+ if(isAdmin)startAdminAutoRefresh();
+  if(isSuperadmin){showView("admin");await loadSuperadminAdmins();}
 }
 async function loadSuperadminAdmins(){
  if(!isSuperadmin)return;
