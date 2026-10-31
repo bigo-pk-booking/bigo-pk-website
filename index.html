@@ -593,11 +593,11 @@ body:has(#adminView:not(.hidden)) .tg-top-strip{display:none!important;}
     <hr>
     <div class="card" style="margin:12px 0;padding:14px">
       <h3>Slot management</h3>
-      <p class="sub">Manage available, booked, and closed PK time slots in a popup.</p>
-      <button id="openSlotManagement" type="button" class="full">⚙️ Open Slot Management</button>
+      <p class="sub">Manage available, booked, and closed PK time slots directly below. No popup.</p>
+      <button id="openSlotManagement" type="button" class="full">⚙️ Load / Refresh Slot Management</button>
     </div>
-    <div id="slotManagementModal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="slotManagementTitle" style="position:fixed;inset:0;z-index:12000;background:rgba(0,0,0,.78);display:flex;align-items:center;justify-content:center;padding:12px">
-      <div style="width:min(100%,950px);max-height:90vh;overflow:auto;background:#fff;border:2px solid #c90012;border-radius:12px;padding:16px;color:#202428;box-shadow:0 20px 60px #0008">
+    <section id="slotManagementModal" class="card" aria-labelledby="slotManagementTitle" style="display:block!important;position:static!important;width:100%;max-width:100%;height:auto!important;max-height:none!important;overflow:visible!important;background:#160909;border:1px solid #b52b36;border-radius:12px;padding:14px;margin:12px 0;color:#fff;box-sizing:border-box">
+      <div style="width:100%;max-width:100%;height:auto;max-height:none;overflow:visible;background:transparent;border:0;border-radius:0;padding:0;color:#fff;box-shadow:none">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;position:sticky;top:-16px;background:#fff;padding:4px 0 12px;z-index:2;border-bottom:1px solid #ddd">
           <div><h3 id="slotManagementTitle" style="margin:0">Slot Management</h3><p class="sub" style="margin:4px 0 0">Close an available slot or reopen a closed slot. Booked slots must be cancelled first.</p></div>
           <button id="closeSlotManagement" type="button" class="secondary" aria-label="Close slot management">✕</button>
@@ -627,7 +627,7 @@ body:has(#adminView:not(.hidden)) .tg-top-strip{display:none!important;}
         <div id="adminSlots" class="table-wrap"><div class="notice">Loading slots…</div></div>
         <div style="display:flex;justify-content:flex-end;margin-top:14px"><button id="closeSlotManagementBottom" type="button" class="secondary">Close</button></div>
       </div>
-    </div>
+    </section>
     <div id="adminMessage" class="status"></div>
   </div>
 </section>
@@ -1687,38 +1687,29 @@ $("closeAllSlotsBtn").addEventListener("click",()=>bulkToggleSlots("close"));
 $("generateMonthlyScheduleBtn").addEventListener("click",generateMonthlySchedule);
 $("slotStatusFilter").addEventListener("change",()=>{slotPage=0;renderAdmin();});
 (function(){
- const modal=$("slotManagementModal");
+ const section=$("slotManagementModal");
  const open=$("openSlotManagement");
- const closeButtons=[$("closeSlotManagement"),$("closeSlotManagementBottom")];
- if(!modal||!open)return;
- const close=()=>{
-  modal.classList.add("hidden");
-  modal.style.display="none";
-  modal.setAttribute("aria-hidden","true");
-  document.body.style.overflow="";
- };
- const show=async event=>{
-  event?.preventDefault();
-  event?.stopPropagation();
-  modal.classList.remove("hidden");
-  modal.style.display="block";
-  modal.setAttribute("aria-hidden","false");
-  document.body.style.overflow="hidden";
-  modal.scrollTop=0;
+ if(!section||!open)return;
+ open.onclick=async event=>{
+  event.preventDefault();
+  if(!isAdmin)return;
   const month=$("slotMonthFilter")?.value||selectedHeaderMonth();
-  if(isAdmin){
-    const table=$("adminSlots");
-    if(table)table.innerHTML='<div class="notice">Loading slot data… please wait.</div>';
-    await loadCloudflareAdminSlots(month);
-    await loadMonthlySettings(month);
+  const table=$("adminSlots");
+  if(table)table.innerHTML='<div class="notice">Loading slot data…</div>';
+  open.disabled=true;
+  open.textContent="Loading slot management…";
+  try{
+   await loadCloudflareAdminSlots(month);
+   await loadMonthlySettings(month);
+   section.scrollIntoView({behavior:"smooth",block:"start"});
+  }catch(error){
+   console.error("Slot management load failed",error);
+   setStatus("adminMessage","Could not load slot management: "+String(error.message||error),"err");
+  }finally{
+   open.disabled=false;
+   open.textContent="⚙️ Refresh Slot Management";
   }
  };
- // Use the button's direct click handler to avoid delegated/overlapping click handlers.
- open.onclick=show;
- closeButtons.forEach(button=>{if(button)button.onclick=event=>{event.preventDefault();event.stopPropagation();close();};});
- modal.addEventListener("click",event=>{if(event.target===modal)close();});
- document.addEventListener("keydown",event=>{if(event.key==="Escape"&&!modal.classList.contains("hidden"))close();});
- close();
 })();
 $("downloadMonthExcelBtn").addEventListener("click",()=>$("exportExcelBtn").click());
 function exportRows(){const selectedMonth=$("bookingMonthFilter")?.value||dateToday().slice(0,7);return bookings.filter(b=>monthKey(b.date)===selectedMonth).map(b=>({"DATE":b.date||"","TIME":b.time||"","BIGO NAME":b.name||"","BIGO ID":b.bigoId||"","HOST LEVEL":b.hostLevel||"","AGENCY NAME":b.agencyName||"","AGENCY TELEGRAM":b.agencyTelegram||"","OPK EVENT":b.opkEvent||"","VS":"VS","OPPONENT NAME":b.opponentName||"","OPPONENT BIGO ID":b.opponentBigoId||"","LEVEL":b.opponentLevel||"","OPPONENT AGENCY NAME":b.opponentAgencyName||"","OPPONENT AGENCY TELEGRAM":b.opponentAgencyTelegram||"","REMARKS (WIN/LOSE)":b.remarks||b.status||""})).sort((a,b)=>(a.DATE+a.TIME).localeCompare(b.DATE+b.TIME));}
