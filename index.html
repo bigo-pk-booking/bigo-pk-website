@@ -506,6 +506,18 @@ body:has(#adminView:not(.hidden)) .tg-top-strip{display:none!important;}
     <label for="adminPassword">Password</label><input id="adminPassword" type="password" autocomplete="current-password" placeholder="Password">
     <button id="loginBtn" class="full">Sign in as admin</button><div id="loginMessage" class="status"></div>
   </div>
+  <div class="card hidden" id="superadminDashboard">
+    <div class="admin-head"><div><h3>Superadmin • Admin Account Management</h3><p class="sub">Manage regular Admin access. Superadmin accounts are protected.</p></div><button id="refreshSuperadminAdmins" class="secondary small" type="button">Refresh</button></div>
+    <div class="card" style="margin:12px 0;padding:14px">
+      <h3>Add Admin account</h3>
+      <p class="sub">Create the user first in Firebase Authentication, then enter the exact Firebase UID and email below.</p>
+      <label for="newAdminEmail">Admin email</label><input id="newAdminEmail" type="email" placeholder="admin@example.com">
+      <label for="newAdminUid">Firebase UID</label><input id="newAdminUid" autocomplete="off" placeholder="Paste Firebase Authentication UID">
+      <button id="addAdminAccountBtn" class="full" type="button" style="margin-top:12px">Add Admin</button>
+      <div id="superadminMessage" class="status" aria-live="polite"></div>
+    </div>
+    <h3>Admin accounts</h3><div id="superadminAdminsList"><div class="notice">Admin accounts will appear here.</div></div>
+  </div>
   <div class="card hidden" id="adminDashboard">
     <div class="admin-head"><div><h3>Welcome, Badass Admin!</h3><p id="adminWelcomeGreeting" class="sub" style="margin:5px 0 0">Welcome back. Have a great day!</p></div></div>
     <section id="opponentSearchReport" style="margin:14px 0">
@@ -806,7 +818,7 @@ async function loadCloudflareSlots(date){
 
 const $ = id => document.getElementById(id);
 const configured = FIREBASE_CONFIG.apiKey && !FIREBASE_CONFIG.apiKey.includes("PASTE_") && FIREBASE_CONFIG.projectId && !FIREBASE_CONFIG.projectId.includes("PASTE_");
-let app, auth, db, currentUser=null, isAdmin=false, slots=[], adminSlots=[], bookings=[], selectedSlot=null, stopSlots=null, stopBookings=null;
+let app, auth, db, currentUser=null, isAdmin=false, isSuperadmin=false, currentRole="", slots=[], adminSlots=[], bookings=[], selectedSlot=null, stopSlots=null, stopBookings=null;
 let bookingPage=0, slotPage=0;
 let bookingDateChosen=false;
 // Telegram direct-edit deep link: ?edit=<booking UUID>
@@ -1069,6 +1081,56 @@ function renderAdmin(){
  $("adminSlots").querySelector("[data-slot-prev]")?.addEventListener("click",()=>{slotPage=Math.max(0,slotPage-1);renderAdmin();});
  $("adminSlots").querySelector("[data-slot-next]")?.addEventListener("click",()=>{slotPage++;renderAdmin();});
 }
+async function detectCloudflareRole(){
+ if(!currentUser||currentUser.isAnonymous)return "";
+ const token=await currentUser.getIdToken(true);
+ const check=async path=>{
+  const response=await fetch(BIGO_API_BASE+path,{headers:{Authorization:"Bearer "+token},cache:"no-store"});
+  let data={};try{data=await response.json();}catch{}
+  return {ok:response.ok&&data.ok===true,data,status:response.status};
+ };
+ // Superadmin endpoint is intentionally inaccessible to regular admins.
+ const superCheck=await check("/api/superadmin/admins");
+ if(superCheck.ok)return "superadmin";
+ const adminCheck=await check("/api/admin/bookings");
+ if(adminCheck.ok)return "admin";
+ return "";
+}
+async function applyRoleAccess(){
+ const loggedIn=isAdmin||isSuperadmin;
+ $("adminLogin").classList.toggle("hidden",loggedIn);
+ $("adminDashboard").classList.toggle("hidden",!isAdmin);
+ $("superadminDashboard")?.classList.toggle("hidden",!isSuperadmin);
+ $("showAdminBtn").classList.toggle("hidden",loggedIn);
+ $("logoutBtn").classList.toggle("hidden",!loggedIn);
+ $("showBookingBtn").classList.toggle("hidden",loggedIn);
+ $("showLookupBtn").classList.toggle("hidden",loggedIn);
+ if(isSuperadmin){showView("admin");await loadSuperadminAdmins();}
+}
+async function loadSuperadminAdmins(){
+ if(!isSuperadmin)return;
+ const box=$("superadminAdminsList"),msg=$("superadminMessage");
+ if(box)box.innerHTML='<div class="notice">Loading admin accounts…</div>';
+ try{
+  const result=await cloudflareAdminRequest("/api/superadmin/admins");
+  const rows=result.admins||[];
+  if(!rows.length){box.innerHTML='<div class="notice">No Admin accounts found.</div>';return;}
+  box.innerHTML='<div class="table-wrap"><table style="min-width:560px"><thead><tr><th>Email</th><th>UID</th><th>Status</th><th>Action</th></tr></thead><tbody>'+
+   rows.map(a=>'<tr><td>'+escapeHtml(a.email||"")+'</td><td style="max-width:180px;overflow-wrap:anywhere">'+escapeHtml(a.uid||"")+'</td><td>'+(Number(a.enabled)===1||a.enabled===true?'Enabled':'Disabled')+'</td><td>'+(a.role==="superadmin"?'Protected Superadmin':'<button class="small secondary" type="button" data-admin-toggle="'+escapeHtml(a.uid||"")+'" data-enabled="'+(Number(a.enabled)===1||a.enabled===true?'1':'0')+'">'+(Number(a.enabled)===1||a.enabled===true?'Disable':'Enable')+'</button> <button class="small danger" type="button" data-admin-delete="'+escapeHtml(a.uid||"")+'">Delete</button>')+'</td></tr>').join("")+
+   '</tbody></table></div>';
+  box.querySelectorAll("[data-admin-toggle]").forEach(btn=>btn.onclick=async()=>{
+   const enabled=btn.dataset.enabled!=="1";
+   if(!confirm((enabled?"Enable":"Disable")+" this Admin account?"))return;
+   try{await cloudflareAdminRequest("/api/superadmin/admins/"+encodeURIComponent(btn.dataset.adminToggle),{method:"PATCH",body:JSON.stringify({enabled})});await loadSuperadminAdmins();}
+   catch(e){msg.textContent="Could not update account: "+e.message;}
+  });
+  box.querySelectorAll("[data-admin-delete]").forEach(btn=>btn.onclick=async()=>{
+   if(!confirm("Delete this Admin record from Cloudflare D1? Firebase Authentication account will remain."))return;
+   try{await cloudflareAdminRequest("/api/superadmin/admins/"+encodeURIComponent(btn.dataset.adminDelete),{method:"DELETE"});await loadSuperadminAdmins();}
+   catch(e){msg.textContent="Could not delete account: "+e.message;}
+  });
+ }catch(e){box.innerHTML='<div class="notice err">'+escapeHtml(e.message||"Could not load Admin accounts.")+'</div>';}
+}
 async function startApp(){
  if(!configured){$("configWarning").classList.remove("hidden");return;}
  try{
@@ -1076,9 +1138,12 @@ async function startApp(){
   onAuthStateChanged(auth,async user=>{
    currentUser=user;
    if(!user){isAdmin=false;try{await signInAnonymously(auth)}catch(e){console.error(e);setStatus("bookingMessage","Could not start a session. Check Firebase Anonymous Authentication settings.","err");}return;}
-   isAdmin=false;
-   if(!user.isAnonymous){try{const a=await getDoc(doc(db,"admins",user.uid));isAdmin=a.exists()&&a.data().enabled===true;}catch(e){console.error(e)}}
-   $("adminLogin").classList.toggle("hidden",isAdmin);$("adminDashboard").classList.toggle("hidden",!isAdmin);$("showAdminBtn").classList.toggle("hidden",isAdmin);$("logoutBtn").classList.toggle("hidden",!isAdmin);$("showBookingBtn").classList.toggle("hidden",isAdmin);$("showLookupBtn").classList.toggle("hidden",isAdmin);if(isAdmin){if(!adminSession.startedAt){adminSession.startedAt=new Date();adminSession.actions=[];}updateAdminWelcomeGreeting();}
+   isAdmin=false;isSuperadmin=false;currentRole="";
+   if(!user.isAnonymous){
+    try{currentRole=await detectCloudflareRole();isAdmin=currentRole==="admin";isSuperadmin=currentRole==="superadmin";}catch(e){console.error("Cloudflare role verification failed:",e);}
+   }
+   await applyRoleAccess();
+   if(isAdmin){if(!adminSession.startedAt){adminSession.startedAt=new Date();adminSession.actions=[];}updateAdminWelcomeGreeting();}
    if(stopSlots)stopSlots();stopSlots=null;
    // Load public monthly settings before checking slots, so the first page load matches the Set OPK button behavior.
    const hasOpenMonths=await loadPublicOpenMonths();
@@ -1315,13 +1380,19 @@ $("loginBtn").addEventListener("click", async (event)=>{
  setStatus("loginMessage","Signing in securely…");
  try{
   const credential=await signInWithEmailAndPassword(auth,email,password);
-  const adminSnap=await getDoc(doc(db,"admins",credential.user.uid));
-  if(!adminSnap.exists() || adminSnap.data().enabled!==true){
+  currentUser=credential.user;
+  const role=await detectCloudflareRole();
+  if(!role){
    await signOut(auth);
-   setStatus("loginMessage","Email/password accepted, but this UID is not enabled in Firestore admins collection. Check admins/USER_UID and enabled=true.","err");
+   currentUser=null;
+   setStatus("loginMessage","This Firebase account is not enabled in Cloudflare D1 Admin Management. Ask the Superadmin to add or enable it.","err");
    return;
   }
-  setStatus("loginMessage","Login successful. Loading Admin dashboard…","ok");
+  currentRole=role;
+  isAdmin=role==="admin";
+  isSuperadmin=role==="superadmin";
+  setStatus("loginMessage",role==="superadmin"?"Superadmin login successful. Loading Admin Account Management…":"Admin login successful. Loading dashboard…","ok");
+  await applyRoleAccess();
  }catch(e){
   console.error("BADASS admin login error:",e);
   const messages={
@@ -1341,7 +1412,20 @@ $("loginBtn").addEventListener("click", async (event)=>{
  }
 });
 
-$("logoutBtn").onclick=async()=>{try{await signOut(auth);adminSession.startedAt=null;adminSession.actions=[];}catch(e){console.error("Admin logout failed:",e);setStatus("adminMessage","Logout failed: "+String(e.message||e),"err");}};
+$("refreshSuperadminAdmins")?.addEventListener("click",loadSuperadminAdmins);
+$("addAdminAccountBtn")?.addEventListener("click",async()=>{
+ if(!isSuperadmin)return;
+ const email=$("newAdminEmail").value.trim(),uid=$("newAdminUid").value.trim(),msg=$("superadminMessage"),btn=$("addAdminAccountBtn");
+ if(!email||!uid){msg.textContent="Enter both the Firebase email and UID.";return;}
+ btn.disabled=true;msg.textContent="Verifying Firebase account and adding Admin…";
+ try{
+  await cloudflareAdminRequest("/api/superadmin/admins",{method:"POST",body:JSON.stringify({email,uid})});
+  $("newAdminEmail").value="";$("newAdminUid").value="";
+  msg.textContent="Admin account added successfully.";await loadSuperadminAdmins();
+ }catch(e){msg.textContent="Could not add Admin: "+String(e.message||e);}
+ finally{btn.disabled=false;}
+});
+$("logoutBtn").onclick=async()=>{try{await signOut(auth);isAdmin=false;isSuperadmin=false;currentRole="";currentUser=null;adminSession.startedAt=null;adminSession.actions=[];await applyRoleAccess();}catch(e){console.error("Admin logout failed:",e);setStatus("adminMessage","Logout failed: "+String(e.message||e),"err");}};
 // Monthly slots are generated automatically by ensureMonthSlots(); manual slot creation is intentionally disabled.
 $("manualDate").addEventListener("change",refreshManualTimes);
 function openManualPkReview(initial){
