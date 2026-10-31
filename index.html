@@ -1809,7 +1809,7 @@ $("addAdminAccountBtn")?.addEventListener("click",async()=>{
   btn.disabled=false;
  }
 });
-$("logoutBtn")?.addEventListener("click",async()=>{try{await signOut(auth);isAdmin=false;isSuperadmin=false;currentRole="";currentUser=null;adminSession.startedAt=null;adminSession.actions=[];await applyRoleAccess();}catch(e){console.error("Admin logout failed:",e);setStatus("adminMessage","Logout failed: "+String(e.message||e),"err");}};
+$("logoutBtn")?.addEventListener("click",async()=>{try{await signOut(auth);isAdmin=false;isSuperadmin=false;currentRole="";currentUser=null;adminSession.startedAt=null;adminSession.actions=[];await applyRoleAccess();}catch(e){console.error("Admin logout failed:",e);setStatus("adminMessage","Logout failed: "+String(e.message||e),"err");}});
 // Monthly slots are generated automatically by ensureMonthSlots(); manual slot creation is intentionally disabled.
 $("manualDate").addEventListener("change",refreshManualTimes);
 function openManualPkReview(initial){
