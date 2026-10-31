@@ -661,6 +661,15 @@ body.admin-page-mode .site-footer{display:none!important}
 .contact-note{font-weight:800;color:#ffb7bf!important}
 @media(max-width:600px){.site-header{flex-wrap:nowrap!important;gap:6px!important;padding:8px 9px!important}.site-header>.brand{min-width:55px!important}.site-header .brand-logo-img{width:42px!important;height:34px!important}.site-header .brand-title{font-size:8px!important}.site-header>.main-nav{gap:5px!important;flex:1 1 auto!important}.site-header .nav-action{min-height:38px!important;padding:7px 8px!important;font-size:11px!important;gap:4px!important}.site-header .nav-action .nav-icon{font-size:16px!important}.site-header .menu-toggle{min-width:40px!important}.site-header .menu-toggle .menu-label{display:none!important}.site-menu-panel{right:0!important;min-width:165px!important}.about-info-card{grid-template-columns:1fr!important}.about-info-image{min-height:190px!important;order:-1}.info-view{margin-top:16px;padding:0 10px}.info-card{padding:17px!important}}
 </style>
+<style id="public-navigation-final-fix">
+#bookingView.hidden,#lookupView.hidden,#adminView.hidden,#infoView.hidden{display:none!important}
+#bookingView:not(.hidden){display:grid!important}
+#lookupView:not(.hidden){display:block!important}
+#infoView:not(.hidden){display:block!important}
+#siteMenuPanel{pointer-events:auto!important}
+#siteMenuPanel.hidden{display:none!important}
+#siteMenuPanel:not(.hidden){display:flex!important}
+</style>
 </head>
 <body>
 <header>
@@ -854,22 +863,48 @@ document.addEventListener("click",function(event){
 })();
 </script>
 <script>
-/* Navigation fallback: keep the three main views usable even if Firebase module loading fails. */
+/* Reliable public navigation: works even if Firebase module startup is delayed. */
 (function(){
+  function el(id){return document.getElementById(id);}
+  function closeMenu(){
+    var panel=el('siteMenuPanel'),toggle=el('menuToggleBtn');
+    if(panel)panel.classList.add('hidden');
+    if(toggle){toggle.setAttribute('aria-expanded','false');toggle.classList.remove('active');}
+  }
   function showBadassView(name){
-    var ids={booking:'bookingView',lookup:'lookupView',admin:'adminView'};
+    var ids={booking:'bookingView',lookup:'lookupView',admin:'adminView',info:'infoView'};
     Object.keys(ids).forEach(function(key){
-      var el=document.getElementById(ids[key]);
-      if(el) el.classList.toggle('hidden', key!==name);
+      var node=el(ids[key]);
+      if(node)node.classList.toggle('hidden',key!==name);
     });
+    if(el('showBookingBtn'))el('showBookingBtn').classList.toggle('active',name==='booking');
+    if(el('showLookupBtn'))el('showLookupBtn').classList.toggle('active',name==='lookup');
+    if(name!=='info')closeMenu();
+    document.body.classList.toggle('admin-panel-open',name==='admin');
+  }
+  function showInfo(id){
+    showBadassView('info');
+    var target=el(id);
+    if(target)target.scrollIntoView({behavior:'smooth',block:'start'});
   }
   document.addEventListener('click',function(event){
-    var btn=event.target.closest('#showBookingBtn, #showLookupBtn, #showAdminBtn');
-    if(!btn) return;
-    if(btn.id==='showBookingBtn') showBadassView('booking');
-    if(btn.id==='showLookupBtn') showBadassView('lookup');
-    if(btn.id==='showAdminBtn') showBadassView('admin');
+    var target=event.target;
+    var btn=target&&target.closest?target.closest('#showBookingBtn, #showLookupBtn, #showAdminBtn, #menuToggleBtn, #openAboutBtn, #openContactBtn'):null;
+    if(!btn)return;
+    if(btn.id==='menuToggleBtn'){
+      event.preventDefault();event.stopImmediatePropagation();
+      var panel=el('siteMenuPanel'),open=panel&&panel.classList.contains('hidden');
+      if(panel)panel.classList.toggle('hidden',!open);
+      btn.setAttribute('aria-expanded',String(!!open));btn.classList.toggle('active',!!open);
+      return;
+    }
+    if(btn.id==='openAboutBtn'){event.preventDefault();event.stopImmediatePropagation();showInfo('aboutUsSection');return;}
+    if(btn.id==='openContactBtn'){event.preventDefault();event.stopImmediatePropagation();showInfo('contactUsSection');return;}
+    if(btn.id==='showBookingBtn'){showBadassView('booking');return;}
+    if(btn.id==='showLookupBtn'){showBadassView('lookup');return;}
+    if(btn.id==='showAdminBtn'){showBadassView('admin');}
   },true);
+  document.addEventListener('keydown',function(event){if(event.key==='Escape')closeMenu();});
   window.showBadassView=showBadassView;
 })();
 </script>
