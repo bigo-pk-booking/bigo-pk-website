@@ -1431,7 +1431,8 @@ $("addAdminAccountBtn")?.addEventListener("click",async()=>{
    credential=await signInWithEmailAndPassword(creatorAuth,email,password);
   }
   const uid=credential.user.uid;
-  await cloudflareAdminRequest("/api/superadmin/admins",{method:"POST",body:JSON.stringify({email,uid})});
+  const idToken=await credential.user.getIdToken(true);
+  await cloudflareAdminRequest("/api/superadmin/admins",{method:"POST",body:JSON.stringify({email,uid,idToken})});
   $("newAdminEmail").value="";$("newAdminPassword").value="";
   msg.textContent="Admin account created and enabled successfully. Share the login details with the new Admin securely.";
   await loadSuperadminAdmins();
