@@ -814,10 +814,14 @@ body:has(#infoView:not(.hidden)) .pk-battle{display:none!important}
         <img class="about-info-image" src="assets/badass-male-phone.png" alt="BADASS cartoon man holding a phone showing the BIGO PK Slots booking screen" loading="lazy" decoding="async">
       </div>
       <div class="about-copy">
-        <h3 class="about-family-title">WE ARE ONE <span>BADASS</span> FAMILY IN BIGO.</h3>
-        <p>We fight as one in every battle, support one another, and give our best together so we can win every PK.</p>
-        <h3 class="about-brand-title">BIGO <span>PK SLOTS</span></h3>
-        <p>is a scheduler created to make OPK booking and PK planning easier for our hosts.</p>
+        <div class="about-copy-block about-family-block">
+          <h3 class="about-family-title">WE ARE ONE <span>BADASS</span> FAMILY IN BIGO.</h3>
+          <p>We fight as one in every battle, support one another, and give our best together so we can win every PK.</p>
+        </div>
+        <div class="about-copy-block about-brand-block">
+          <h3 class="about-brand-title">BIGO <span>PK SLOTS</span></h3>
+          <p>is a scheduler created to make OPK booking and PK planning easier for our hosts.</p>
+        </div>
       </div>
       <div class="about-character-wrap about-female">
         <img class="about-info-image" src="assets/badass-female-phone.png" alt="BADASS cartoon woman holding a phone showing a BIGO PK battle screen" loading="lazy" decoding="async">
@@ -2303,6 +2307,21 @@ startApp();
   #aboutUsSection .about-character-wrap{width:100%!important;max-width:none!important;max-height:none!important;overflow:visible!important}
   #aboutUsSection .about-info-image{width:100%!important;max-width:260px!important;height:auto!important;max-height:260px!important;object-fit:contain!important}
   #aboutUsSection .about-copy p{color:#fff!important}
+}
+</style>
+
+
+<style id="about-us-mobile-reference-layout-fix">
+@media(max-width:700px){
+ #aboutUsSection .about-copy{display:contents!important}
+ #aboutUsSection .about-copy-block{display:flex!important;flex-direction:column!important;justify-content:center!important;gap:6px!important;min-width:0!important;padding:8px 2px!important;background:transparent!important;border:0!important;border-radius:0!important}
+ #aboutUsSection .about-family-block{grid-column:2!important;grid-row:1!important}
+ #aboutUsSection .about-brand-block{grid-column:1!important;grid-row:2!important}
+ #aboutUsSection .about-family-title,#aboutUsSection .about-brand-title{margin:0!important;padding:0!important;text-align:left!important}
+ #aboutUsSection .about-copy-block p{margin:0!important;padding:0!important;text-align:left!important}
+}
+@media(min-width:701px){
+ #aboutUsSection .about-copy-block{display:contents!important}
 }
 </style>
 
