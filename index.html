@@ -975,18 +975,11 @@ document.addEventListener("click",function(event){
 </script>
 <script type="module">
 window.__badassFirebaseModuleLoaded = true;
-// Load Firebase modules dynamically so CDN/import failures are shown on the page.
-const firebaseModuleLoad = await Promise.all([
-  import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"),
-  import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"),
-  import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js")
-]).catch(error => {
-  const msg = document.getElementById("loginMessage");
-  if (msg) { msg.className = "status err"; msg.textContent = "Firebase module load failed: " + (error?.message || String(error)) + ". Check connection/content blockers and try Chrome. If this persists, send this exact message."; }
-  console.error("Firebase module load failed", error);
-  throw error;
-});
-const [{ initializeApp, deleteApp }, { getAuth, onAuthStateChanged, signInAnonymously, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut }, { getFirestore, collection, doc, getDoc, getDocs, onSnapshot, query, where, orderBy, runTransaction, setDoc, updateDoc, deleteDoc, serverTimestamp, writeBatch }] = firebaseModuleLoad;
+// Firebase SDK bindings are loaded lazily inside startApp, AFTER the public
+// calendar request. This keeps public slots independent of Firebase/CDN startup.
+let initializeApp, deleteApp;
+let getAuth, onAuthStateChanged, signInAnonymously, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut;
+let getFirestore, collection, doc, getDoc, getDocs, onSnapshot, query, where, orderBy, runTransaction, setDoc, updateDoc, deleteDoc, serverTimestamp, writeBatch;
 
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyC4wcnp9FmyL8Api2kvcLcV68gCpnn09xE",
@@ -1462,6 +1455,16 @@ async function startApp(){
  catch(calendarError){console.error("Public calendar bootstrap failed:",calendarError);}
  if(!configured){$("configWarning").classList.remove("hidden");return;}
  try{
+  // Load Firebase only after the public calendar has already loaded.
+  const [appSdk,authSdk,firestoreSdk]=await Promise.all([
+   import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"),
+   import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"),
+   import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js")
+  ]);
+  ({initializeApp,deleteApp}=appSdk);
+  ({getAuth,onAuthStateChanged,signInAnonymously,signInWithEmailAndPassword,createUserWithEmailAndPassword,signOut}=authSdk);
+  ({getFirestore,collection,doc,getDoc,getDocs,onSnapshot,query,where,orderBy,runTransaction,setDoc,updateDoc,deleteDoc,serverTimestamp,writeBatch}=firestoreSdk);
+  window.__badassFirebaseModuleLoaded=true;
   app=initializeApp(FIREBASE_CONFIG);auth=getAuth(app);db=getFirestore(app);
   onAuthStateChanged(auth,async user=>{
    currentUser=user;
