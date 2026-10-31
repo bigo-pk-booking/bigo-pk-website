@@ -647,6 +647,25 @@ body.admin-page-mode #logoutBtn:not(.hidden){display:inline-flex!important}
 @media(max-width:600px){.site-footer .footer-links{gap:8px}.site-footer .footer-links a{font-size:13px;padding:8px 10px}.site-footer .info-footer-section{padding:14px}}
 body.admin-page-mode .site-footer{display:none!important}
 </style>
+<style id="integrated-info-sections">
+.site-info-section{scroll-margin-top:90px;margin:34px auto 0;max-width:1100px;padding:28px 24px;background:#fff;border:1px solid #ded6d6;border-top:5px solid #d40000;box-shadow:0 3px 14px #00000008}
+.site-info-heading{max-width:720px;margin-bottom:28px}.site-info-eyebrow{font-size:11px;font-weight:900;letter-spacing:.16em;color:#c40012}
+.site-info-heading h2{font-size:clamp(26px,4vw,42px);line-height:1.14;margin:10px 0;color:#252525;letter-spacing:-.02em}
+.site-info-heading p{font-size:14px;line-height:1.7;color:#687078;margin:0}
+.site-contact-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.site-contact-card{min-width:0;padding:18px 15px;border:1px solid #e0dada;border-radius:5px;background:#faf9f9}
+.site-contact-card h3{font-size:17px;margin:10px 0 8px;color:#292323}.site-contact-card p{font-size:13px;line-height:1.65;color:#666;margin:0 0 13px}
+.site-contact-card a{font-size:12px;font-weight:800;color:#b40012;text-decoration:underline;overflow-wrap:anywhere}.site-contact-note{font-size:12px;color:#777}
+.site-contact-icon{display:inline-flex;width:34px;height:34px;align-items:center;justify-content:center;border-radius:50%;background:#fae9e9;color:#bd0013;font-size:17px;font-weight:900}
+.site-contact-icon.telegram{background:#e8f3fa;color:#1686bd}.site-contact-icon.facebook{background:#eaf0ff;color:#1877f2}.site-contact-icon.admin{background:#f7f0df;color:#87651d}
+.about-info-section{background:#111;color:#fff;border-color:#d40000}.about-info-section .site-info-heading h2{color:#fff}
+.about-info-card{max-width:900px;padding:20px 22px;border-left:4px solid #d40000;background:#1c1c1c;color:#e9e9e9}
+.about-info-card p{font-size:15px;line-height:1.85;margin:0 0 12px}.about-info-card p:last-child{margin-bottom:0}
+.site-footer{margin:28px auto 0;max-width:1100px}.site-footer .footer{margin-top:0;padding:15px}
+@media(max-width:850px){.site-contact-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.site-info-section{padding:22px 16px;margin-top:22px}.site-contact-grid{grid-template-columns:1fr}.site-contact-card{padding:16px}}
+body.admin-page-mode .site-info-section,body.admin-page-mode .site-footer{display:none!important}
+</style>
 </head>
 <body class="admin-page-mode">
 <header>
@@ -797,17 +816,20 @@ body.admin-page-mode .site-footer{display:none!important}
     </div>
   </div>
 </section>
-<footer class="site-footer">
- <div class="footer-links">
-  <a href="#contactUs">Contact Us</a>
-  <a href="https://t.me/+RPxCoUZ1MctjYmZl" target="_blank" rel="noopener noreferrer">➤ TG Group</a>
-  <a href="#" class="facebook-footer-link" aria-label="Facebook page link to be added">Facebook</a>
-  <a href="admin.html">Admin</a>
+<section id="contactUs" class="site-info-section">
+ <div class="site-info-heading"><span class="site-info-eyebrow">CONTACT</span><h2>Get in touch with us</h2><p>Need help with your PK booking or have a question? Reach out through our channels below.</p></div>
+ <div class="site-contact-grid">
+  <article class="site-contact-card"><span class="site-contact-icon">✉</span><h3>Contact Us</h3><p>For booking assistance, questions, and announcements, message our team through the official group.</p><a href="https://t.me/+RPxCoUZ1MctjYmZl" target="_blank" rel="noopener noreferrer">Contact our team ↗</a></article>
+  <article class="site-contact-card"><span class="site-contact-icon telegram">➤</span><h3>TG Group</h3><p>Join the BIGO PK SLOTS Telegram group for updates and community announcements.</p><a href="https://t.me/+RPxCoUZ1MctjYmZl" target="_blank" rel="noopener noreferrer">Join Telegram ↗</a></article>
+  <article class="site-contact-card"><span class="site-contact-icon facebook">f</span><h3>Facebook: Badass</h3><p>Find our BADASS family on Facebook.</p><span class="site-contact-note">Facebook page link coming soon.</span></article>
+  <article class="site-contact-card"><span class="site-contact-icon admin">♛</span><h3>Admin: Sample</h3><p>Authorized administrators can sign in to manage bookings and schedules.</p><a href="admin.html">Open Admin Portal ↗</a></article>
  </div>
- <section id="contactUs" class="info-footer-section"><h2>Contact Us</h2><p>For booking assistance, questions, and announcements, reach out through our official Telegram group.</p><a class="tg-group-nav" href="https://t.me/+RPxCoUZ1MctjYmZl" target="_blank" rel="noopener noreferrer">➤ TG Group</a></section>
- <section id="aboutUs" class="info-footer-section"><h2>About Us</h2><p>BIGO PK SLOTS is a scheduler created to make OPK booking and PK planning easier for our hosts. We are one BADASS family in BIGO. We fight as one in every battle, support one another, and give our best together so we can win every PK.</p></section>
- <div class="footer">BADASS BIGO PK SLOTS • All times are in Philippine time.</div>
-</footer>
+</section>
+<section id="aboutUs" class="site-info-section about-info-section">
+ <div class="site-info-heading"><span class="site-info-eyebrow">ABOUT US</span><h2>One BADASS family. One team. Every battle.</h2></div>
+ <div class="about-info-card"><p><strong>BIGO PK SLOTS</strong> is a scheduler created to make OPK booking and PK planning easier and more organized for BIGO hosts. It helps users check available slots and arrange their PK schedules in one place.</p><p>We are one <strong>BADASS family in BIGO</strong>. We fight as one in every battle, support one another, and give our best together so that we can win every PK. Every match is a team effort, and every battle makes our family stronger.</p></div>
+</section>
+<footer class="site-footer"><div class="footer">BADASS BIGO PK SLOTS • All times are in Philippine time.</div></footer>
 </main>
 <script>
 /* Reliable mobile close handler for Slot Management. */
