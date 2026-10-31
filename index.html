@@ -46,36 +46,44 @@ input,select{border-radius:3px;border-color:#c4d2d1}input:focus,select:focus{out
 .support-message{display:flex;align-items:center;justify-content:center;gap:12px;text-align:left;background:#fff0f0;border:1px solid #efb8b8;border-left:5px solid #d40000;padding:13px 16px;margin:0 0 18px;color:#7d0000;border-radius:4px}.support-message .support-icon{font-size:25px;flex:0 0 auto}.support-message strong{display:block;font-size:15px;letter-spacing:.02em}.support-message p{margin:4px 0 0;color:#5c3838;font-size:13px;line-height:1.45}@media(max-width:600px){.support-message{padding:11px 12px;gap:9px}.support-message strong{font-size:14px}.support-message p{font-size:12px}.sheet-logo-img{width:min(100%,560px)}}
 
 /* Animated BADASS PK battle banner */
-.pk-battle{position:relative;isolation:isolate;overflow:hidden;margin:0 0 18px;padding:18px 14px 16px;border:2px solid #a90000;border-radius:8px;background:radial-gradient(ellipse at center,#3a0707 0%,#140808 48%,#050505 100%);color:#fff;text-align:center;box-shadow:0 7px 20px #7d000022}
+.pk-battle{position:relative;isolation:isolate;overflow:hidden;margin:0 0 14px;padding:12px 12px 10px;border:2px solid #a90000;border-radius:12px;background:radial-gradient(ellipse at center,#3a0707 0%,#140808 48%,#050505 100%);color:#fff;text-align:center;box-shadow:0 7px 20px #7d000022}
 .pk-battle:before,.pk-battle:after{content:"";position:absolute;z-index:-1;top:-40%;bottom:-40%;width:38%;filter:blur(20px);opacity:.5;pointer-events:none}
 .pk-battle:before{left:-10%;background:linear-gradient(90deg,transparent,#ff1717,transparent);animation:battleFlareLeft 2.8s ease-in-out infinite alternate}
 .pk-battle:after{right:-10%;background:linear-gradient(90deg,transparent,#ff6a00,transparent);animation:battleFlareRight 2.4s ease-in-out infinite alternate}
-.pk-battle-kicker{margin:0 0 5px;color:#ffb3b3;font-size:11px;font-weight:900;letter-spacing:.22em;text-transform:uppercase}
-.pk-battle-title{margin:0 0 13px;font-size:clamp(19px,4vw,27px);font-weight:1000;letter-spacing:.08em;text-shadow:0 0 14px #ff1616aa}
-.battle-arena{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:8px;max-width:620px;margin:0 auto 12px}
-.battle-side{min-width:0;display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px;border:1px solid #ffffff28;border-radius:8px;background:#ffffff08}
-.battle-emblem{font-size:clamp(30px,8vw,50px);line-height:1;filter:drop-shadow(0 0 9px #ff1818);animation:battleBounce 1.4s ease-in-out infinite}
-.battle-side.right .battle-emblem{animation-delay:.35s;filter:drop-shadow(0 0 9px #ff8c00)}
-.battle-side strong{font-size:clamp(10px,2.5vw,14px);letter-spacing:.1em;overflow-wrap:anywhere}
-.battle-side small{color:#ffb9b9;font-size:10px;letter-spacing:.08em;text-transform:uppercase}
-.battle-vs{position:relative;z-index:1;display:grid;place-items:center;width:58px;height:58px;border:2px solid #ff3a3a;border-radius:50%;background:#090909;color:#fff;font-size:22px;font-weight:1000;font-style:italic;box-shadow:0 0 0 5px #ff17171c,0 0 22px #ff1717aa;animation:battlePulse 1.25s ease-in-out infinite}
-.battle-energy{height:4px;max-width:620px;margin:0 auto 12px;border-radius:10px;background:linear-gradient(90deg,#ff1d1d 0%,#ffb300 48%,#ff1d1d 100%);background-size:200% 100%;animation:battleEnergy 1.5s linear infinite;box-shadow:0 0 12px #ff2626aa}
-.pk-battle-note{margin:0;color:#ffe1e1;font-size:12px;line-height:1.5}.pk-battle-note b{color:#fff}
-/* The challenger gets a playful, looping defeat animation. */
-.battle-side.right{position:relative;animation:challengerLose 3.2s ease-in-out infinite;transform-origin:center bottom}
-.battle-side.right .battle-emblem{animation:challengerDizzy 3.2s ease-in-out infinite;filter:drop-shadow(0 0 9px #ff8c00)}
-.battle-side.right small{color:#ff7777;font-weight:900}
-.battle-side.right:after{content:"DEFEATED!";position:absolute;top:5px;right:3px;padding:3px 5px;border:1px solid #ff5b5b;border-radius:4px;background:#8f0000;color:#fff;font-size:8px;font-weight:1000;letter-spacing:.08em;transform:rotate(8deg);animation:defeatStamp 3.2s ease-in-out infinite}
-@keyframes challengerLose{0%,18%,100%{transform:translateY(0) rotate(0);opacity:1}28%{transform:translateX(-4px) rotate(-4deg)}34%{transform:translateX(4px) rotate(4deg)}42%{transform:translateY(5px) rotate(8deg) scale(.96);opacity:.78}54%,78%{transform:translateY(7px) rotate(7deg) scale(.94);opacity:.7}88%{transform:translateY(0) rotate(0) scale(1);opacity:1}}
-@keyframes challengerDizzy{0%,22%,100%{transform:translateY(0) rotate(0) scale(1)}32%{transform:translateX(-5px) rotate(-18deg)}38%{transform:translateX(5px) rotate(18deg)}48%,75%{transform:translateY(4px) rotate(25deg) scale(.86)}90%{transform:translateY(0) rotate(0) scale(1)}}
-@keyframes defeatStamp{0%,20%,100%{opacity:0;transform:scale(.45) rotate(12deg)}38%,78%{opacity:1;transform:scale(1) rotate(8deg)}}
-@keyframes battleBounce{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-7px) scale(1.1)}}
-@keyframes battlePulse{0%,100%{transform:scale(1);box-shadow:0 0 0 4px #ff17171c,0 0 15px #ff171788}50%{transform:scale(1.1);box-shadow:0 0 0 9px #ff17171c,0 0 27px #ff1717}}
+.pk-battle-kicker{margin:0 0 3px;color:#ffb3b3;font-size:10px;font-weight:900;letter-spacing:.2em;text-transform:uppercase}
+.pk-battle-title{margin:0 0 8px;font-size:clamp(17px,3.7vw,23px);font-weight:1000;letter-spacing:.06em;text-shadow:0 0 14px #ff1616aa}
+.battle-arena{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:7px;max-width:700px;margin:0 auto 8px}
+.battle-side{min-width:0;min-height:112px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:7px 4px;border:1px solid #ffffff28;border-radius:9px;background:#ffffff08;transition:background .4s,border-color .4s}
+.battle-characters{display:flex;align-items:center;justify-content:center;gap:5px;min-height:52px}
+.battle-char{display:grid;place-items:center;width:43px;height:48px;border-radius:12px 12px 8px 8px;background:linear-gradient(145deg,#30070b,#090909);border:1px solid #ff3434;color:#fff;font-size:30px;line-height:1;filter:drop-shadow(0 0 7px #ff1818);animation:battleBounce 1.5s ease-in-out infinite}
+.battle-char:nth-child(2){animation-delay:.25s}
+.battle-side.right .battle-char{background:linear-gradient(145deg,#16345d,#08111f);border-color:#54aaff;filter:drop-shadow(0 0 7px #278dff)}
+.battle-side strong{font-size:clamp(10px,2.5vw,14px);letter-spacing:.08em;overflow-wrap:anywhere}
+.battle-side small{color:#ffb9b9;font-size:9px;letter-spacing:.06em;text-transform:uppercase}
+.battle-vs{position:relative;z-index:1;display:grid;place-items:center;width:48px;height:48px;border:2px solid #ff3a3a;border-radius:50%;background:#090909;color:#fff;font-size:19px;font-weight:1000;font-style:italic;box-shadow:0 0 0 4px #ff17171c,0 0 18px #ff1717aa;animation:battlePulse 1.25s ease-in-out infinite}
+.battle-progress-wrap{max-width:700px;margin:0 auto 7px}
+.battle-countdown-row{display:flex;justify-content:space-between;align-items:center;margin:0 1px 4px;color:#ffd5d5;font-size:10px;font-weight:900;letter-spacing:.08em}
+.battle-countdown{font-size:15px;color:#fff;text-shadow:0 0 9px #ff3434;font-variant-numeric:tabular-nums}
+.battle-progress-track{height:9px;overflow:hidden;border:1px solid #ff9c45;border-radius:20px;background:#18090a;box-shadow:0 0 9px #ff262688}
+.battle-energy{height:100%;width:100%;border-radius:20px;background:linear-gradient(90deg,#ff1d1d 0%,#ffb300 48%,#ff1d1d 100%);background-size:200% 100%;animation:battleEnergy 1.5s linear infinite;transition:width 1s linear}
+.battle-result{min-height:19px;margin:0 0 5px;color:#ffd5d5;font-size:11px;font-weight:1000;letter-spacing:.1em}
+.pk-battle-note{margin:0;color:#ffe1e1;font-size:11px;line-height:1.4}.pk-battle-note b{color:#fff}
+.pk-battle.is-finished .battle-side.left{border-color:#ffd54a;background:#3a210b88;box-shadow:0 0 16px #ffb30055;animation:winnerCelebrate .55s ease-in-out infinite alternate}
+.pk-battle.is-finished .battle-side.right{border-color:#4b9fe8;background:#0b1d3688;animation:opponentCry .7s ease-in-out infinite alternate}
+.pk-battle.is-finished .battle-side.right .battle-char{background:linear-gradient(145deg,#16345d,#08111f);border-color:#54aaff;filter:drop-shadow(0 0 8px #278dff);animation:cryShake .45s ease-in-out infinite alternate}
+.pk-battle.is-finished .battle-vs{border-color:#ffd54a;color:#ffd54a;box-shadow:0 0 22px #ffb300}
+.pk-battle.is-finished .battle-result{color:#ffe15c;text-shadow:0 0 12px #ff8c00;font-size:14px}
+.battle-side.right:after{content:"";display:none}
+@keyframes battleBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes battlePulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
 @keyframes battleEnergy{to{background-position:200% 0}}
 @keyframes battleFlareLeft{to{transform:translateX(75%);opacity:.8}}
 @keyframes battleFlareRight{to{transform:translateX(-75%);opacity:.8}}
-@media(max-width:420px){.pk-battle{padding:15px 9px}.battle-arena{gap:5px}.battle-vs{width:45px;height:45px;font-size:18px}.battle-side{padding:9px 2px}.battle-side small{font-size:9px}}
-@media(prefers-reduced-motion:reduce){.pk-battle:before,.pk-battle:after,.battle-emblem,.battle-vs,.battle-energy,.battle-side.right,.battle-side.right:after{animation-duration:6s!important;animation-iteration-count:infinite!important}.battle-side.right{animation-name:challengerLose!important}.battle-side.right .battle-emblem{animation-name:challengerDizzy!important}.battle-side.right:after{animation-name:defeatStamp!important}}
+@keyframes winnerCelebrate{to{transform:translateY(-3px) scale(1.015);box-shadow:0 0 22px #ffb30088}}
+@keyframes opponentCry{to{transform:translateY(3px) rotate(1.5deg)}}
+@keyframes cryShake{from{transform:translateY(0) rotate(-5deg)}to{transform:translateY(3px) rotate(5deg)}}
+@media(max-width:420px){.pk-battle{padding:10px 7px}.battle-arena{gap:4px}.battle-side{min-height:100px;padding:6px 2px}.battle-char{width:35px;height:42px;font-size:25px}.battle-vs{width:40px;height:40px;font-size:16px}.battle-side small{font-size:8px}}
+@media(prefers-reduced-motion:reduce){.pk-battle:before,.pk-battle:after,.battle-char,.battle-vs,.battle-energy,.pk-battle.is-finished .battle-side{animation-duration:3s!important}}
 
 
 /* PK success celebration: CSS-only so it cannot interrupt Firebase startup */
@@ -794,15 +802,25 @@ body:has(#infoView:not(.hidden)) .pk-battle{display:none!important}
   <p>Make sure the host level and OPK event are properly matched based on the information provided.</p>
 </section>
 
-<section class="pk-battle" aria-label="Animated PK battle support banner">
+<section class="pk-battle" id="pkBattleAnimation" aria-label="Animated PK battle support banner">
   <p class="pk-battle-kicker">BADASS • PK BATTLE SPIRIT</p>
   <h2 class="pk-battle-title">LET THE PK BATTLE BEGIN!</h2>
   <div class="battle-arena">
-    <div class="battle-side left"><span class="battle-emblem" aria-hidden="true">👑🔥</span><strong>BADASS TEAM</strong><small>Fight together</small></div>
+    <div class="battle-side left">
+      <div class="battle-characters" aria-label="BADASS male and female teammates"><span class="battle-char">🧑🏻‍🎤</span><span class="battle-char">👩🏻‍🎤</span></div>
+      <strong>👑 BADASS TEAM</strong><small class="battle-side-caption">Fight together</small>
+    </div>
     <div class="battle-vs" aria-label="versus">VS</div>
-    <div class="battle-side right"><span class="battle-emblem" aria-hidden="true">😵‍💫💥</span><strong>PK CHALLENGER</strong><small>Defeated • BADASS wins!</small></div>
+    <div class="battle-side right">
+      <div class="battle-characters" aria-label="PK challenger male and female team"><span class="battle-char" data-normal="🧑🏻‍💻" data-cry="😭">🧑🏻‍💻</span><span class="battle-char" data-normal="👩🏻‍💻" data-cry="😭">👩🏻‍💻</span></div>
+      <strong>PK CHALLENGER</strong><small class="battle-side-caption">Ready to battle</small>
+    </div>
   </div>
-  <div class="battle-energy" aria-hidden="true"></div>
+  <div class="battle-progress-wrap">
+    <div class="battle-countdown-row"><span>PK BATTLE COUNTDOWN</span><span class="battle-countdown" id="battleCountdown">00:15</span></div>
+    <div class="battle-progress-track"><div class="battle-energy" id="battleProgress"></div></div>
+  </div>
+  <p class="battle-result" id="battleResult" aria-live="polite">⚔️ BATTLE IN PROGRESS</p>
   <p class="pk-battle-note"><b>Let’s support every PK match!</b> Every cheer counts—let’s help one another reach our target quota. ❤️</p>
 </section>
 <div id="configWarning" class="notice warn hidden">Firebase setup is incomplete. Open <b>README-SETUP.txt</b> in the project folder and add your Firebase web configuration before publishing.</div>
@@ -2518,4 +2536,48 @@ startApp();
 }
 </style>
 
+<script>
+(function(){
+ const banner=document.getElementById("pkBattleAnimation");
+ if(!banner||banner.dataset.timerReady==="1")return;
+ banner.dataset.timerReady="1";
+ const countdown=document.getElementById("battleCountdown");
+ const progress=document.getElementById("battleProgress");
+ const result=document.getElementById("battleResult");
+ const opponentFaces=banner.querySelectorAll(".battle-side.right .battle-char");
+ const opponentCaption=banner.querySelector(".battle-side.right .battle-side-caption");
+ const badassCaption=banner.querySelector(".battle-side.left .battle-side-caption");
+ const ROUND_SECONDS=15,WIN_SECONDS=5;
+ let remaining=ROUND_SECONDS,finished=false;
+ const format=n=>"00:"+String(n).padStart(2,"0");
+ function resetRound(){
+  finished=false;remaining=ROUND_SECONDS;
+  banner.classList.remove("is-finished");
+  opponentFaces.forEach(face=>face.textContent=face.dataset.normal);
+  opponentCaption.textContent="Ready to battle";
+  badassCaption.textContent="Fight together";
+  countdown.textContent=format(remaining);
+  progress.style.width="100%";
+  result.textContent="⚔️ BATTLE IN PROGRESS";
+ }
+ function finishRound(){
+  finished=true;remaining=0;
+  banner.classList.add("is-finished");
+  opponentFaces.forEach(face=>face.textContent=face.dataset.cry);
+  opponentCaption.textContent="😭 DEFEATED • CRYING!";
+  badassCaption.textContent="🏆 BADASS WINS!";
+  countdown.textContent="00:00";
+  progress.style.width="0%";
+  result.textContent="🏆 BADASS WINS! • PK BATTLE COMPLETE";
+ }
+ resetRound();
+ window.setInterval(()=>{
+  if(finished){resetRound();return;}
+  remaining=Math.max(0,remaining-1);
+  countdown.textContent=format(remaining);
+  progress.style.width=(remaining/ROUND_SECONDS*100)+"%";
+  if(remaining===0)finishRound();
+ },1000);
+})();
+</script>
 </body></html>
