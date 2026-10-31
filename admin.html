@@ -906,6 +906,19 @@ async function cloudflareAdminRequest(path, options={}){
  if(!response.ok||!result.ok)throw new Error(result.error||"Cloudflare admin request failed");
  return result;
 }
+function updateOpponentNavCount(){
+ if(!isAdmin)return;
+ const selectedMonth=$("bookingMonthFilter")?.value||new Date().toISOString().slice(0,7);
+ const count=bookings.filter(b=>
+  !["cancelled","rejected"].includes(String(b.status||"").trim().toLowerCase())&&
+  monthKey(b.date)===selectedMonth&&
+  !String(b.opponentBigoId||"").trim()
+ ).length;
+ const countEl=$("opponentNavCount");
+ if(countEl)countEl.textContent=String(count);
+ const navBtn=$("opponentNavBtn");
+ if(navBtn)navBtn.classList.remove("hidden");
+}
 async function loadCloudflareAdminBookings(){
  try{
   const result=await cloudflareAdminRequest("/api/admin/bookings");
@@ -931,6 +944,7 @@ async function loadCloudflareAdminBookings(){
    adminReviewed:Number(b.admin_reviewed)===1
   }));
   renderAdmin();
+  updateOpponentNavCount();
   setStatus("adminMessage","Loaded bookings from Cloudflare D1.","ok");
  }catch(e){
   console.error("Cloudflare admin bookings failed:",e);
@@ -1029,7 +1043,7 @@ function showView(name){$("bookingView").classList.toggle("hidden",name!=="booki
 let adminRefreshTimer=null;
 function startAdminAutoRefresh(){
  if(adminRefreshTimer)clearInterval(adminRefreshTimer);
- adminRefreshTimer=setInterval(()=>{if(isAdmin&&document.visibilityState==="visible")loadCloudflareAdminBookings();},30000);
+ adminRefreshTimer=setInterval(()=>{if(isAdmin&&document.visibilityState==="visible")loadCloudflareAdminBookings();},5000);
 }
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&(isAdmin||isSuperadmin)){if(isAdmin)loadCloudflareAdminBookings();if(isSuperadmin)loadSuperadminAdmins();}});
 window.addEventListener("focus",()=>{if(isAdmin)loadCloudflareAdminBookings();});
