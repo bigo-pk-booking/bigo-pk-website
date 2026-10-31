@@ -1134,6 +1134,7 @@ const $ = id => document.getElementById(id);
 const configured = FIREBASE_CONFIG.apiKey && !FIREBASE_CONFIG.apiKey.includes("PASTE_") && FIREBASE_CONFIG.projectId && !FIREBASE_CONFIG.projectId.includes("PASTE_");
 let app, auth, db, currentUser=null, isAdmin=false, isSuperadmin=false, currentRole="", slots=[], adminSlots=[], bookings=[], selectedSlot=null, stopSlots=null, stopBookings=null;
 let bookingPage=0, slotPage=0;
+let manualDateSlots=[],manualSlotsMonth="";
 let bookingDateChosen=false;
 // Telegram direct-edit deep link: ?edit=<booking UUID>
 const requestedEditBookingId = new URLSearchParams(window.location.search).get("edit") || "";
@@ -1281,9 +1282,25 @@ async function syncBookedSlotHostDetails(records){
 }
 function refreshManualTimes(){
  const date=$("manualDate")?.value;
- if(!$("manualTime"))return;
- const available=slots.filter(s=>s.date===date&&s.status==="available").sort((a,b)=>a.time.localeCompare(b.time));
- $("manualTime").innerHTML=available.length?'<option value="">Choose time</option>'+available.map(s=>`<option value="${escapeHtml(s.id)}">${escapeHtml(s.time)}</option>`).join(""):'<option value="">No available slots for this date</option>';
+ const select=$("manualTime");if(!select)return;
+ const available=manualDateSlots.filter(s=>s.date===date&&String(s.status||"").toLowerCase()==="available").sort((a,b)=>a.time.localeCompare(b.time));
+ select.innerHTML=available.length?'<option value="">Choose available time</option>'+available.map(s=>`<option value="${escapeHtml(s.id||s.slot_id||slotId(s.date,s.time))}">${escapeHtml(s.time)}</option>`).join(""):'<option value="">No available slots for this date</option>';
+}
+async function loadManualAvailableTimes(){
+ const date=$("manualDate")?.value;if(!date)return;
+ const month=date.slice(0,7),select=$("manualTime");
+ if(select)select.innerHTML='<option value="">Loading available times…</option>';
+ try{
+  if(manualSlotsMonth!==month){
+   const result=await cloudflareAdminRequest("/api/admin/slots?month="+encodeURIComponent(month));
+   manualDateSlots=(result.slots||[]).map(s=>({...s,id:s.id||s.slot_id||slotId(s.date,s.time),status:String(s.status||"").toLowerCase()}));
+   manualSlotsMonth=month;
+  }
+  refreshManualTimes();
+ }catch(e){
+  console.error("Manual booking slot list failed:",e);
+  if(select)select.innerHTML='<option value="">Could not load slots — refresh and try again</option>';
+ }
 }
 function monthKey(date){return String(date||"").slice(0,7);}
 function monthLabel(key){if(!/^\d{4}-\d{2}$/.test(key))return key;return new Date(Number(key.slice(0,4)),Number(key.slice(5,7))-1,1).toLocaleDateString("en-US",{month:"long",year:"numeric"});}
@@ -1844,7 +1861,7 @@ $("addAdminAccountBtn")?.addEventListener("click",async()=>{
 });
 $("logoutBtn").onclick=async()=>{try{await signOut(auth);isAdmin=false;isSuperadmin=false;currentRole="";currentUser=null;adminSession.startedAt=null;adminSession.actions=[];await applyRoleAccess();}catch(e){console.error("Admin logout failed:",e);setStatus("adminMessage","Logout failed: "+String(e.message||e),"err");}};
 // Monthly slots are generated automatically by ensureMonthSlots(); manual slot creation is intentionally disabled.
-$("manualDate").addEventListener("change",refreshManualTimes);
+$("manualDate").addEventListener("change",loadManualAvailableTimes);
 function openManualPkReview(initial){
  let modal=document.getElementById("manualPkReviewModal");
  if(!modal){
@@ -1947,13 +1964,13 @@ function openManualPkReview(initial){
   }finally{
    confirm.disabled=false;confirm.textContent="Confirm & Create PK";
    createBtn.disabled=false;createBtn.classList.remove("is-loading");
-   refreshManualTimes();
+   loadManualAvailableTimes();
   }
  };
 }
 $("manualCreateBtn").onclick=()=>{
  const slotKey=$("manualTime").value;
- const slot=slots.find(x=>x.id===slotKey);
+ const slot=manualDateSlots.find(x=>(x.id||x.slot_id||slotId(x.date,x.time))===slotKey);
  const initial={
   date:slot?.date||$("manualDate").value||"",
   time:slot?.time||"",
@@ -2096,6 +2113,7 @@ startApp();
   toggle.addEventListener('click',function(){
     var opening=fields.classList.contains('hidden');
     fields.classList.toggle('hidden',!opening);
+    if(opening&&typeof loadManualAvailableTimes==='function')loadManualAvailableTimes();
     toggle.setAttribute('aria-expanded',String(opening));
     toggle.innerHTML=(opening?'− Hide Manual PK Form':'＋ Create a Manual PK Booking')+' <span class="accordion-chevron">'+(opening?'⌄':'›')+'</span>';
   });
