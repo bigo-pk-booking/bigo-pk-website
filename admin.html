@@ -1383,7 +1383,15 @@ function renderAdmin(){
   const legacyReportContent=$("opponentReportContent");if(legacyReportContent)legacyReportContent.innerHTML=reportText?'<textarea id="opponentReportText" readonly rows="10" style="width:100%;background:#fff;color:#202428;padding:10px;border-radius:6px"></textarea><p class="sub">'+missingOpponents.length+' booking(s) still need an opponent.</p>':'<div class="notice ok">All active bookings this month already have an opponent.</div>';
  if($("opponentReportText"))$("opponentReportText").value=reportText;
   const copyBtn=$("copyOpponentReportBtn");if(copyBtn){copyBtn.disabled=!reportText;copyBtn.onclick=async()=>{if(!reportText)return;try{await navigator.clipboard.writeText(reportText);const status=$("opponentReportStatus");if(status)status.textContent="Report copied. Paste it into Telegram.";}catch(e){const t=$("opponentReportText");t?.focus();t?.select();const status=$("opponentReportStatus");if(status)status.textContent="Select the report above and copy it.";}}}
- $("adminBookings").innerHTML=bookingTable+bookingPager;
+ const bookingReportContainer=$("adminBookings");
+ const bookingReportOuterScroll=bookingReportContainer?.scrollLeft||0;
+ const bookingReportInnerScroll=bookingReportContainer?.querySelector(".table-wrap")?.scrollLeft||0;
+ bookingReportContainer.innerHTML=bookingTable+bookingPager;
+ // The booking list refreshes automatically every few seconds. Keep the admin's
+ // horizontal position when the table DOM is rebuilt so it does not jump left.
+ bookingReportContainer.scrollLeft=bookingReportOuterScroll;
+ const refreshedBookingTable=bookingReportContainer.querySelector(".table-wrap");
+ if(refreshedBookingTable)refreshedBookingTable.scrollLeft=bookingReportInnerScroll;
  $("adminBookings").querySelectorAll("[data-booking-details]").forEach(btn=>btn.onclick=()=>openBookingDetails(btn.dataset.bookingDetails));
  $("adminBookings").querySelectorAll("[data-edit-booking]").forEach(btn=>btn.onclick=()=>openBookingEdit(btn.dataset.editBooking));
  $("adminBookings").querySelectorAll("[data-approve]").forEach(btn=>btn.onclick=()=>approveBooking(btn.dataset.approve));
