@@ -714,6 +714,23 @@ body:has(#infoView:not(.hidden)) .pk-battle{display:none!important}
 #aboutUsSection .about-copy .about-brand-title{margin-top:20px!important;font-size:clamp(29px,8vw,38px)!important}
 }
 </style>
+
+<style id="opponent-notification-real-markup">
+.opponent-nav-wrap{position:relative;display:flex;align-items:center;flex:0 0 auto}
+.opponent-nav-popup.hidden{display:none!important}
+.opponent-nav-popup{position:absolute;top:calc(100% + 10px);right:0;z-index:12050;width:min(440px,calc(100vw - 24px));max-height:75vh;overflow:auto;padding:14px;background:#12090b;border:1px solid #e22b38;border-radius:16px;box-shadow:0 16px 48px #000b;color:#fff}
+.opponent-popup-head,.opponent-popup-actions{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.opponent-popup-head button{width:40px;min-width:40px;height:40px;padding:0;border-radius:50%;background:#fff;color:#8d0010;font-size:26px}
+.opponent-popup-content textarea{display:block;width:100%;min-height:180px;resize:vertical}
+.opponent-popup-actions button{flex:1;min-height:44px}
+.opponent-popup-actions button:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:820px){
+ .opponent-nav-wrap{flex:1 1 100%;width:100%;order:10}
+ .opponent-nav-btn{width:100%;min-height:42px;justify-content:center}
+ .opponent-nav-popup{position:fixed;top:50%;left:12px;right:12px;transform:translateY(-50%);width:auto;max-height:80vh}
+}
+</style>
+
 </head>
 <body>
 <header>
@@ -730,6 +747,20 @@ body:has(#infoView:not(.hidden)) .pk-battle{display:none!important}
 <button class="nav-action hidden" id="showAdminBtn" type="button" aria-hidden="true" tabindex="-1">Admin</button>
 </nav>
 
+<div class="opponent-nav-wrap" id="opponentNavWrap">
+ <button type="button" class="opponent-nav-btn hidden" id="opponentNavBtn" aria-expanded="false">
+  <span class="bell-icon" aria-hidden="true">🔔</span><span>Looking for Opponent</span><b class="opponent-count" id="opponentNavCount">0</b>
+ </button>
+ <section class="opponent-nav-popup hidden" id="opponentNavPopup" aria-label="Looking for Opponent report">
+  <div class="opponent-popup-head"><strong>Looking for Opponent</strong><button type="button" id="opponentPopupClose" aria-label="Close">×</button></div>
+  <div class="opponent-popup-content" id="opponentPopupContent"><div class="notice">Loading opponent report…</div></div>
+  <div class="opponent-popup-actions">
+   <button type="button" class="secondary" id="opponentPopupCopy" disabled>Copy</button>
+   <button type="button" id="opponentPopupCloseBottom">Close</button>
+  </div>
+  <div class="status" id="opponentPopupStatus" aria-live="polite"></div>
+ </section>
+</div>
 </div></header>
 <main>
 <section class="sheet-title hidden">
