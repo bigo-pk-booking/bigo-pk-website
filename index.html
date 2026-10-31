@@ -661,8 +661,11 @@ body.admin-page-mode .site-footer{display:none!important}
 .contact-note{font-weight:800;color:#ffb7bf!important}
 /* Soft fade transitions for About and Contact views */
 @keyframes infoFadeIn{from{opacity:0;transform:translateY(14px) scale(.985);filter:blur(3px)}to{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}
-.info-card:not(.hidden){animation:infoFadeIn .42s ease both}
-.info-view{animation:infoFadeIn .35s ease both}
+/* Hide the PK battle banner while either About Us or Contact Us is open. */
+body:has(#infoView:not(.hidden)) .pk-battle{display:none!important}
+/* Slower, calmer entrance animation for the About Us and Contact Us panels. */
+.info-card:not(.hidden){animation:infoFadeIn 1.2s ease both}
+.info-view{animation:infoFadeIn 1s ease both}
 @keyframes slotLoaderSpin{to{transform:rotate(360deg)}}
 .slot-loading{display:flex;align-items:center;justify-content:center;gap:14px;min-height:78px;padding:16px;border:1px solid #a90024;border-radius:13px;background:linear-gradient(110deg,#16090c,#260b10,#16090c);color:#f8eeee;font-size:15px;text-align:center}
 .slot-loading:before{content:"";width:30px;height:30px;flex:0 0 30px;border:5px solid #6f1824;border-top-color:#ff3b4d;border-right-color:#ff7a32;border-radius:50%;animation:slotLoaderSpin .8s linear infinite;box-shadow:0 0 14px #ff243855}
