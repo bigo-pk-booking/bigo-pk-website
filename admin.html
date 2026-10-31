@@ -187,6 +187,11 @@ body.admin-panel-open .pk-battle { display:none !important; }
 .booking-edit-vs{display:flex;align-items:center;gap:12px;color:#b90000;font-weight:900;justify-content:center;margin:16px 0 6px}.booking-edit-vs:before,.booking-edit-vs:after{content:"";height:1px;background:#d71920;flex:1}
 .booking-edit-actions{display:flex;gap:10px;margin-top:18px}.booking-edit-actions>*{flex:1}.booking-edit-save{background:#bd0000;border-color:#bd0000}
 .booking-edit-trigger{background:#fff;color:#a90000;border:1px solid #dfbaba}
+.booking-view-field{min-width:0;padding:12px;border:1px solid #ead0d0;border-radius:8px;background:#fff8f8;display:flex;flex-direction:column;gap:6px}
+.booking-view-field b{font-size:10px;letter-spacing:.06em;color:#a90000}
+.booking-view-field span{font-size:14px;color:#262020;overflow-wrap:anywhere;white-space:pre-wrap}
+#bookingDetailsModal{z-index:1100}
+#bookingDetailsModal .booking-edit-dialog{width:min(680px,100%)}
 @media(max-width:520px){.booking-edit-grid{grid-template-columns:1fr}.booking-edit-grid .wide{grid-column:auto}.booking-edit-body{padding:14px}.booking-edit-head h2{font-size:18px}}
 
 /* Responsive wide layout + gentle booking form entrance */
@@ -1331,6 +1336,20 @@ function updateAdminWelcomeGreeting(){
  const el=$("adminWelcomeGreeting");
  if(el)el.textContent=greeting+" Welcome back. Have a great day!";
 }
+function openBookingDetails(id){
+ const b=bookings.find(x=>String(x.id)===String(id));if(!b)return;
+ const modal=$("bookingDetailsModal");if(!modal)return;
+ const fields=[
+  ["HOST LEVEL",b.hostLevel],["AGENCY NAME",b.agencyName],["AGENCY TELEGRAM",b.agencyTelegram],["OPK EVENT",b.opkEvent],
+  ["OPPONENT NAME",b.opponentName],["OPPONENT BIGO ID",b.opponentBigoId],["OPPONENT LEVEL",b.opponentLevel],
+  ["OPPONENT AGENCY NAME",b.opponentAgencyName],["OPPONENT AGENCY TELEGRAM",b.opponentAgencyTelegram],["REMARKS (WIN/LOSE)",b.remarks]
+ ];
+ $("bookingDetailsMeta").textContent=(b.date||"")+" · "+(b.time||"")+" · "+(b.name||"Host")+" · BIGO ID: "+(b.bigoId||"—");
+ $("bookingDetailsContent").innerHTML='<div class="booking-edit-grid">'+fields.slice(0,4).map(([label,value])=>'<div class="booking-view-field"><b>'+label+'</b><span>'+escapeHtml(value||"—")+'</span></div>').join("")+'</div><div class="booking-edit-vs">VS</div><div class="booking-edit-grid">'+fields.slice(4).map(([label,value])=>'<div class="booking-view-field"><b>'+label+'</b><span>'+escapeHtml(value||"—")+'</span></div>').join("")+'</div>';
+ modal.classList.remove("hidden");document.body.style.overflow="hidden";
+}
+function closeBookingDetails(){const modal=$("bookingDetailsModal");if(modal)modal.classList.add("hidden");document.body.style.overflow="";}
+window.closeBookingDetails=closeBookingDetails;
 function renderAdmin(){
  if(!isAdmin)return;
  refreshManualTimes();
@@ -1344,7 +1363,7 @@ function renderAdmin(){
  const bookingPages=Math.max(1,Math.ceil(filteredBookings.length/ADMIN_PAGE_SIZE));
  bookingPage=Math.min(bookingPage,bookingPages-1);
  const visibleBookings=filteredBookings.slice(bookingPage*ADMIN_PAGE_SIZE,(bookingPage+1)*ADMIN_PAGE_SIZE);
- const bookingTable=visibleBookings.length?`<div class="admin-slots-heading"><h3>Bookings (${escapeHtml(monthLabel(bookingMonth))})</h3><span class="sub">Showing ${filteredBookings.length} bookings</span></div><div class="table-wrap"><table class="slot-management-table booking-report-table"><thead><tr><th>Date</th><th>Time</th><th>Name</th><th>BIGO ID</th><th>Status</th><th>Action</th></tr></thead><tbody>${visibleBookings.map(b=>{const id=escapeHtml(b.id);const reviewed=b.adminReviewed&&!["Approved","Opponent assigned","Cancelled","Rejected"].includes(String(b.status||""));const closed=["Cancelled","Rejected"].includes(String(b.status||""));return `<tr><td>${escapeHtml(b.date||"")}</td><td><b>${escapeHtml(b.time||"")}</b></td><td>${escapeHtml(b.name||"")}</td><td>${escapeHtml(b.bigoId||"")}</td><td><span class="pill ${b.opponentBigoId?"assigned":"full"}">${escapeHtml(b.status||"Reserved")}</span></td><td><button class="small secondary" type="button" data-booking-details>View</button> <button class="small booking-edit-trigger" type="button" data-edit-booking="${id}">Edit</button> ${reviewed?'<button class="small" type="button" data-approve="'+id+'">Approve</button>':'<span class="muted">'+(closed?'Closed':b.adminReviewed?'Already reviewed':'Review required')+'</span>'} <button class="small danger" type="button" data-cancel="${id}">Reject / cancel</button></td></tr><tr class="booking-report-details-row hidden"><td colspan="6"><div class="booking-report-details-grid"><div><b>HOST LEVEL</b><span>${escapeHtml(b.hostLevel||"—")}</span></div><div><b>AGENCY NAME</b><span>${escapeHtml(b.agencyName||"—")}</span></div><div><b>AGENCY TELEGRAM</b><span>${escapeHtml(b.agencyTelegram||"—")}</span></div><div><b>OPK EVENT</b><span>${escapeHtml(b.opkEvent||"—")}</span></div><div class="booking-report-vs">VS</div><div><b>OPPONENT NAME</b><span>${escapeHtml(b.opponentName||"—")}</span></div><div><b>OPPONENT BIGO ID</b><span>${escapeHtml(b.opponentBigoId||"—")}</span></div><div><b>OPPONENT LEVEL</b><span>${escapeHtml(b.opponentLevel||"—")}</span></div><div><b>OPPONENT AGENCY NAME</b><span>${escapeHtml(b.opponentAgencyName||"—")}</span></div><div><b>OPPONENT AGENCY TELEGRAM</b><span>${escapeHtml(b.opponentAgencyTelegram||"—")}</span></div><div><b>REMARKS (WIN/LOSE)</b><span>${escapeHtml(b.remarks||"—")}</span></div></div></td></tr>`}).join("")}</tbody></table></div>`:'<div class="notice">No bookings for this month match your search.</div>';
+ const bookingTable=visibleBookings.length?`<div class="admin-slots-heading"><h3>Bookings (${escapeHtml(monthLabel(bookingMonth))})</h3><span class="sub">Showing ${filteredBookings.length} bookings</span></div><div class="table-wrap"><table class="slot-management-table booking-report-table"><thead><tr><th>Date</th><th>Time</th><th>Name</th><th>BIGO ID</th><th>Status</th><th>Action</th></tr></thead><tbody>${visibleBookings.map(b=>{const id=escapeHtml(b.id);const reviewed=b.adminReviewed&&!["Approved","Opponent assigned","Cancelled","Rejected"].includes(String(b.status||""));const closed=["Cancelled","Rejected"].includes(String(b.status||""));return `<tr data-booking-row="${id}"><td>${escapeHtml(b.date||"")}</td><td><b>${escapeHtml(b.time||"")}</b></td><td>${escapeHtml(b.name||"")}</td><td>${escapeHtml(b.bigoId||"")}</td><td><span class="pill ${b.opponentBigoId?"assigned":"full"}">${escapeHtml(b.status||"Reserved")}</span></td><td><button class="small secondary" type="button" data-booking-details="${id}">View</button> <button class="small booking-edit-trigger" type="button" data-edit-booking="${id}">Edit</button> ${reviewed?'<button class="small" type="button" data-approve="'+id+'">Approve</button>':'<span class="muted">'+(closed?'Closed':b.adminReviewed?'Already reviewed':'Review required')+'</span>'} <button class="small danger" type="button" data-cancel="${id}">Reject / cancel</button></td></tr>`}).join("")}</tbody></table></div>`:'<div class="notice">No bookings for this month match your search.</div>';
  const bookingPager=filteredBookings.length?`<div class="admin-pagination"><span>Showing ${bookingPage*ADMIN_PAGE_SIZE+1}–${Math.min((bookingPage+1)*ADMIN_PAGE_SIZE,filteredBookings.length)} of ${filteredBookings.length}</span><div><button class="secondary small" type="button" data-booking-prev ${bookingPage===0?"disabled":""}>Previous</button> <button class="secondary small" type="button" data-booking-next ${bookingPage>=bookingPages-1?"disabled":""}>Next</button></div></div>`:"";
  const missingOpponents=[...new Map(bookings.filter(b=>!["cancelled","rejected"].includes(String(b.status||"").trim().toLowerCase())&&!String(b.opponentBigoId||"").trim()).map((b,i)=>[String(b.id||`${b.date}|${b.time}|${b.bigoId||b.name||i}`),b])).values()].sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
  const reportDate=v=>{const p=String(v||"").split("-").map(Number);return p.length===3?new Date(p[0],p[1]-1,p[2]).toLocaleDateString("en-US",{month:"long",day:"numeric"}).toUpperCase():String(v||"");};
@@ -1365,7 +1384,7 @@ function renderAdmin(){
  if($("opponentReportText"))$("opponentReportText").value=reportText;
   const copyBtn=$("copyOpponentReportBtn");if(copyBtn){copyBtn.disabled=!reportText;copyBtn.onclick=async()=>{if(!reportText)return;try{await navigator.clipboard.writeText(reportText);const status=$("opponentReportStatus");if(status)status.textContent="Report copied. Paste it into Telegram.";}catch(e){const t=$("opponentReportText");t?.focus();t?.select();const status=$("opponentReportStatus");if(status)status.textContent="Select the report above and copy it.";}}}
  $("adminBookings").innerHTML=bookingTable+bookingPager;
- $("adminBookings").querySelectorAll("[data-booking-details]").forEach(btn=>btn.onclick=()=>{const row=btn.closest("tr")?.nextElementSibling;if(!row)return;const opening=row.classList.contains("hidden");row.classList.toggle("hidden",!opening);btn.textContent=opening?"Hide":"View";});
+ $("adminBookings").querySelectorAll("[data-booking-details]").forEach(btn=>btn.onclick=()=>openBookingDetails(btn.dataset.bookingDetails));
  $("adminBookings").querySelectorAll("[data-edit-booking]").forEach(btn=>btn.onclick=()=>openBookingEdit(btn.dataset.editBooking));
  $("adminBookings").querySelectorAll("[data-approve]").forEach(btn=>btn.onclick=()=>approveBooking(btn.dataset.approve));
  $("adminBookings").querySelectorAll("[data-cancel]").forEach(btn=>btn.onclick=()=>cancelBooking(btn.dataset.cancel));
@@ -2096,6 +2115,15 @@ startApp();
 })();
 </script>
 
+
+
+<div id="bookingDetailsModal" class="booking-edit-modal hidden" role="dialog" aria-modal="true" aria-labelledby="bookingDetailsTitle">
+ <div class="booking-edit-dialog">
+  <div class="booking-edit-head"><h2 id="bookingDetailsTitle">OPK Booking Details</h2><button id="bookingDetailsClose" type="button" class="booking-edit-close" aria-label="Close">×</button></div>
+  <div class="booking-edit-body"><p id="bookingDetailsMeta" class="sub"></p><div id="bookingDetailsContent"></div><div class="booking-edit-actions"><button id="bookingDetailsDone" class="booking-edit-save" type="button">Close</button></div></div>
+ </div>
+</div>
+<script>(function(){const modal=document.getElementById("bookingDetailsModal");if(!modal)return;const close=()=>window.closeBookingDetails?.();document.getElementById("bookingDetailsClose").addEventListener("click",close);document.getElementById("bookingDetailsDone").addEventListener("click",close);modal.addEventListener("click",e=>{if(e.target===modal)close();});document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!modal.classList.contains("hidden"))close();});})();</script>
 
 <div id="bookingEditModal" class="booking-edit-modal hidden" role="dialog" aria-modal="true" aria-labelledby="bookingEditTitle">
  <div class="booking-edit-dialog">
