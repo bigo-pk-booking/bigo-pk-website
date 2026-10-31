@@ -439,6 +439,12 @@ body:has(#adminView:not(.hidden)) .tg-top-strip{display:none!important;}
 .head>.nav #logoutBtn{display:none!important;flex:0 0 auto!important;width:auto!important;min-width:0!important;max-width:none!important;min-height:36px!important;padding:7px 13px!important;margin:0!important;font-size:13px!important;line-height:1.2!important;white-space:nowrap!important;border-radius:6px!important;}
 @media(max-width:480px){.head{gap:7px!important;padding-right:0!important}.head>.brand{gap:7px!important}.head>.brand .brand-logo-img{width:clamp(92px,30vw,142px)!important}.head>.brand .brand-tagline{font-size:clamp(10px,3vw,14px)!important;letter-spacing:.1em!important}.head>.nav{gap:0!important}.head>.nav #logoutBtn{padding:6px 10px!important;font-size:12px!important;}}
 
+
+/* Logout button: override the older hidden display rule only after successful login. */
+.head>.nav #logoutBtn:not(.hidden){display:inline-flex!important}
+/* OPK booking list is collapsed until requested; export stays below the list. */
+#opkBookingsPanel{margin-top:12px}
+#opkBookingsPanel>button{width:100%}
 /* FINAL MOBILE READABILITY + NAV VISIBILITY FIX */
 #logoutBtn:not(.hidden){display:inline-flex!important}
 #superadminAdminsList .table-wrap{background:#160909!important;border:1px solid #a92b35!important;border-radius:8px!important;overflow-x:auto!important}
@@ -577,10 +583,13 @@ body:has(#adminView:not(.hidden)) .tg-top-strip{display:none!important;}
       </div>
     </div>
     <hr>
-    <div class="admin-head"><div><h3>Bookings & editable details</h3><p class="sub" style="margin:5px 0 0">Edit host and opponent information directly in this Admin section, then press Save changes.</p></div><input id="adminSearch" style="max-width:300px" placeholder="Search BIGO ID / name / date / time"></div>
-    <div class="row month-filter-row" style="margin-top:12px"><div><label for="bookingMonthFilter">Select month for bookings</label><select id="bookingMonthFilter" aria-label="Filter bookings by month"></select></div><div style="flex:0 0 auto;min-width:auto"><button id="downloadMonthExcelBtn" class="success" type="button">Download selected month Excel</button></div></div>
-
-    <div id="adminBookings" class="table-wrap"><div class="notice">Loading bookings…</div></div>
+    <div class="admin-head"><div><h3>OPK Booking</h3><p class="sub" style="margin:5px 0 0">View and edit host and opponent information.</p></div><input id="adminSearch" style="max-width:300px" placeholder="Search BIGO ID / name / date / time"></div>
+    <button id="toggleOpkBookingsBtn" class="full" type="button" aria-expanded="false" style="margin-top:12px">📋 View OPK Booking</button>
+    <div id="opkBookingsPanel" class="hidden" style="margin-top:12px">
+      <div style="margin:12px 0"><label for="bookingMonthFilter">Select month of OPK</label><select id="bookingMonthFilter" aria-label="Select month of OPK"></select></div>
+      <div id="adminBookings" class="table-wrap"><div class="notice">Loading bookings…</div></div>
+      <button id="downloadMonthExcelBtn" class="success full" type="button" style="margin-top:12px">Download selected month Excel</button>
+    </div>
     <hr>
     <div class="card" style="margin:12px 0;padding:14px">
       <h3>Slot management</h3>
@@ -855,6 +864,15 @@ function recordAdminAction(label){adminSession.actions.push(label);}
 function showLogoutSummary(){const mins=adminSession.startedAt?Math.max(0,Math.round((Date.now()-adminSession.startedAt)/60000)):0;const counts=adminSession.actions.reduce((a,x)=>(a[x]=(a[x]||0)+1,a),{});const lines=Object.entries(counts).map(([k,v])=>v+" × "+k).join("\n");return confirm("ADMIN SESSION SUMMARY\nDuration: "+mins+" minute(s)\nActions: "+adminSession.actions.length+"\n"+(lines||"No tracked actions") +"\n\nLog out now?");}
 async function bulkToggleSlots(action){const month=$("slotMonthFilter")?.value||selectedHeaderMonth();const verb=action==="open"?"OPEN ALL CLOSED SLOTS":"CLOSE ALL AVAILABLE SLOTS";if(!confirm(verb+" for "+monthTitle(month)+"? Booked slots will not change."))return;const buttons=[$("openAllSlotsBtn"),$("closeAllSlotsBtn")];buttons.forEach(b=>b.disabled=true);try{const result=await cloudflareAdminRequest("/api/admin/slots/bulk",{method:"PATCH",body:JSON.stringify({month,action})});recordAdminAction(action==="open"?"Bulk opened slots":"Bulk closed slots");await loadCloudflareAdminSlots(month);setStatus("monthlySettingsMessage",result.affected+" slot(s) "+(action==="open"?"opened":"closed")+". Booked slots were protected.","ok");}catch(e){setStatus("monthlySettingsMessage","Bulk action failed: "+String(e.message||e),"err");}finally{buttons.forEach(b=>b.disabled=false);}}
 function showView(name){$("bookingView").classList.toggle("hidden",name!=="booking");$("lookupView").classList.toggle("hidden",name!=="lookup");$("adminView").classList.toggle("hidden",name!=="admin");document.body.classList.toggle("admin-panel-open",name==="admin");}
+/* Refresh the admin booking list and opponent counter when returning to the page. */
+let adminRefreshTimer=null;
+function startAdminAutoRefresh(){
+ if(adminRefreshTimer)clearInterval(adminRefreshTimer);
+ adminRefreshTimer=setInterval(()=>{if(isAdmin&&document.visibilityState==="visible")loadCloudflareAdminBookings();},30000);
+}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&(isAdmin||isSuperadmin)){if(isAdmin)loadCloudflareAdminBookings();if(isSuperadmin)loadSuperadminAdmins();}});
+window.addEventListener("focus",()=>{if(isAdmin)loadCloudflareAdminBookings();});
+
 async function loadMonthlySettings(month){
  if(!isAdmin||!/^\d{4}-\d{2}$/.test(month))return;
  try{
@@ -1122,7 +1140,7 @@ async function applyRoleAccess(){
  $("logoutBtn").classList.toggle("hidden",!loggedIn);
  $("showBookingBtn").classList.toggle("hidden",loggedIn);
  $("showLookupBtn").classList.toggle("hidden",loggedIn);
- if(isSuperadmin){showView("admin");await loadSuperadminAdmins();}
+ if(isAdmin)startAdminAutoRefresh();\n if(isSuperadmin){showView("admin");await loadSuperadminAdmins();}
 }
 async function loadSuperadminAdmins(){
  if(!isSuperadmin)return;
@@ -1651,6 +1669,14 @@ async function toggleSlot(id){
 }
 $("adminSearch").addEventListener("input",()=>{bookingPage=0;renderAdmin();});
 $("bookingMonthFilter").addEventListener("change",()=>{bookingPage=0;renderAdmin();});
+$("toggleOpkBookingsBtn")?.addEventListener("click",()=>{
+ const panel=$("opkBookingsPanel"),button=$("toggleOpkBookingsBtn");
+ const opening=panel.classList.contains("hidden");
+ panel.classList.toggle("hidden",!opening);
+ button.setAttribute("aria-expanded",String(opening));
+ button.textContent=opening?"📋 Hide OPK Booking":"📋 View OPK Booking";
+ if(opening){bookingPage=0;renderAdmin();}
+});
 $("slotMonthFilter").addEventListener("change",()=>{slotPage=0;loadCloudflareAdminSlots($("slotMonthFilter").value);});
 $("saveMonthlySettingsBtn").addEventListener("click",saveMonthlySettings);
 $("openAllSlotsBtn").addEventListener("click",()=>bulkToggleSlots("open"));
