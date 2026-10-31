@@ -1349,8 +1349,9 @@ async function loadCloudflareSlots(date){
   slots=Array.isArray(data.slots)?data.slots.map(s=>({...s,bookingId:s.booking_id??s.bookingId,hostName:s.hostName||s.host_name||"",hostBigoId:s.hostBigoId||s.host_bigo_id||""})):[]; 
   renderSlots();
   const selectedAvailableSlot=bookingDateChosen&&slots.some(s=>s.id===selectedSlot&&s.status==="available");
+  const showBookingConfirmation=!$("bookingResult")?.classList.contains("hidden");
   if(window.matchMedia("(max-width: 800px)").matches){
-   $("bookingFormCard")?.classList.toggle("mobile-booking-form-open",!!selectedAvailableSlot);
+   $("bookingFormCard")?.classList.toggle("mobile-booking-form-open",!!selectedAvailableSlot||showBookingConfirmation);
   }else{$("bookingFormCard")?.classList.remove("hidden","mobile-booking-form-open");}
   $("slotStatus").textContent="";
  }catch(e){
