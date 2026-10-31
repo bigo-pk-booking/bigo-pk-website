@@ -1385,13 +1385,19 @@ function renderAdmin(){
   const copyBtn=$("copyOpponentReportBtn");if(copyBtn){copyBtn.disabled=!reportText;copyBtn.onclick=async()=>{if(!reportText)return;try{await navigator.clipboard.writeText(reportText);const status=$("opponentReportStatus");if(status)status.textContent="Report copied. Paste it into Telegram.";}catch(e){const t=$("opponentReportText");t?.focus();t?.select();const status=$("opponentReportStatus");if(status)status.textContent="Select the report above and copy it.";}}}
  const bookingReportContainer=$("adminBookings");
  const bookingReportOuterScroll=bookingReportContainer?.scrollLeft||0;
- const bookingReportInnerScroll=bookingReportContainer?.querySelector(".table-wrap")?.scrollLeft||0;
+ const oldBookingReportTable=bookingReportContainer?.querySelector(".table-wrap");
+ const bookingReportInnerScroll=oldBookingReportTable?.scrollLeft||0;
  bookingReportContainer.innerHTML=bookingTable+bookingPager;
- // The booking list refreshes automatically every few seconds. Keep the admin's
- // horizontal position when the table DOM is rebuilt so it does not jump left.
- bookingReportContainer.scrollLeft=bookingReportOuterScroll;
- const refreshedBookingTable=bookingReportContainer.querySelector(".table-wrap");
- if(refreshedBookingTable)refreshedBookingTable.scrollLeft=bookingReportInnerScroll;
+ // Preserve only the View Management OPK report's horizontal position across
+ // the five-second D1 refresh, including after the browser recalculates layout.
+ const restoreBookingReportScroll=()=>{
+  if(!bookingReportContainer)return;
+  bookingReportContainer.scrollLeft=bookingReportOuterScroll;
+  const refreshedBookingTable=bookingReportContainer.querySelector(".table-wrap");
+  if(refreshedBookingTable)refreshedBookingTable.scrollLeft=bookingReportInnerScroll;
+ };
+ restoreBookingReportScroll();
+ requestAnimationFrame(restoreBookingReportScroll);
  $("adminBookings").querySelectorAll("[data-booking-details]").forEach(btn=>btn.onclick=()=>openBookingDetails(btn.dataset.bookingDetails));
  $("adminBookings").querySelectorAll("[data-edit-booking]").forEach(btn=>btn.onclick=()=>openBookingEdit(btn.dataset.editBooking));
  $("adminBookings").querySelectorAll("[data-approve]").forEach(btn=>btn.onclick=()=>approveBooking(btn.dataset.approve));
