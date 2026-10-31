@@ -1332,7 +1332,7 @@ async function loadCloudflareSlots(date){
  if(!publicOpenMonths.includes(date.slice(0,7))){
   slots=[];selectedSlot=null;bookingDateChosen=false;
   if(window.matchMedia("(max-width: 800px)").matches){$("bookingFormCard")?.classList.remove("mobile-booking-form-open");$("bookingFormCard")?.classList.add("hidden");}else{$("bookingFormCard")?.classList.remove("hidden","mobile-booking-form-open");}
-  $("bookingResult")?.classList.add("hidden");
+  // Keep a previous successful booking confirmation visible; date changes clear it explicitly.
   $("chosenSlot").value="";$("bookBtn").disabled=true;
   $("slotsArea").innerHTML='<div class="notice err">Bookings for '+escapeHtml(monthTitle(date.slice(0,7)))+' are CLOSED. Please choose an OPEN month.</div>';
   return;
@@ -1361,7 +1361,7 @@ async function loadCloudflareSlots(date){
   console.error("Cloudflare slots failed:",e);
   slots=[];selectedSlot=null;bookingDateChosen=false;
   $("bookingFormCard")?.classList.add("hidden");
-  $("bookingResult")?.classList.add("hidden");
+  // Do not erase a successful booking confirmation if the follow-up slot refresh fails.
   area.innerHTML='<div class="notice err">'+escapeHtml(String(e.message||"Could not load slots."))+'</div>';
   setStatus("slotStatus","", "err");
  }finally{
