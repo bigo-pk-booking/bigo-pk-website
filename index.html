@@ -797,6 +797,17 @@ body:has(#infoView:not(.hidden)) .pk-battle{display:none!important}
 @media(prefers-reduced-motion:reduce){.contact-telegram-btn,.contact-telegram-btn:before,.contact-telegram-arrow{animation:none!important}.contact-telegram-btn{transition:none}}
 </style>
 
+<style id="contact-messenger-qr">
+.contact-messenger-card{display:grid;grid-template-columns:minmax(0,1fr) 190px;align-items:center;gap:24px;width:min(100%,650px);margin:24px auto 4px;padding:20px;border:1px solid #245eea;border-radius:16px;background:linear-gradient(125deg,rgba(7,15,42,.96),rgba(8,28,75,.94));box-shadow:0 0 24px #0866ff25}
+.contact-messenger-copy{min-width:0}.contact-messenger-kicker{color:#78aaff;font-size:10px;font-weight:900;letter-spacing:.17em}
+.contact-messenger-copy h3{margin:7px 0 8px;color:#fff;font-size:clamp(18px,3vw,23px);font-weight:950}
+.contact-messenger-copy p{margin:0 0 16px;color:#d6e3ff;font-size:13px;line-height:1.55}
+.contact-messenger-btn{display:flex;align-items:center;justify-content:center;gap:9px;min-height:44px;padding:11px 14px;border:1px solid #69a1ff;border-radius:10px;background:linear-gradient(110deg,#0866ff,#1684ff);color:#fff!important;text-align:center;text-decoration:none!important;font-size:11px;font-weight:950;letter-spacing:.045em;box-shadow:0 7px 18px #0866ff45;transition:transform .2s ease,box-shadow .2s ease}
+.contact-messenger-btn:hover{transform:translateY(-2px);box-shadow:0 10px 24px #0866ff70}
+.contact-messenger-qr-link{display:flex;flex-direction:column;align-items:center;gap:8px;padding:9px;border:1px solid #4b83ff;border-radius:12px;background:#fff;color:#0758d8!important;text-decoration:none!important;font-size:10px;font-weight:950;letter-spacing:.12em}
+.contact-messenger-qr{display:block;width:100%;max-width:170px;height:auto;aspect-ratio:1;object-fit:contain}
+@media(max-width:560px){.contact-messenger-card{grid-template-columns:1fr;gap:16px;padding:16px;text-align:center}.contact-messenger-copy p{max-width:390px;margin-left:auto;margin-right:auto}.contact-messenger-btn{width:100%}.contact-messenger-qr-link{width:min(100%,230px);margin:auto}.contact-messenger-qr{max-width:205px}}
+</style>
 </head>
 <body>
 <header>
@@ -947,6 +958,20 @@ body:has(#infoView:not(.hidden)) .pk-battle{display:none!important}
       <span class="contact-telegram-copy"><strong>JOIN OUR TELEGRAM GROUP</strong><small>BADASS BIGO PK Notifications</small></span>
       <span class="contact-telegram-arrow" aria-hidden="true">↗</span>
     </a>
+    <div class="contact-messenger-card">
+      <div class="contact-messenger-copy">
+        <span class="contact-messenger-kicker">DIRECT MESSAGE</span>
+        <h3>Chat with us on Messenger</h3>
+        <p>Scan the QR code or tap the button below to open our official Messenger invitation.</p>
+        <a class="contact-messenger-btn" href="https://m.me/j/CLOqDTv6x_fszmYC/?send_source=gc%3Acopy_invite_link_c" target="_blank" rel="noopener noreferrer">
+          <span aria-hidden="true">●</span> MESSAGE US ON MESSENGER <span aria-hidden="true">↗</span>
+        </a>
+      </div>
+      <a class="contact-messenger-qr-link" href="https://m.me/j/CLOqDTv6x_fszmYC/?send_source=gc%3Acopy_invite_link_c" target="_blank" rel="noopener noreferrer" aria-label="Open BIGO PK SLOTS Messenger invitation">
+        <img class="contact-messenger-qr" src="https://api.qrserver.com/v1/create-qr-code/?size=420x420&margin=12&color=0866ff&bgcolor=ffffff&data=https%3A%2F%2Fm.me%2Fj%2FCLOqDTv6x_fszmYC%2F%3Fsend_source%3Dgc%253Acopy_invite_link_c" alt="Scan to open BIGO PK SLOTS on Messenger" loading="lazy" decoding="async">
+        <span>SCAN TO CHAT</span>
+      </a>
+    </div>
   </section>
 </section>
 
