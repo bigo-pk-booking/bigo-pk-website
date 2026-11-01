@@ -2588,6 +2588,21 @@ startApp();
  function setBattlePhase(phase){
   banner.classList.remove("phase-opponent","phase-red","phase-blue","phase-build","is-finished");
   if(phase)banner.classList.add(phase);
+  const meter=banner.querySelector(".battle-clash-track");
+  if(!meter)return;
+  // Set the meter values directly so the opening inline styles cannot freeze the colors.
+  const widths={
+   "phase-opponent":[35,65,35],
+   "phase-red":[65,35,65],
+   "phase-blue":[35,65,35],
+   "is-finished":[100,0,100]
+  };
+  const values=widths[phase];
+  if(values){
+   meter.style.setProperty("--red-width",values[0]+"%");
+   meter.style.setProperty("--blue-width",values[1]+"%");
+   meter.style.setProperty("--clash-at",values[2]+"%");
+  }
  }
  function resetRound(){
   elapsed=0;finished=false;winHold=0;
