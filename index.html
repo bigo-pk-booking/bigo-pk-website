@@ -1222,21 +1222,35 @@ body.admin-panel-open .site-footer,body.admin-page-mode .site-footer{display:non
 (function(){
   var footer=document.getElementById("badass-site-footer");
   if(!footer)return;
-  function goToTarget(action){
-    var targetId={home:"pkBattleAnimation","my-pk":"lookupView",about:"aboutUsSection",contact:"contactUsSection"}[action];
-    var target=targetId&&document.getElementById(targetId);
+  function scrollToSection(action){
+    var ids={home:"pkBattleAnimation","my-pk":"lookupView",about:"aboutUsSection",contact:"contactUsSection"};
+    var target=document.getElementById(ids[action]||"");
     if(!target)return;
     var header=document.querySelector("header");
-    var offset=header?header.getBoundingClientRect().height:0;
-    var top=target.getBoundingClientRect().top+window.pageYOffset-offset-6;
+    var headerHeight=header?header.getBoundingClientRect().height:0;
+    var top=target.getBoundingClientRect().top+window.scrollY-headerHeight-4;
     window.scrollTo({top:Math.max(0,top),behavior:"smooth"});
   }
   footer.addEventListener("click",function(event){
     var button=event.target.closest("[data-footer-action]");
     if(!button)return;
     var action=button.dataset.footerAction;
-    window.setTimeout(function(){goToTarget(action);},250);
-    window.setTimeout(function(){goToTarget(action);},650);
+    var navId={home:"showBookingBtn","my-pk":"showLookupBtn",about:"openAboutBtn",contact:"openContactBtn"}[action];
+    var navButton=navId&&document.getElementById(navId);
+    if(navButton)navButton.click();
+    if(action==="my-pk"){
+      /* My OPK is a separate view; wait for both navigation handlers to reveal it. */
+      [80,220,450,800].forEach(function(delay){
+        window.setTimeout(function(){
+          var lookup=document.getElementById("lookupView");
+          if(lookup&&!lookup.classList.contains("hidden"))scrollToSection("my-pk");
+        },delay);
+      });
+    }else{
+      [180,500].forEach(function(delay){
+        window.setTimeout(function(){scrollToSection(action);},delay);
+      });
+    }
   });
 })();
 </script>
