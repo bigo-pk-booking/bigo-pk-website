@@ -850,6 +850,52 @@ body.admin-panel-open .site-footer,body.admin-page-mode .site-footer{display:non
 }
 @media(max-width:360px){.site-footer .footer-socials{grid-template-columns:1fr}.site-footer .footer-logo{width:62px;height:62px}}
 </style>
+
+<style id="badass-footer-mobile-alignment-fix">
+/* Footer: consistent mobile link rows and tap-to-top navigation. */
+@media(max-width:650px){
+  #badass-site-footer .footer-link-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    align-items:stretch!important;
+    column-gap:18px!important;
+    row-gap:8px!important;
+  }
+  #badass-site-footer .footer-link-grid a,
+  #badass-site-footer .footer-link-grid button{
+    display:flex!important;
+    width:100%!important;
+    min-height:42px!important;
+    justify-content:flex-start!important;
+    align-items:center!important;
+    white-space:nowrap!important;
+    padding:6px 4px!important;
+  }
+  #badass-site-footer .footer-link-grid a:last-child{
+    grid-column:1/-1!important;
+    justify-content:center!important;
+  }
+}
+</style>
+<script id="badass-footer-scroll-fix">
+(function(){
+  var footer=document.getElementById("badass-site-footer");
+  if(!footer||footer.dataset.scrollFixReady==="1")return;
+  footer.dataset.scrollFixReady="1";
+  footer.addEventListener("click",function(event){
+    var button=event.target.closest("[data-footer-action]");
+    if(!button)return;
+    var action=button.dataset.footerAction;
+    window.setTimeout(function(){
+      if(action==="about"||action==="contact"){
+        window.scrollTo({top:0,behavior:"smooth"});
+      }else{
+        window.scrollTo({top:0,behavior:"smooth"});
+      }
+    },80);
+  });
+})();
+</script>
+
 </head>
 <body>
 <header>
