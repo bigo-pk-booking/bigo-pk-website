@@ -878,6 +878,14 @@ body.admin-panel-open .site-footer,body.admin-page-mode .site-footer{display:non
 </style>
 
 
+
+<style id="hide-pk-battle-only-in-my-opk">
+/* Hide the battle animation only while the My OPK lookup view is active.
+   The animation markup, styles, timer, and Home/Set OPK display remain intact. */
+body:has(#lookupView:not(.hidden)) #pkBattleAnimation {
+  display: none !important;
+}
+</style>
 </head>
 <body>
 <header>
