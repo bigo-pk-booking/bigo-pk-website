@@ -879,19 +879,33 @@ body.admin-panel-open .site-footer,body.admin-page-mode .site-footer{display:non
 <script id="badass-footer-scroll-fix">
 (function(){
   var footer=document.getElementById("badass-site-footer");
-  if(!footer||footer.dataset.scrollFixReady==="1")return;
-  footer.dataset.scrollFixReady="1";
+  if(!footer||footer.dataset.scrollFixReady==="2")return;
+  footer.dataset.scrollFixReady="2";
+  function scrollToDestination(action){
+    var target=null;
+    if(action==="home"){
+      target=document.getElementById("pkBattleAnimation");
+    }else if(action==="my-pk"){
+      target=document.getElementById("lookupView");
+    }else if(action==="about"){
+      target=document.getElementById("aboutUsSection");
+    }else if(action==="contact"){
+      target=document.getElementById("contactUsSection");
+    }
+    if(target){
+      target.scrollIntoView({behavior:"smooth",block:"start"});
+      window.setTimeout(function(){
+        target.scrollIntoView({behavior:"smooth",block:"start"});
+      },320);
+    }else{
+      window.scrollTo({top:0,behavior:"smooth"});
+    }
+  }
   footer.addEventListener("click",function(event){
     var button=event.target.closest("[data-footer-action]");
     if(!button)return;
     var action=button.dataset.footerAction;
-    window.setTimeout(function(){
-      if(action==="about"||action==="contact"){
-        window.scrollTo({top:0,behavior:"smooth"});
-      }else{
-        window.scrollTo({top:0,behavior:"smooth"});
-      }
-    },80);
+    window.setTimeout(function(){scrollToDestination(action);},180);
   });
 })();
 </script>
