@@ -2152,7 +2152,7 @@ async function openBookingReview(initial){
    const saved=result.booking||{};
    const lookupCode=saved.bookingCode||saved.booking_code||"";
    $("bookingResult").classList.remove("hidden");
-   $("bookingResult").innerHTML='<div class="pk-success-celebration"><span class="pk-success-crown" aria-hidden="true">👑 🎉 🔥</span><h3 class="pk-success-title">OPK REQUEST SUBMITTED!</h3><p class="pk-success-copy">Your PK slot request was submitted successfully.</p><p class="pk-success-copy">PK date: <b>'+escapeHtml(date)+'</b> · Time: <b>'+escapeHtml(time)+'</b></p><p class="pk-success-copy">Please wait for admin approval and check your schedule in My OPK. ❤️</p><p class="pk-success-copy">Reference Code: <b>'+escapeHtml(lookupCode||saved.id||"Saved")+'</b></p></div><div class="row" style="margin-top:12px"><button class="secondary" id="viewNewBooking">View my PK schedule</button></div>';
+   $("bookingResult").innerHTML='<div class="pk-success-celebration"><span class="pk-success-crown" aria-hidden="true">👑 🎉 🔥</span><h3 class="pk-success-title">OPK REQUEST SUBMITTED!</h3><p class="pk-success-copy">Your PK slot request was submitted successfully.</p><p class="pk-success-copy">PK date: <b>'+escapeHtml(date)+'</b> · Time: <b>'+escapeHtml(time)+'</b></p><p class="pk-success-copy">Please wait for admin approval and check your schedule in My OPK. ❤️</p></div><div class="row" style="margin-top:12px"><button class="secondary" id="viewNewBooking">View my PK schedule</button></div>';
    localStorage.setItem("bigoPkLastCode",bigoId);
    $("viewNewBooking").onclick=()=>{$("lookupCode").value=bigoId;showView("lookup");lookupBooking();};
    setStatus("bookingMessage","Booking saved to Cloudflare D1. Waiting for admin approval.","ok");
