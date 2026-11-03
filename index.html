@@ -999,7 +999,7 @@ body:has(#lookupView:not(.hidden)) #pkBattleAnimation {
 
 <section id="lookupView" class="card hidden" style="max-width:700px;margin:0 auto">
   <h3>My PK Schedule</h3><p class="sub">Enter your BIGO ID to view your PK schedule, opponent, date, and time.</p>
-  <label for="lookupCode">Your BIGO ID</label><input id="lookupCode" autocomplete="off" maxlength="43" placeholder="Enter BDS + BIGO ID">
+  <label for="lookupCode">Your BIGO ID</label><input id="lookupCode" autocomplete="off" maxlength="40" placeholder="Enter your BIGO ID (e.g. BDSNASK)">
   <button id="lookupBtn" class="full">Show My PK Schedule</button>
   <div id="lookupResult" class="status" aria-live="polite"></div>
 </section>
@@ -2152,9 +2152,8 @@ async function openBookingReview(initial){
    const saved=result.booking||{};
    const lookupCode=saved.bookingCode||saved.booking_code||"";
    $("bookingResult").classList.remove("hidden");
-   $("bookingResult").innerHTML='<div class="pk-success-celebration"><span class="pk-success-crown" aria-hidden="true">👑 🎉 🔥</span><h3 class="pk-success-title">OPK REQUEST SUBMITTED!</h3><p class="pk-success-copy">Your PK slot request was submitted successfully.</p><p class="pk-success-copy">PK date: <b>'+escapeHtml(date)+'</b> · Time: <b>'+escapeHtml(time)+'</b></p><p class="pk-success-copy">Please wait for admin approval and check your schedule in My OPK. ❤️</p><p class="pk-success-copy">Reference: <b>'+escapeHtml(lookupCode||saved.id||"Saved")+'</b></p></div><div class="row" style="margin-top:12px"><button class="secondary" id="viewNewBooking">View my PK schedule</button><button class="success" id="copyNewCode">Copy reference (backup)</button></div>';
+   $("bookingResult").innerHTML='<div class="pk-success-celebration"><span class="pk-success-crown" aria-hidden="true">👑 🎉 🔥</span><h3 class="pk-success-title">OPK REQUEST SUBMITTED!</h3><p class="pk-success-copy">Your PK slot request was submitted successfully.</p><p class="pk-success-copy">PK date: <b>'+escapeHtml(date)+'</b> · Time: <b>'+escapeHtml(time)+'</b></p><p class="pk-success-copy">Please wait for admin approval and check your schedule in My OPK. ❤️</p><p class="pk-success-copy">Reference Code: <b>'+escapeHtml(lookupCode||saved.id||"Saved")+'</b></p></div><div class="row" style="margin-top:12px"><button class="secondary" id="viewNewBooking">View my PK schedule</button></div>';
    localStorage.setItem("bigoPkLastCode",bigoId);
-   $("copyNewCode").onclick=()=>copyText(lookupCode||saved.id||"");
    $("viewNewBooking").onclick=()=>{$("lookupCode").value=bigoId;showView("lookup");lookupBooking();};
    setStatus("bookingMessage","Booking saved to Cloudflare D1. Waiting for admin approval.","ok");
    $("bigoId").value=bigoId;$("userName").value=name;$("filterDate").value=date;
@@ -2206,7 +2205,9 @@ $("pkScheduleModal").addEventListener("click",e=>{if(e.target===$("pkScheduleMod
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closePkScheduleModal();if(!$("pkScheduleModal").classList.contains("hidden")){if(e.key==="ArrowRight"&&!$("pkScheduleNext").disabled)$("pkScheduleNext").click();if(e.key==="ArrowLeft"&&!$("pkSchedulePrev").disabled)$("pkSchedulePrev").click();}});
 async function lookupBooking(){
  const bigoId=$("lookupCode").value.trim();
- if(!/^(?:BDS)?[A-Za-z0-9._-]{3,40}$/.test(bigoId)){setStatus("lookupResult","Ilagay ang tamang BIGO ID at subukan ulit.","err");return;}
+ $("lookupResult").textContent="";
+ $("lookupResult").className="status";
+ if(!/^[A-Za-z0-9._-]{3,40}$/.test(bigoId)){setStatus("lookupResult","Ilagay ang tamang BIGO ID at subukan ulit.","err");return;}
  setStatus("lookupResult","Searching for your PK schedules…");
  try{
   const response=await fetch(BIGO_API_BASE+"/api/lookup?bigoId="+encodeURIComponent(bigoId),{cache:"no-store"});
@@ -2227,6 +2228,10 @@ async function lookupBooking(){
 }
 
 $("lookupBtn").onclick=lookupBooking;
+$("lookupCode").addEventListener("input",()=>{
+ $("lookupResult").textContent="";
+ $("lookupResult").className="status";
+});
 // Autofill a previously recorded host name when a known BIGO ID is entered.
 // The name input remains editable so the user can correct/update it before booking.
 let lastAutofilledBigoId="";
