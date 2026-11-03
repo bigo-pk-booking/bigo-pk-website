@@ -987,7 +987,7 @@ body:has(#lookupView:not(.hidden)) #pkBattleAnimation {
 </section>
 <section class="card" id="bookingFormCard">
     <h3>SET YOUR PK SLOT</h3><p class="sub">Enter your BIGO ID and name, then select a date and available time.</p>
-    <label for="bigoId">BIGO ID</label><input id="bigoId" maxlength="40" autocomplete="off" placeholder="Enter BIGO ID">
+    <label for="bigoId">BIGO ID</label><input id="bigoId" maxlength="43" autocomplete="off" placeholder="Enter BDS + BIGO ID (e.g. BDSBDSNASK)">
     <label for="userName">Name</label><input id="userName" maxlength="80" autocomplete="name" placeholder="Enter your name">
     <label for="chosenSlot">Date and time</label><input id="chosenSlot" readonly placeholder="Choose date and time above">
     <button id="bookBtn" class="full" disabled>Set OPK slot</button>
@@ -999,7 +999,7 @@ body:has(#lookupView:not(.hidden)) #pkBattleAnimation {
 
 <section id="lookupView" class="card hidden" style="max-width:700px;margin:0 auto">
   <h3>My PK Schedule</h3><p class="sub">Enter your BIGO ID to view your PK schedule, opponent, date, and time.</p>
-  <label for="lookupCode">Your BIGO ID</label><input id="lookupCode" autocomplete="off" maxlength="40" placeholder="Paste your BIGO ID">
+  <label for="lookupCode">Your BIGO ID</label><input id="lookupCode" autocomplete="off" maxlength="43" placeholder="Enter BDS + BIGO ID">
   <button id="lookupBtn" class="full">Show My PK Schedule</button>
   <div id="lookupResult" class="status" aria-live="polite"></div>
 </section>
@@ -1083,7 +1083,7 @@ body:has(#lookupView:not(.hidden)) #pkBattleAnimation {
         <button id="toggleManualPkForm" class="full" type="button" aria-expanded="false" aria-controls="manualPkFormFields">＋ Manual PK Booking</button>
         <div id="manualPkFormFields" class="hidden">
           <p class="sub" style="margin-top:14px">Admin can create and approve a booking for a user. Select an existing available slot first.</p>
-          <label for="manualBigoId">User BIGO ID</label><input id="manualBigoId" maxlength="40" placeholder="User BIGO ID">
+          <label for="manualBigoId">User BIGO ID</label><input id="manualBigoId" maxlength="43" placeholder="User BIGO ID (BDS + BIGO ID)">
           <label for="manualName">User name</label><input id="manualName" maxlength="80" placeholder="User name">
           <label for="manualDate">PK date</label><input type="date" id="manualDate">
           <label for="manualTime">Available PK time</label><select id="manualTime"><option value="">Choose date first</option></select>
@@ -1460,6 +1460,8 @@ function setupAnnouncementManager(){
   }catch(error){$("announcementAdminStatus").textContent=error.message||String(error);$("announcementAdminStatus").className="status err";}
  });
 }
+function validBookingBdsId(value){const id=String(value||"").trim();return id.startsWith("BDS")&&/^[A-Za-z0-9._-]{3,40}$/.test(id.slice(3));}
+function displayBigoId(value){const id=String(value||"");return id.startsWith("BDS")?id.slice(3):id;}
 async function cloudflareAdminRequest(path, options={}){
  if(!currentUser||currentUser.isAnonymous)throw new Error("Please sign in as admin first.");
  const token=await currentUser.getIdToken();
@@ -1512,7 +1514,7 @@ function refreshOpponentNotificationUI(){
    const m=monthKey(b.date),d=dateLabel(b.date);
    if(m!==lastMonth){lines.push(monthLabel(m).toUpperCase(),"");lastMonth=m;lastDate="";}
    if(d!==lastDate){lines.push(d,"");lastDate=d;}
-   lines.push("NAME : "+(b.name||"—"),"BIGO ID : "+(b.bigoId||"—"),"TIME : "+timeLabel(b.time),"");
+   lines.push("NAME : "+(b.name||"—"),"BIGO ID : "+(displayBigoId(b.bigoId)||"—"),"TIME : "+timeLabel(b.time),"");
   });
   lines.push("No PM, no match. Tara 😘");
   report=lines.join("\n");
@@ -1785,7 +1787,7 @@ function renderSlots(){
  const date=$("filterDate").value;
  if(date){const d=new Date(date+"T12:00:00");$("scheduleMonth").textContent=d.toLocaleDateString("en-PH",{month:"long",year:"numeric"}).toUpperCase();}const list=slots.filter(s=>s.date===date).sort((a,b)=>a.time.localeCompare(b.time));
  if(!list.length){$("slotsArea").innerHTML='<div class="notice err">Sorry, the date you selected is not available. Choose another date and time. Thank you.</div>';return;}
- $("slotsArea").innerHTML=`<div class="slot-date">${escapeHtml(prettyDate(date))}</div><div class="slots">${list.map(s=>{const state=s.status||"available";const disabled=state!=="available";return `<button class="slot ${state==="full"?"full-slot":state==="closed"?"closed-slot":""} ${selectedSlot===s.id?"selected":""}" data-slot="${escapeHtml(s.id)}" ${disabled?"disabled":""}>${escapeHtml(s.time)}<span>${slotStatus(s)}</span>${state==="full"?`<span class="slot-host-details">👤 ${escapeHtml(s.hostName||"Host details unavailable")}${s.hostBigoId?`<small>BIGO ID: ${escapeHtml(s.hostBigoId)}</small>`:""}</span>`:""}</button>`}).join("")}</div>`;
+ $("slotsArea").innerHTML=`<div class="slot-date">${escapeHtml(prettyDate(date))}</div><div class="slots">${list.map(s=>{const state=s.status||"available";const disabled=state!=="available";return `<button class="slot ${state==="full"?"full-slot":state==="closed"?"closed-slot":""} ${selectedSlot===s.id?"selected":""}" data-slot="${escapeHtml(s.id)}" ${disabled?"disabled":""}>${escapeHtml(s.time)}<span>${slotStatus(s)}</span>${state==="full"?`<span class="slot-host-details">👤 ${escapeHtml(s.hostName||"Host details unavailable")}${s.hostBigoId?`<small>BIGO ID: ${escapeHtml(displayBigoId(s.hostBigoId))}</small>`:""}</span>`:""}</button>`}).join("")}</div>`;
  $("slotsArea").querySelectorAll("[data-slot]").forEach(b=>b.onclick=()=>{$("bookingResult")?.classList.add("hidden");setStatus("bookingMessage","");selectedSlot=b.dataset.slot;const s=slots.find(x=>x.id===selectedSlot);if(s&&s.status==="available"){bookingDateChosen=true;$("bookingFormCard")?.classList.remove("hidden");if(window.matchMedia("(max-width: 800px)").matches)$("bookingFormCard")?.classList.add("mobile-booking-form-open");}$("chosenSlot").value=s?`${prettyDate(s.date)} • ${s.time}`:"";$("bookBtn").disabled=!s||s.status!=="available";$("slotStatus").textContent="Selected slot: "+(s?`${s.date} ${s.time}`:"");renderSlots();if(s&&s.status==="available")$("bookingFormCard")?.scrollIntoView({behavior:"smooth",block:"start"});});
 }
 // Backfill host details for older booked slots. Runs only after an authenticated admin loads bookings.
@@ -1857,7 +1859,7 @@ async function saveReportDetails(id){
  const values={};
  modal.querySelectorAll("[data-report-field]").forEach(input=>values[input.dataset.reportField]=input.value.trim());
  if(!values.name){message.textContent="Host name is required.";return;}
- if(!values.bigoId||!/^[A-Za-z0-9._-]{3,40}$/.test(values.bigoId)){message.textContent="Check the host BIGO ID format.";return;}
+ if(!validBookingBdsId(values.bigoId)){message.textContent="Enter BDS followed by the BIGO ID (example: BDSBDSNASK).";return;}
  if(values.opponentBigoId&&!/^[A-Za-z0-9._-]{3,40}$/.test(values.opponentBigoId)){message.textContent="Check the opponent BIGO ID format.";return;}
  if(!values.date||!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(values.date)){message.textContent="Choose a valid date.";return;}
  if(!values.time||!/^[0-9]{2}:[0-9]{2}$/.test(values.time)){message.textContent="Choose a valid time.";return;}
@@ -1904,7 +1906,7 @@ function renderAdmin(){
  const bookingPages=Math.max(1,Math.ceil(filteredBookings.length/ADMIN_PAGE_SIZE));
  bookingPage=Math.min(bookingPage,bookingPages-1);
  const visibleBookings=filteredBookings.slice(bookingPage*ADMIN_PAGE_SIZE,(bookingPage+1)*ADMIN_PAGE_SIZE);
- const bookingTable=visibleBookings.length?`<table><thead><tr><th>DATE</th><th>TIME</th><th>BIGO NAME</th><th>BIGO ID</th><th>HOST LEVEL</th><th>AGENCY NAME</th><th>AGENCY TELEGRAM</th><th>OPK EVENT</th><th class="vs-head">VS</th><th>OPPONENT NAME</th><th>OPPONENT BIGO ID</th><th>LEVEL</th><th>OPPONENT AGENCY NAME</th><th>OPPONENT AGENCY TELEGRAM</th><th>REMARKS (WIN/LOSE)</th><th>STATUS</th><th>ACTIONS</th></tr></thead><tbody>${visibleBookings.map(b=>`<tr><td>${escapeHtml(b.date||"")}</td><td><b>${escapeHtml(b.time||"")}</b></td><td>${escapeHtml(b.name||"")}</td><td>${escapeHtml(b.bigoId||"")}</td><td>${escapeHtml(b.hostLevel||"")}</td><td>${escapeHtml(b.agencyName||"")}</td><td>${escapeHtml(b.agencyTelegram||"")}</td><td>${escapeHtml(b.opkEvent||"")}</td><td class="vs-cell">VS</td><td>${escapeHtml(b.opponentName||"")}</td><td>${escapeHtml(b.opponentBigoId||"")}</td><td>${escapeHtml(b.opponentLevel||"")}</td><td>${escapeHtml(b.opponentAgencyName||"")}</td><td>${escapeHtml(b.opponentAgencyTelegram||"")}</td><td>${escapeHtml(b.remarks||"")}</td><td><span class="pill ${b.opponentBigoId?"assigned":"full"}">${escapeHtml(b.status||"Reserved")}</span></td><td><button class="small booking-edit-trigger" data-edit-booking="${escapeHtml(b.id)}">Edit details</button> ${b.adminReviewed&&!["Approved","Opponent assigned","Cancelled","Rejected"].includes(String(b.status||""))?'<button class="small" data-approve="'+escapeHtml(b.id)+'">Approve</button>':'<span class="muted">'+(["Cancelled","Rejected"].includes(String(b.status||""))?'Closed':b.adminReviewed?'Already reviewed':'Review required')+'</span>'} <button class="small danger" data-cancel="${escapeHtml(b.id)}">Reject / cancel</button></td></tr>`).join("")}</tbody></table>`:'<div class="notice">No bookings for this month match your search.</div>';
+ const bookingTable=visibleBookings.length?`<table><thead><tr><th>DATE</th><th>TIME</th><th>BIGO NAME</th><th>BIGO ID</th><th>HOST LEVEL</th><th>AGENCY NAME</th><th>AGENCY TELEGRAM</th><th>OPK EVENT</th><th class="vs-head">VS</th><th>OPPONENT NAME</th><th>OPPONENT BIGO ID</th><th>LEVEL</th><th>OPPONENT AGENCY NAME</th><th>OPPONENT AGENCY TELEGRAM</th><th>REMARKS (WIN/LOSE)</th><th>STATUS</th><th>ACTIONS</th></tr></thead><tbody>${visibleBookings.map(b=>`<tr><td>${escapeHtml(b.date||"")}</td><td><b>${escapeHtml(b.time||"")}</b></td><td>${escapeHtml(b.name||"")}</td><td>${escapeHtml(displayBigoId(b.bigoId)||"")}</td><td>${escapeHtml(b.hostLevel||"")}</td><td>${escapeHtml(b.agencyName||"")}</td><td>${escapeHtml(b.agencyTelegram||"")}</td><td>${escapeHtml(b.opkEvent||"")}</td><td class="vs-cell">VS</td><td>${escapeHtml(b.opponentName||"")}</td><td>${escapeHtml(b.opponentBigoId||"")}</td><td>${escapeHtml(b.opponentLevel||"")}</td><td>${escapeHtml(b.opponentAgencyName||"")}</td><td>${escapeHtml(b.opponentAgencyTelegram||"")}</td><td>${escapeHtml(b.remarks||"")}</td><td><span class="pill ${b.opponentBigoId?"assigned":"full"}">${escapeHtml(b.status||"Reserved")}</span></td><td><button class="small booking-edit-trigger" data-edit-booking="${escapeHtml(b.id)}">Edit details</button> ${b.adminReviewed&&!["Approved","Opponent assigned","Cancelled","Rejected"].includes(String(b.status||""))?'<button class="small" data-approve="'+escapeHtml(b.id)+'">Approve</button>':'<span class="muted">'+(["Cancelled","Rejected"].includes(String(b.status||""))?'Closed':b.adminReviewed?'Already reviewed':'Review required')+'</span>'} <button class="small danger" data-cancel="${escapeHtml(b.id)}">Reject / cancel</button></td></tr>`).join("")}</tbody></table>`:'<div class="notice">No bookings for this month match your search.</div>';
  const bookingPager=filteredBookings.length?`<div class="admin-pagination"><span>Showing ${bookingPage*ADMIN_PAGE_SIZE+1}–${Math.min((bookingPage+1)*ADMIN_PAGE_SIZE,filteredBookings.length)} of ${filteredBookings.length}</span><div><button class="secondary small" type="button" data-booking-prev ${bookingPage===0?"disabled":""}>Previous</button> <button class="secondary small" type="button" data-booking-next ${bookingPage>=bookingPages-1?"disabled":""}>Next</button></div></div>`:"";
  // Refresh the Admin-only opponent report after the current booking list is rendered.
  $("adminBookings").innerHTML=bookingTable+bookingPager;
@@ -1927,7 +1929,7 @@ function renderAdmin(){
  const slotPages=Math.max(1,Math.ceil(filteredSlots.length/ADMIN_PAGE_SIZE));
  slotPage=Math.min(slotPage,slotPages-1);
  const visibleSlots=filteredSlots.slice(slotPage*ADMIN_PAGE_SIZE,(slotPage+1)*ADMIN_PAGE_SIZE);
- const slotTable=visibleSlots.length?`<div class="admin-slots-heading"><h3>Bookings (${escapeHtml(monthLabel(slotMonth))})</h3><span class="sub">Showing ${filteredSlots.length} slots</span></div><div class="table-wrap"><table class="slot-management-table"><thead><tr><th>Date</th><th>Time</th><th>Name</th><th>BIGO ID</th><th>Status</th><th>Action</th></tr></thead><tbody>${visibleSlots.map(s=>{const linkedBooking=bookings.find(b=>(s.bookingId&&String(b.id)===String(s.bookingId))||(b.date===s.date&&b.time===s.time&&!["Cancelled","Rejected"].includes(String(b.status||""))));const booked=s.status==="full"||!!linkedBooking;const label=booked?"Booked":s.status==="closed"?"Closed":"Available";return `<tr><td>${escapeHtml(s.date||"")}</td><td><b>${escapeHtml(s.time||"")}</b></td><td>${escapeHtml(s.hostName||linkedBooking?.name||"—")}</td><td>${escapeHtml(s.hostBigoId||linkedBooking?.bigoId||"—")}</td><td><span class="pill ${booked?"full":s.status==="closed"?"":"available"}">${booked?"Booked":s.status==="closed"?"Closed":"Available"}</span></td><td>${booked&&linkedBooking?`<button class="small secondary" title="View booking" data-slot-view="${escapeHtml(linkedBooking.id)}">View</button> <button class="small" title="Edit booking" data-slot-edit="${escapeHtml(linkedBooking.id)}">Edit</button> <button class="small danger" title="Delete booking" data-slot-delete="${escapeHtml(linkedBooking.id)}">Delete</button>`:`<button class="small secondary" data-toggle="${escapeHtml(s.id)}">${s.status==="closed"?"Open":"Close"}</button>`}</td></tr>`}).join("")}</tbody></table></div>`:'<div class="notice">No slots match the selected month and status.</div>';
+ const slotTable=visibleSlots.length?`<div class="admin-slots-heading"><h3>Bookings (${escapeHtml(monthLabel(slotMonth))})</h3><span class="sub">Showing ${filteredSlots.length} slots</span></div><div class="table-wrap"><table class="slot-management-table"><thead><tr><th>Date</th><th>Time</th><th>Name</th><th>BIGO ID</th><th>Status</th><th>Action</th></tr></thead><tbody>${visibleSlots.map(s=>{const linkedBooking=bookings.find(b=>(s.bookingId&&String(b.id)===String(s.bookingId))||(b.date===s.date&&b.time===s.time&&!["Cancelled","Rejected"].includes(String(b.status||""))));const booked=s.status==="full"||!!linkedBooking;const label=booked?"Booked":s.status==="closed"?"Closed":"Available";return `<tr><td>${escapeHtml(s.date||"")}</td><td><b>${escapeHtml(s.time||"")}</b></td><td>${escapeHtml(s.hostName||linkedBooking?.name||"—")}</td><td>${escapeHtml(displayBigoId(s.hostBigoId||linkedBooking?.bigoId||"—"))}</td><td><span class="pill ${booked?"full":s.status==="closed"?"":"available"}">${booked?"Booked":s.status==="closed"?"Closed":"Available"}</span></td><td>${booked&&linkedBooking?`<button class="small secondary" title="View booking" data-slot-view="${escapeHtml(linkedBooking.id)}">View</button> <button class="small" title="Edit booking" data-slot-edit="${escapeHtml(linkedBooking.id)}">Edit</button> <button class="small danger" title="Delete booking" data-slot-delete="${escapeHtml(linkedBooking.id)}">Delete</button>`:`<button class="small secondary" data-toggle="${escapeHtml(s.id)}">${s.status==="closed"?"Open":"Close"}</button>`}</td></tr>`}).join("")}</tbody></table></div>`:'<div class="notice">No slots match the selected month and status.</div>';
  const slotPager=filteredSlots.length?`<div class="admin-pagination"><span>Showing ${slotPage*ADMIN_PAGE_SIZE+1}–${Math.min((slotPage+1)*ADMIN_PAGE_SIZE,filteredSlots.length)} of ${filteredSlots.length}</span><div><button class="secondary small" type="button" data-slot-prev ${slotPage===0?"disabled":""}>Previous</button> <button class="secondary small" type="button" data-slot-next ${slotPage>=slotPages-1?"disabled":""}>Next</button></div></div>`:"";
  $("adminSlots").innerHTML=slotTable+slotPager;
  $("adminSlots").querySelectorAll("[data-toggle]").forEach(btn=>btn.onclick=()=>toggleSlot(btn.dataset.toggle));
@@ -2091,7 +2093,7 @@ function openBookingReview(initial){
   const time=document.getElementById("reviewTime").value;
   const msg=document.getElementById("bookingReviewMessage");
   const confirmBtn=document.getElementById("bookingReviewConfirm");
-  if(!/^[A-Za-z0-9._-]{3,40}$/.test(bigoId)){msg.textContent="Please check the BIGO ID (3–40 letters, numbers, dot, underscore, or dash).";return;}
+  if(!validBookingBdsId(bigoId)){msg.textContent="Enter BDS followed by the BIGO ID (example: BDSBDSNASK). Do not omit or auto-add the prefix.";return;}
   if(!name){msg.textContent="Please enter your name.";return;}
   if(!date||!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(date)){msg.textContent="Please choose a valid date.";return;}
   if(!TIMES.includes(time)){msg.textContent="Please choose a valid time.";return;}
@@ -2162,7 +2164,7 @@ $("bookBtn").onclick=()=>{
  const s=slots.find(x=>x.id===selectedSlot);
  if(!bigoId){setStatus("bookingMessage","Ilagay muna ang BIGO ID mo.","err");return;}
  if(!name){setStatus("bookingMessage","Please enter your name.","err");return;}
- if(!/^[A-Za-z0-9._-]{3,40}$/.test(bigoId)){setStatus("bookingMessage","Check your BIGO ID. Use 3–40 letters, numbers, dot, underscore, or dash.","err");return;}
+ if(!validBookingBdsId(bigoId)){setStatus("bookingMessage","Enter BDS followed by the BIGO ID (example: BDSBDSNASK). Do not omit or auto-add the prefix.","err");return;}
  if(!s||s.status!=="available"){setStatus("bookingMessage","Already set this date to another host. Please choose another time.","err");return;}
  openBookingReview({bigoId,name,date:s.date,time:s.time});
 };
@@ -2192,7 +2194,7 @@ $("pkScheduleModal").addEventListener("click",e=>{if(e.target===$("pkScheduleMod
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closePkScheduleModal();if(!$("pkScheduleModal").classList.contains("hidden")){if(e.key==="ArrowRight"&&!$("pkScheduleNext").disabled)$("pkScheduleNext").click();if(e.key==="ArrowLeft"&&!$("pkSchedulePrev").disabled)$("pkSchedulePrev").click();}});
 async function lookupBooking(){
  const bigoId=$("lookupCode").value.trim();
- if(!/^[A-Za-z0-9._-]{3,40}$/.test(bigoId)){setStatus("lookupResult","Ilagay ang tamang BIGO ID at subukan ulit.","err");return;}
+ if(!/^(?:BDS)?[A-Za-z0-9._-]{3,40}$/.test(bigoId)){setStatus("lookupResult","Ilagay ang tamang BIGO ID at subukan ulit.","err");return;}
  setStatus("lookupResult","Searching for your PK schedules…");
  try{
   const response=await fetch(BIGO_API_BASE+"/api/lookup?bigoId="+encodeURIComponent(bigoId),{cache:"no-store"});
@@ -2201,7 +2203,7 @@ async function lookupBooking(){
   const items=(result.bookings||[]).map(b=>({
    id:b.bookingCode||b.booking_code||"",
    date:b.date,time:b.time,name:b.name||b.bigo_name||"",
-   bigoId:b.bigoId||b.bigo_id||"",status:b.status||"Pending approval",
+   bigoId:displayBigoId(b.bigoId||b.bigo_id||""),status:b.status||"Pending approval",
    opponentName:b.opponentName||b.opponent_name||"",
    opponentBigoId:b.opponentBigoId||b.opponent_bigo_id||"",
    hostLevel:b.hostLevel||b.host_level||"",
@@ -2375,7 +2377,7 @@ function openManualPkReview(initial){
   const confirm=document.getElementById("manualPkReviewConfirm");
   if(!data.date||!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(data.date)){msg.textContent="Choose a valid date.";return;}
   if(!TIMES.includes(data.time)){msg.textContent="Choose a valid time.";return;}
-  if(!/^[A-Za-z0-9._-]{3,40}$/.test(data.bigoId)){msg.textContent="Check the host BIGO ID (3–40 letters, numbers, dot, underscore, or dash).";return;}
+  if(!validBookingBdsId(data.bigoId)){msg.textContent="Enter BDS followed by the BIGO ID (example: BDSBDSNASK).";return;}
   if(!data.name){msg.textContent="BIGO name is required.";return;}
   if(data.opponentBigoId&&!/^[A-Za-z0-9._-]{3,40}$/.test(data.opponentBigoId)){msg.textContent="Check the opponent BIGO ID.";return;}
   confirm.disabled=true;confirm.textContent="Checking slot…";msg.textContent="Checking that the selected slot is available…";
@@ -2451,7 +2453,7 @@ $("manualCreateBtn").onclick=()=>{
  };
  if(!initial.date){setStatus("manualMessage","Choose a date first.","err");return;}
  if(!initial.time){setStatus("manualMessage","Choose a time first.","err");return;}
- if(!/^[A-Za-z0-9._-]{3,40}$/.test(initial.bigoId)){setStatus("manualMessage","Enter a valid user BIGO ID.","err");return;}
+ if(!validBookingBdsId(initial.bigoId)){setStatus("manualMessage","Enter BDS followed by the user BIGO ID (example: BDSBDSNASK).","err");return;}
  if(!initial.name){setStatus("manualMessage","Enter the user's name.","err");return;}
  if(initial.opponentBigoId&&!/^[A-Za-z0-9._-]{3,40}$/.test(initial.opponentBigoId)){setStatus("manualMessage","Check the opponent BIGO ID format.","err");return;}
  openManualPkReview(initial);
@@ -2478,7 +2480,7 @@ async function saveOpponent(id){
  const input=$("adminBookings").querySelector(`[data-opponent="${CSS.escape(id)}"]`);const opponentBigoId=input?.value.trim()||"";
  const nameInput=$("adminBookings").querySelector(`[data-opponent-name="${CSS.escape(id)}"]`);const opponentName=nameInput?.value.trim()||"";
  if(!hostName){setStatus("adminMessage","Host name is required.","err");return;}
- if(!/^[A-Za-z0-9._-]{3,40}$/.test(hostBigoId)){setStatus("adminMessage","Check the host BIGO ID format.","err");return;}
+ if(!validBookingBdsId(hostBigoId)){setStatus("adminMessage","Enter BDS followed by the host BIGO ID (example: BDSBDSNASK).","err");return;}
  if(opponentBigoId&&!/^[A-Za-z0-9._-]{3,40}$/.test(opponentBigoId)){setStatus("adminMessage","Check the opponent BIGO ID format.","err");return;}
  const b=bookings.find(x=>x.id===id);if(!b)return;
  try{
@@ -2548,7 +2550,7 @@ function isActiveOpponentBooking(b){
   && b.cancelled!==true&&b.is_cancelled!==true&&b.isCancelled!==true
   && !b.cancelled_at&&!b.cancelledAt;
 }
-function exportRows(){const selectedMonth=$("bookingMonthFilter")?.value||dateToday().slice(0,7);return bookings.filter(b=>monthKey(b.date)===selectedMonth&&!isClosedExportBooking(b)).map(b=>({"DATE":b.date||"","TIME":b.time||"","BIGO NAME":b.name||"","BIGO ID":b.bigoId||"","HOST LEVEL":b.hostLevel||"","AGENCY NAME":b.agencyName||"","AGENCY TELEGRAM":b.agencyTelegram||"","OPK EVENT":b.opkEvent||"","VS":"VS","OPPONENT NAME":b.opponentName||"","OPPONENT BIGO ID":b.opponentBigoId||"","LEVEL":b.opponentLevel||"","OPPONENT AGENCY NAME":b.opponentAgencyName||"","OPPONENT AGENCY TELEGRAM":b.opponentAgencyTelegram||"","REMARKS (WIN/LOSE)":b.remarks||b.status||""})).sort((a,b)=>(a.DATE+a.TIME).localeCompare(b.DATE+b.TIME));}
+function exportRows(){const selectedMonth=$("bookingMonthFilter")?.value||dateToday().slice(0,7);return bookings.filter(b=>monthKey(b.date)===selectedMonth&&!isClosedExportBooking(b)).map(b=>({"DATE":b.date||"","TIME":b.time||"","BIGO NAME":b.name||"","BIGO ID":displayBigoId(b.bigoId||""),"HOST LEVEL":b.hostLevel||"","AGENCY NAME":b.agencyName||"","AGENCY TELEGRAM":b.agencyTelegram||"","OPK EVENT":b.opkEvent||"","VS":"VS","OPPONENT NAME":b.opponentName||"","OPPONENT BIGO ID":b.opponentBigoId||"","LEVEL":b.opponentLevel||"","OPPONENT AGENCY NAME":b.opponentAgencyName||"","OPPONENT AGENCY TELEGRAM":b.opponentAgencyTelegram||"","REMARKS (WIN/LOSE)":b.remarks||b.status||""})).sort((a,b)=>(a.DATE+a.TIME).localeCompare(b.DATE+b.TIME));}
 function downloadBlob(content,type,name){const blob=new Blob([content],{type});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 $("exportExcelBtn").onclick=async()=>{if(!isAdmin)return;if(!window.ExcelJS){setStatus("exportMessage","Excel formatting library did not load. Check your internet connection, then try again.","err");return;}try{
  const ExcelJS=window.ExcelJS;const wb=new ExcelJS.Workbook();wb.creator="BADASS";wb.subject="BIGO OPK Match Schedule";wb.title="BADASS OPK Match Report";wb.created=new Date();
@@ -2559,7 +2561,7 @@ $("exportExcelBtn").onclick=async()=>{if(!isAdmin)return;if(!window.ExcelJS){set
   const monthDate=new Date(Number(month.slice(0,4)),Number(month.slice(5,7))-1,1);
   const tabName=monthDate.toLocaleDateString("en-US",{month:"long",year:"numeric"});
   const reportMonth=monthLabel(month).toUpperCase();
-  const rows=bookings.filter(b=>monthKey(b.date)===month&&!isClosedExportBooking(b)).map(b=>({"DATE":b.date||"","TIME":b.time||"","BIGO NAME":b.name||"","BIGO ID":b.bigoId||"","HOST LEVEL":b.hostLevel||"","AGENCY NAME":b.agencyName||"","AGENCY TELEGRAM":b.agencyTelegram||"","OPK EVENT":b.opkEvent||"","VS":"VS","OPPONENT NAME":b.opponentName||"","OPPONENT BIGO ID":b.opponentBigoId||"","LEVEL":b.opponentLevel||"","OPPONENT AGENCY NAME":b.opponentAgencyName||"","OPPONENT AGENCY TELEGRAM":b.opponentAgencyTelegram||"","REMARKS (WIN/LOSE)":b.remarks||b.status||""})).sort((a,b)=>(a.DATE+a.TIME).localeCompare(b.DATE+b.TIME));
+  const rows=bookings.filter(b=>monthKey(b.date)===month&&!isClosedExportBooking(b)).map(b=>({"DATE":b.date||"","TIME":b.time||"","BIGO NAME":b.name||"","BIGO ID":displayBigoId(b.bigoId||""),"HOST LEVEL":b.hostLevel||"","AGENCY NAME":b.agencyName||"","AGENCY TELEGRAM":b.agencyTelegram||"","OPK EVENT":b.opkEvent||"","VS":"VS","OPPONENT NAME":b.opponentName||"","OPPONENT BIGO ID":b.opponentBigoId||"","LEVEL":b.opponentLevel||"","OPPONENT AGENCY NAME":b.opponentAgencyName||"","OPPONENT AGENCY TELEGRAM":b.opponentAgencyTelegram||"","REMARKS (WIN/LOSE)":b.remarks||b.status||""})).sort((a,b)=>(a.DATE+a.TIME).localeCompare(b.DATE+b.TIME));
   const ws=wb.addWorksheet(tabName,{views:[{state:"frozen",ySplit:6,xSplit:2,showGridLines:false}]});
   headers.forEach((h,i)=>ws.getColumn(i+1).width=widths[i]);
   ws.mergeCells(1,1,1,15);ws.getCell("A1").value="♛ BADASS  |  BIGO PK MATCH SCHEDULER";ws.getCell("A1").font={name:"Arial",size:16,bold:true,color:{argb:"FFFFFFFF"}};ws.getCell("A1").alignment={vertical:"middle",horizontal:"center"};ws.getRow(1).height=30;ws.getRow(1).eachCell(c=>c.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FFD40000"}});
@@ -2653,7 +2655,7 @@ startApp();
     <label>DATE<input type="date" data-report-field="date" required></label>
     <label>TIME<select data-report-field="time" required><option value="20:00">20:00</option><option value="20:15">20:15</option><option value="20:30">20:30</option><option value="20:45">20:45</option><option value="21:00">21:00</option><option value="21:15">21:15</option><option value="21:30">21:30</option><option value="21:45">21:45</option><option value="22:00">22:00</option></select></label>
     <label class="wide">BIGO NAME<input data-report-field="name" placeholder="Host name" maxlength="80" required></label>
-    <label class="wide">BIGO ID<input data-report-field="bigoId" placeholder="Host BIGO ID" maxlength="40" required></label>
+    <label class="wide">BIGO ID<input data-report-field="bigoId" placeholder="Host BIGO ID (BDS + BIGO ID)" maxlength="43" required></label>
     <label>HOST LEVEL<input data-report-field="hostLevel" placeholder="Host level"></label><label>AGENCY NAME<input data-report-field="agencyName" placeholder="Agency name"></label>
     <label>AGENCY TELEGRAM<input data-report-field="agencyTelegram" placeholder="@telegram"></label>
     <label>OPK EVENT<select data-report-field="opkEvent"><option value="">Choose OPK event</option><option>Regular PK</option><option>OPK</option><option>PK Event</option><option>Other</option></select></label>
