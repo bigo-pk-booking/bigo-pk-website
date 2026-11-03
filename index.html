@@ -2075,7 +2075,7 @@ async function openBookingReview(initial){
  const datesResponse=await fetch(BIGO_API_BASE+"/api/available-dates",{cache:"no-store"});
  const datesData=await datesResponse.json();
  if(!datesResponse.ok||!datesData.ok||!Array.isArray(datesData.dates)){alert("Could not load available dates. Please refresh slots and try again.");return;}
- const availableDates=datesData.dates.filter(x=>x&&/^\\d{4}-\\d{2}-\\d{2}$/.test(x.date)&&Array.isArray(x.times)&&x.times.length);
+ const availableDates=datesData.dates.filter(x=>x&&/^\d{4}-\d{2}-\d{2}$/.test(x.date)&&Array.isArray(x.times)&&x.times.length);
  if(!availableDates.length){alert("There are currently no available dates.");return;}
  const selectedDate=availableDates.some(x=>x.date===initial.date)?initial.date:availableDates[0].date;
  const dateOptions=availableDates.map(x=>'<option value="'+escapeHtml(x.date)+'" '+(x.date===selectedDate?'selected':'')+'>'+escapeHtml(prettyDate(x.date))+'</option>').join("");
