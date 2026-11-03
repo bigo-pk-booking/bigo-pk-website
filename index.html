@@ -2093,7 +2093,7 @@ function openBookingReview(initial){
   const time=document.getElementById("reviewTime").value;
   const msg=document.getElementById("bookingReviewMessage");
   const confirmBtn=document.getElementById("bookingReviewConfirm");
-  if(!validBookingBdsId(bigoId)){msg.textContent="Enter BDS followed by the BIGO ID (example: BDSBDSNASK). Do not omit or auto-add the prefix.";return;}
+  if(!validBookingBdsId(bigoId)){alert("Invalid BIGO ID format. Please contact the admin for the correct BIGO ID format.");return;}
   if(!name){msg.textContent="Please enter your name.";return;}
   if(!date||!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(date)){msg.textContent="Please choose a valid date.";return;}
   if(!TIMES.includes(time)){msg.textContent="Please choose a valid time.";return;}
@@ -2164,7 +2164,7 @@ $("bookBtn").onclick=()=>{
  const s=slots.find(x=>x.id===selectedSlot);
  if(!bigoId){setStatus("bookingMessage","Ilagay muna ang BIGO ID mo.","err");return;}
  if(!name){setStatus("bookingMessage","Please enter your name.","err");return;}
- if(!validBookingBdsId(bigoId)){setStatus("bookingMessage","Enter BDS followed by the BIGO ID (example: BDSBDSNASK). Do not omit or auto-add the prefix.","err");return;}
+ if(!validBookingBdsId(bigoId)){alert("Invalid BIGO ID format. Please contact the admin for the correct BIGO ID format.");return;}
  if(!s||s.status!=="available"){setStatus("bookingMessage","Already set this date to another host. Please choose another time.","err");return;}
  openBookingReview({bigoId,name,date:s.date,time:s.time});
 };
