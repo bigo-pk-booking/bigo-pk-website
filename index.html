@@ -1461,7 +1461,7 @@ function setupAnnouncementManager(){
  });
 }
 function validBookingBdsId(value){const id=String(value||"").trim();return id.startsWith("BDS")&&/^[A-Za-z0-9._-]{3,40}$/.test(id.slice(3));}
-function displayBigoId(value){const id=String(value||"");return id.startsWith("BDS")?id.slice(3):id;}
+function displayBigoId(value){return String(value||"");}
 async function cloudflareAdminRequest(path, options={}){
  if(!currentUser||currentUser.isAnonymous)throw new Error("Please sign in as admin first.");
  const token=await currentUser.getIdToken();
