@@ -2064,6 +2064,26 @@ $("filterDate").addEventListener("change",()=>{
  loadCloudflareSlots(date);
 });
 $("refreshSlots").onclick=()=>loadCloudflareSlots($("filterDate").value||defaultScheduleDate);
+function showInvalidBigoIdPopup(){
+ const old=document.getElementById("invalidBigoIdPopup");
+ if(old)old.remove();
+ const overlay=document.createElement("div");
+ overlay.id="invalidBigoIdPopup";
+ overlay.style.cssText="position:fixed;inset:0;z-index:30000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.82);backdrop-filter:blur(5px);";
+ const modal=document.createElement("div");
+ modal.style.cssText="position:relative;width:min(100%,420px);box-sizing:border-box;padding:28px 24px 22px;background:linear-gradient(145deg,#19090d,#080808 72%);border:1px solid #a51b32;border-radius:22px;box-shadow:0 18px 65px rgba(190,0,35,.28),inset 0 0 24px rgba(130,0,25,.12);color:#f8edf0;text-align:center;font-family:Arial,sans-serif;";
+ modal.innerHTML='<div style="width:66px;height:66px;margin:0 auto 16px;border-radius:50%;display:grid;place-items:center;background:rgba(190,20,50,.14);border:1px solid #b51e3b;color:#ff526b;font-size:34px;font-weight:800;">!</div>'+
+  '<div style="font-size:11px;letter-spacing:3px;font-weight:800;color:#c64b60;margin-bottom:9px;">BADASS BIGO PK SLOTS</div>'+
+  '<h2 style="margin:0 0 12px;font-size:22px;line-height:1.25;letter-spacing:.5px;color:#ff536b;">INVALID BIGO ID</h2>'+
+  '<p style="margin:0 auto 14px;max-width:330px;font-size:15px;line-height:1.65;color:#e8d9dd;">The BIGO ID you entered is not in the correct format.</p>'+
+  '<div style="margin:0 0 22px;padding:13px 14px;border:1px solid rgba(190,35,65,.35);border-radius:12px;background:rgba(120,12,34,.16);font-size:14px;line-height:1.55;color:#d9c2c8;">Please contact the admin to verify your correct BIGO ID before booking.</div>'+
+  '<button type="button" id="invalidBigoIdClose" style="width:100%;min-height:48px;border:0;border-radius:12px;background:linear-gradient(100deg,#a90d2c,#e12645);color:#fff;font-size:14px;font-weight:800;letter-spacing:1px;cursor:pointer;box-shadow:0 7px 22px rgba(180,0,35,.25);">OK, GOT IT</button>';
+ overlay.appendChild(modal);
+ document.body.appendChild(overlay);
+ const close=()=>overlay.remove();
+ modal.querySelector("#invalidBigoIdClose").addEventListener("click",close);
+ overlay.addEventListener("click",e=>{if(e.target===overlay)close();});
+}
 async function openBookingReview(initial){
  let overlay=document.getElementById("bookingReviewModal");
  if(!overlay){
@@ -2105,7 +2125,7 @@ async function openBookingReview(initial){
   const time=document.getElementById("reviewTime").value;
   const msg=document.getElementById("bookingReviewMessage");
   const confirmBtn=document.getElementById("bookingReviewConfirm");
-  if(!validBookingBdsId(bigoId)){alert("Invalid BIGO ID format. Please contact the admin for the correct BIGO ID format.");return;}
+  if(!validBookingBdsId(bigoId)){showInvalidBigoIdPopup();return;}
   if(!name){msg.textContent="Please enter your name.";return;}
   if(!date||!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(date)){msg.textContent="Please choose a valid date.";return;}
   if(!availableDates.some(x=>x.date===date&&(x.times||[]).includes(time))){msg.textContent="Please choose an available date and time.";return;}
@@ -2175,7 +2195,7 @@ $("bookBtn").onclick=()=>{
  const s=slots.find(x=>x.id===selectedSlot);
  if(!bigoId){setStatus("bookingMessage","Ilagay muna ang BIGO ID mo.","err");return;}
  if(!name){setStatus("bookingMessage","Please enter your name.","err");return;}
- if(!validBookingBdsId(bigoId)){alert("Invalid BIGO ID format. Please contact the admin for the correct BIGO ID format.");return;}
+ if(!validBookingBdsId(bigoId)){showInvalidBigoIdPopup();return;}
  if(!s||s.status!=="available"){setStatus("bookingMessage","Already set this date to another host. Please choose another time.","err");return;}
  openBookingReview({bigoId,name,date:s.date,time:s.time});
 };
