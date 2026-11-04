@@ -702,6 +702,7 @@ body.admin-page-mode .site-footer{display:none!important}
 .site-menu-panel{position:absolute!important;right:0!important;top:calc(100% + 10px)!important;z-index:1100!important;min-width:180px!important;padding:8px!important;display:flex!important;flex-direction:column!important;gap:6px!important;background:rgba(8,5,7,.98)!important;border:1px solid #c90024!important;border-radius:12px!important;box-shadow:0 12px 30px #000b!important}
 .site-menu-panel.hidden{display:none!important}
 .site-menu-panel button{display:flex!important;align-items:center!important;gap:12px!important;width:100%!important;padding:12px!important;border:1px solid #ffffff20!important;border-radius:8px!important;background:#190b0e!important;color:#fff!important;font-weight:800!important;text-align:left!important}
+.site-menu-panel .menu-download-link{display:flex!important;align-items:center!important;gap:12px!important;width:100%!important;padding:12px!important;border:1px solid #c90024!important;border-radius:8px!important;background:linear-gradient(135deg,#8d000d,#24070a)!important;color:#fff!important;font-weight:900!important;text-align:left!important;text-decoration:none!important}
 .site-menu-panel button:hover{background:#85000f!important;border-color:#f22!important}
 .info-view{max-width:1200px;margin:22px auto 34px;padding:0 16px;scroll-margin-top:100px}
 .info-card{position:relative;overflow:hidden;margin:0 0 18px;padding:clamp(18px,4vw,34px);border:1px solid #df182b;border-radius:16px;background:linear-gradient(110deg,rgba(5,3,4,.97),rgba(20,4,7,.88)),var(--badass-bg-image);background-size:cover;background-position:center;box-shadow:0 0 22px #c9002430;color:#fff}
@@ -896,6 +897,7 @@ body:has(#lookupView:not(.hidden)) #pkBattleAnimation {
 <button class="nav-action" id="showLookupBtn" type="button"><span class="nav-icon" aria-hidden="true">♙</span><span>My OPK</span></button>
 <button class="nav-action menu-toggle" id="menuToggleBtn" type="button" aria-expanded="false" aria-controls="siteMenuPanel"><span class="nav-icon hamburger-icon" aria-hidden="true">☰</span><span class="menu-label">Menu</span></button>
 <div id="siteMenuPanel" class="site-menu-panel hidden">
+<a class="menu-download-link" href="./download.html">⬇ <span>Download App</span></a>
 <button type="button" id="openAboutBtn">ⓘ <span>About Us</span></button>
 <button type="button" id="openContactBtn">✉ <span>Contact Us</span></button>
 </div>
