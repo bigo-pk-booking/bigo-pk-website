@@ -674,6 +674,23 @@ body.admin-page-mode .site-footer{display:none!important}
 @media(max-width:480px){#managementOpkPanel .booking-report-details-grid{grid-template-columns:1fr}#managementOpkPanel .admin-slots-heading{align-items:flex-start}}
 </style>
 
+<style id="badass-confirm-modal-style">
+.badass-confirm-overlay{position:fixed;inset:0;z-index:999999;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.76);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+.badass-confirm-card{position:relative;width:min(100%,520px);overflow:hidden;border:3px solid #ed1026;border-radius:30px;background:radial-gradient(ellipse at 50% 0%,rgba(130,0,12,.34),transparent 48%),linear-gradient(160deg,#160809,#050505 58%,#100405);box-shadow:0 0 12px #ff142c,0 0 38px rgba(255,0,30,.38),inset 0 0 25px rgba(255,0,30,.08);color:#fff;text-align:center}
+.badass-confirm-head{position:relative;padding:18px 56px 14px;background:radial-gradient(ellipse at 50% 0%,rgba(255,0,25,.28),transparent 70%);border-bottom:1px solid #a90019;box-shadow:0 3px 12px rgba(255,0,30,.25)}
+.badass-confirm-brand{font-weight:1000;font-size:31px;line-height:1;color:#ff142d;letter-spacing:-1.5px;text-shadow:0 0 8px #ff001e,0 0 18px rgba(255,0,30,.8);font-style:italic}
+.badass-confirm-subtitle{margin-top:7px;font-size:17px;font-weight:900;letter-spacing:2px;color:#fff}
+.badass-confirm-close{position:absolute;right:13px;top:12px;width:38px;height:38px;border:2px solid #ff3146;border-radius:50%;background:#100507;color:#fff;font-size:26px;line-height:1;box-shadow:0 0 10px #ff1730}
+.badass-confirm-body{padding:20px 22px 16px}
+.badass-confirm-icon{display:grid;place-items:center;width:76px;height:76px;margin:0 auto 15px;border:3px solid #ff263d;border-radius:50%;color:#fff;font-size:36px;background:radial-gradient(circle,#f20b25,#65000e 72%);box-shadow:0 0 10px #ff142c,0 0 24px rgba(255,0,30,.55)}
+.badass-confirm-title{margin:0 0 12px;font-size:25px;font-weight:900;color:#fff}
+.badass-confirm-message{margin:0 auto;max-width:420px;font-size:17px;line-height:1.55;color:#f4eeee;overflow-wrap:anywhere}
+.badass-confirm-actions{display:flex;gap:14px;padding:17px 22px 22px;border-top:1px solid #a90019;box-shadow:0 -3px 12px rgba(255,0,30,.18)}
+.badass-confirm-actions button{flex:1;min-height:54px;border-radius:999px;font-size:17px;font-weight:900;letter-spacing:.5px}
+.badass-confirm-no{border:2px solid #777;background:linear-gradient(#444,#080808 65%);color:#fff;box-shadow:0 0 8px rgba(255,255,255,.16)}
+.badass-confirm-yes{border:2px solid #ff3549;background:linear-gradient(#ff5968,#e90020 55%,#76000d);color:#fff;box-shadow:0 0 10px #ff102b,0 0 20px rgba(255,0,30,.35)}
+@media(max-width:420px){.badass-confirm-card{border-radius:24px}.badass-confirm-head{padding-top:16px}.badass-confirm-brand{font-size:27px}.badass-confirm-title{font-size:23px}.badass-confirm-message{font-size:16px}.badass-confirm-actions{gap:10px;padding:14px}.badass-confirm-actions button{min-height:50px;font-size:15px}}
+</style>
 </head>
 <body class="admin-page-mode">
 <header>
@@ -2033,8 +2050,31 @@ async function saveOpponent(id){
   await batch.commit();setStatus("adminMessage","Host and opponent details saved.","ok");
  }catch(e){console.error(e);setStatus("adminMessage","Could not save booking details. Check rules and try again.","err");}
 }
+function showBadassConfirm(message){
+ return new Promise(resolve=>{
+  const overlay=document.createElement("div");
+  overlay.className="badass-confirm-overlay";
+  overlay.innerHTML=`<section class="badass-confirm-card" role="dialog" aria-modal="true" aria-labelledby="badassConfirmTitle">
+   <div class="badass-confirm-head"><button class="badass-confirm-close" type="button" aria-label="Close">×</button><div class="badass-confirm-brand">♛ BADASS</div><div class="badass-confirm-subtitle">BIGO PK SLOTS</div></div>
+   <div class="badass-confirm-body"><div class="badass-confirm-icon" aria-hidden="true">▤</div><h2 class="badass-confirm-title" id="badassConfirmTitle">Cancel Booking</h2><p class="badass-confirm-message"></p></div>
+   <div class="badass-confirm-actions"><button class="badass-confirm-no" type="button">CANCEL</button><button class="badass-confirm-yes" type="button">OK</button></div>
+  </section>`;
+  overlay.querySelector(".badass-confirm-message").textContent=message;
+  let finished=false;
+  const onKey=event=>{if(event.key==="Escape")finish(false);};
+  const finish=value=>{if(finished)return;finished=true;document.removeEventListener("keydown",onKey);overlay.remove();resolve(value);};
+  overlay.querySelector(".badass-confirm-close").addEventListener("click",()=>finish(false));
+  overlay.querySelector(".badass-confirm-no").addEventListener("click",()=>finish(false));
+  overlay.querySelector(".badass-confirm-yes").addEventListener("click",()=>finish(true));
+  overlay.addEventListener("click",event=>{if(event.target===overlay)finish(false);});
+  document.addEventListener("keydown",onKey);
+  document.body.appendChild(overlay);
+  overlay.querySelector(".badass-confirm-yes").focus();
+ });
+}
+
 async function cancelBooking(id){
- const b=bookings.find(x=>x.id===id);if(!b||!confirm(`Cancel booking for ${b.bigoId} on ${b.date} ${b.time}?`))return;
+ const b=bookings.find(x=>x.id===id);if(!b||!(await showBadassConfirm(`Cancel booking for ${b.bigoId} on ${b.date} ${b.time}?`)))return;
  try{
   await cloudflareAdminRequest("/api/admin/bookings/"+encodeURIComponent(id)+"/status",{method:"PATCH",body:JSON.stringify({status:"Cancelled"})});
   bookings=bookings.filter(x=>x.id!==id);renderAdmin();
