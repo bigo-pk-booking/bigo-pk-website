@@ -895,9 +895,10 @@ body:has(#lookupView:not(.hidden)) #pkBattleAnimation {
 .site-header .menu-toggle.active .hamburger-icon i:first-child{transform:translateY(7.75px) rotate(45deg)!important}
 .site-header .menu-toggle.active .hamburger-icon i:nth-child(2){opacity:0!important;width:0!important}
 .site-header .menu-toggle.active .hamburger-icon i:last-child{transform:translateY(-7.75px) rotate(-45deg)!important}
+#siteMenuPanel:not(.hidden){display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important}
 .site-menu-panel{position:absolute!important;top:calc(100% + 12px)!important;right:0!important;z-index:1200!important;width:min(340px,calc(100vw - 24px))!important;min-width:0!important;box-sizing:border-box!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;padding:13px!important;overflow:hidden!important;border:1.5px solid #ed1534!important;border-radius:19px!important;background:radial-gradient(ellipse at 50% 0%,rgba(155,0,24,.25),transparent 62%),linear-gradient(145deg,rgba(19,7,10,.99),rgba(4,4,5,.99))!important;box-shadow:0 0 12px #f0003040,0 16px 38px #000d,inset 0 0 20px #e0002010!important;transform-origin:top right!important;animation:badassMenuIn .24s cubic-bezier(.2,.8,.2,1) both!important}
 .site-menu-panel.hidden{display:none!important}
-.site-menu-panel .badass-menu-tile{position:relative!important;display:flex!important;min-width:0!important;min-height:112px!important;flex-direction:column!important;align-items:flex-start!important;justify-content:center!important;gap:10px!important;box-sizing:border-box!important;padding:14px!important;border:1px solid #7d1726!important;border-radius:13px!important;background:linear-gradient(150deg,#260b11 0%,#11090c 58%,#080708 100%)!important;color:#fff!important;text-align:left!important;text-decoration:none!important;font:800 13px/1.2 inherit!important;box-shadow:inset 0 0 14px #ff00100b!important;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease,background .18s ease!important;animation:badassTileIn .32s ease both!important}
+.site-menu-panel .badass-menu-tile{position:relative!important;display:flex!important;min-width:0!important;min-height:112px!important;flex-direction:column!important;align-items:flex-start!important;justify-content:center!important;gap:10px!important;box-sizing:border-box!important;padding:14px!important;border:1px solid #7d1726!important;border-radius:13px!important;background:linear-gradient(150deg,#260b11 0%,#11090c 58%,#080708 100%)!important;color:#fff!important;text-align:left!important;text-decoration:none!important;font-family:inherit!important;font-size:13px!important;font-weight:800!important;line-height:1.2!important;box-shadow:inset 0 0 14px #ff00100b!important;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease,background .18s ease!important;animation:badassTileIn .32s ease both!important}
 .site-menu-panel .badass-menu-tile:nth-child(2){animation-delay:.04s!important}
 .site-menu-panel .badass-menu-tile:nth-child(3){animation-delay:.08s!important}
 .site-menu-panel .badass-menu-tile:hover,.site-menu-panel .badass-menu-tile:focus-visible{transform:translateY(-2px)!important;border-color:#ff304b!important;background:linear-gradient(145deg,#500b18,#13080b)!important;box-shadow:0 0 13px #f0003040,inset 0 0 16px #ff173817!important;outline:none!important}
@@ -923,8 +924,9 @@ body:has(#lookupView:not(.hidden)) #pkBattleAnimation {
 <a class="badass-menu-tile menu-download-link" href="./download.html"><span class="badass-menu-icon" aria-hidden="true">↓</span><span class="badass-menu-label">Download App</span><span class="badass-menu-arrow" aria-hidden="true">↗</span></a>
 <button class="badass-menu-tile" type="button" id="openAboutBtn"><span class="badass-menu-icon" aria-hidden="true">ⓘ</span><span class="badass-menu-label">About Us</span><span class="badass-menu-arrow" aria-hidden="true">›</span></button>
 <button class="badass-menu-tile" type="button" id="openContactBtn"><span class="badass-menu-icon" aria-hidden="true">✉</span><span class="badass-menu-label">Contact Us</span><span class="badass-menu-arrow" aria-hidden="true">›</span></button>
+<button class="badass-menu-tile" type="button" id="closeQuickMenuBtn"><span class="badass-menu-icon" aria-hidden="true">×</span><span class="badass-menu-label">Close Menu</span><span class="badass-menu-arrow" aria-hidden="true">⌄</span></button>
 </div>
-<button class="nav-action hidden" id="showAdminBtn" type="button" aria-hidden="true" tabindex="-1">Admin</button>
+<button class="nav-action hidden" id="showAdminBtn type="button" aria-hidden="true" tabindex="-1">Admin</button>
 </nav>
 
 <div class="opponent-nav-wrap" id="opponentNavWrap">
@@ -1352,6 +1354,8 @@ document.addEventListener("click",function(event){
     var target=event.target;
     var menuButton=target&&target.closest?target.closest('#menuToggleBtn'):null;
     var aboutButton=target&&target.closest?target.closest('#openAboutBtn'):null;
+    var closeQuickMenu=target&&target.closest?target.closest('#closeQuickMenuBtn'):null;
+    if(closeQuickMenu){event.preventDefault();closeMenu();return;}
     var contactButton=target&&target.closest?target.closest('#openContactBtn'):null;
     if(menuButton){
       event.preventDefault();event.stopImmediatePropagation();
