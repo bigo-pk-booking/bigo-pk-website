@@ -2983,6 +2983,7 @@ startApp();
 <script id="badass-web-entry-controller">
 (function(){
  var welcome=document.getElementById('badass-web-entry-screen');
+ if(new URLSearchParams(window.location.search).get('appRole')==='host'){welcome.hidden=true;return;}
  var loading=document.getElementById('badass-web-loading');
  if(!welcome||!loading)return;
  var source=document.querySelector('.brand-logo-img');
