@@ -887,6 +887,29 @@ body:has(#lookupView:not(.hidden)) #pkBattleAnimation {
   display: none !important;
 }
 </style>
+<style id="badass-grid-menu-style">
+/* BADASS animated 2-column quick menu */
+.site-header .menu-toggle{position:relative!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;min-width:48px!important;min-height:44px!important;border:1px solid #d20a2b!important;border-radius:11px!important;background:linear-gradient(145deg,#26070c,#090608)!important;box-shadow:0 0 12px #e0002938,inset 0 0 12px #ff17300d!important}
+.site-header .hamburger-icon{width:22px!important;height:18px!important;display:flex!important;flex-direction:column!important;justify-content:space-between!important;align-items:center!important;font-size:0!important;line-height:0!important}
+.site-header .hamburger-icon i{display:block!important;width:22px!important;height:2.5px!important;border-radius:5px!important;background:#fff!important;box-shadow:0 0 7px #ff1738!important;transition:transform .28s ease,opacity .2s ease,width .28s ease!important}
+.site-header .menu-toggle.active .hamburger-icon i:first-child{transform:translateY(7.75px) rotate(45deg)!important}
+.site-header .menu-toggle.active .hamburger-icon i:nth-child(2){opacity:0!important;width:0!important}
+.site-header .menu-toggle.active .hamburger-icon i:last-child{transform:translateY(-7.75px) rotate(-45deg)!important}
+.site-menu-panel{position:absolute!important;top:calc(100% + 12px)!important;right:0!important;z-index:1200!important;width:min(340px,calc(100vw - 24px))!important;min-width:0!important;box-sizing:border-box!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;padding:13px!important;overflow:hidden!important;border:1.5px solid #ed1534!important;border-radius:19px!important;background:radial-gradient(ellipse at 50% 0%,rgba(155,0,24,.25),transparent 62%),linear-gradient(145deg,rgba(19,7,10,.99),rgba(4,4,5,.99))!important;box-shadow:0 0 12px #f0003040,0 16px 38px #000d,inset 0 0 20px #e0002010!important;transform-origin:top right!important;animation:badassMenuIn .24s cubic-bezier(.2,.8,.2,1) both!important}
+.site-menu-panel.hidden{display:none!important}
+.site-menu-panel .badass-menu-tile{position:relative!important;display:flex!important;min-width:0!important;min-height:112px!important;flex-direction:column!important;align-items:flex-start!important;justify-content:center!important;gap:10px!important;box-sizing:border-box!important;padding:14px!important;border:1px solid #7d1726!important;border-radius:13px!important;background:linear-gradient(150deg,#260b11 0%,#11090c 58%,#080708 100%)!important;color:#fff!important;text-align:left!important;text-decoration:none!important;font:800 13px/1.2 inherit!important;box-shadow:inset 0 0 14px #ff00100b!important;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease,background .18s ease!important;animation:badassTileIn .32s ease both!important}
+.site-menu-panel .badass-menu-tile:nth-child(2){animation-delay:.04s!important}
+.site-menu-panel .badass-menu-tile:nth-child(3){animation-delay:.08s!important}
+.site-menu-panel .badass-menu-tile:hover,.site-menu-panel .badass-menu-tile:focus-visible{transform:translateY(-2px)!important;border-color:#ff304b!important;background:linear-gradient(145deg,#500b18,#13080b)!important;box-shadow:0 0 13px #f0003040,inset 0 0 16px #ff173817!important;outline:none!important}
+.site-menu-panel .menu-download-link{border-color:#f01b38!important;background:linear-gradient(145deg,#8d0018,#2b080f 70%,#10070a)!important}
+.badass-menu-icon{display:grid!important;place-items:center!important;width:38px!important;height:38px!important;border:1px solid #f02a45!important;border-radius:11px!important;background:radial-gradient(circle at 40% 30%,#9c0c25,#310811 75%)!important;color:#fff!important;font-size:23px!important;line-height:1!important;text-shadow:0 0 9px #ff2345!important;box-shadow:0 0 10px #ed102b35!important}
+.badass-menu-label{display:block!important;max-width:100%!important;color:#fff!important;font-size:13px!important;font-weight:900!important;letter-spacing:.02em!important;overflow-wrap:anywhere!important}
+.badass-menu-arrow{position:absolute!important;top:12px!important;right:13px!important;color:#ff5369!important;font-size:17px!important}
+@keyframes badassMenuIn{from{opacity:0;transform:translateY(-8px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes badassTileIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:420px){.site-menu-panel{width:min(310px,calc(100vw - 20px))!important;right:-4px!important;gap:8px!important;padding:10px!important}.site-menu-panel .badass-menu-tile{min-height:102px!important;padding:11px!important}.badass-menu-icon{width:34px!important;height:34px!important;font-size:21px!important}.badass-menu-label{font-size:12px!important}}
+@media(prefers-reduced-motion:reduce){.site-menu-panel,.site-menu-panel .badass-menu-tile,.site-header .hamburger-icon i{animation:none!important;transition:none!important}}
+</style>
 </head>
 <body>
 <header>
@@ -895,11 +918,11 @@ body:has(#lookupView:not(.hidden)) #pkBattleAnimation {
 <nav id="mainMenuPanel" class="nav main-nav" aria-label="Main navigation">
 <button class="nav-action active" id="showBookingBtn" type="button"><span class="nav-icon" aria-hidden="true">▦</span><span>Set OPK</span></button>
 <button class="nav-action" id="showLookupBtn" type="button"><span class="nav-icon" aria-hidden="true">♙</span><span>My OPK</span></button>
-<button class="nav-action menu-toggle" id="menuToggleBtn" type="button" aria-expanded="false" aria-controls="siteMenuPanel"><span class="nav-icon hamburger-icon" aria-hidden="true">☰</span><span class="menu-label">Menu</span></button>
-<div id="siteMenuPanel" class="site-menu-panel hidden">
-<a class="menu-download-link" href="./download.html">⬇ <span>Download App</span></a>
-<button type="button" id="openAboutBtn">ⓘ <span>About Us</span></button>
-<button type="button" id="openContactBtn">✉ <span>Contact Us</span></button>
+<button class="nav-action menu-toggle" id="menuToggleBtn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="siteMenuPanel"><span class="nav-icon hamburger-icon" aria-hidden="true"><i></i><i></i><i></i></span><span class="menu-label">Menu</span></button>
+<div id="siteMenuPanel" class="site-menu-panel hidden" aria-label="Quick menu">
+<a class="badass-menu-tile menu-download-link" href="./download.html"><span class="badass-menu-icon" aria-hidden="true">↓</span><span class="badass-menu-label">Download App</span><span class="badass-menu-arrow" aria-hidden="true">↗</span></a>
+<button class="badass-menu-tile" type="button" id="openAboutBtn"><span class="badass-menu-icon" aria-hidden="true">ⓘ</span><span class="badass-menu-label">About Us</span><span class="badass-menu-arrow" aria-hidden="true">›</span></button>
+<button class="badass-menu-tile" type="button" id="openContactBtn"><span class="badass-menu-icon" aria-hidden="true">✉</span><span class="badass-menu-label">Contact Us</span><span class="badass-menu-arrow" aria-hidden="true">›</span></button>
 </div>
 <button class="nav-action hidden" id="showAdminBtn" type="button" aria-hidden="true" tabindex="-1">Admin</button>
 </nav>
@@ -1337,9 +1360,16 @@ document.addEventListener("click",function(event){
         var opening=panel.classList.contains('hidden');
         panel.classList.toggle('hidden',!opening);
         menuButton.setAttribute('aria-expanded',String(opening));
+        menuButton.setAttribute('aria-label',opening?'Close menu':'Open menu');
         menuButton.classList.toggle('active',opening);
       }
       return;
+    }
+    var openPanel=el('siteMenuPanel');
+    var toggle=el('menuToggleBtn');
+    if(openPanel&&!openPanel.classList.contains('hidden')&&!target.closest('#siteMenuPanel')){
+      openPanel.classList.add('hidden');
+      if(toggle){toggle.setAttribute('aria-expanded','false');toggle.setAttribute('aria-label','Open menu');toggle.classList.remove('active');}
     }
     if(aboutButton||contactButton){
       event.preventDefault();event.stopImmediatePropagation();
