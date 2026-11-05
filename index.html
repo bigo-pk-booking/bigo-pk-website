@@ -911,6 +911,13 @@ body:has(#lookupView:not(.hidden)) #pkBattleAnimation {
 @media(max-width:420px){.site-menu-panel{width:min(310px,calc(100vw - 20px))!important;right:-4px!important;gap:8px!important;padding:10px!important}.site-menu-panel .badass-menu-tile{min-height:102px!important;padding:11px!important}.badass-menu-icon{width:34px!important;height:34px!important;font-size:21px!important}.badass-menu-label{font-size:12px!important}}
 @media(prefers-reduced-motion:reduce){.site-menu-panel,.site-menu-panel .badass-menu-tile,.site-header .hamburger-icon i{animation:none!important;transition:none!important}}
 </style>
+<style id="badass-hide-hidden-nav-items">
+/* Keep utility-hidden navigation items hidden despite navbar display overrides. */
+.site-header .nav-action.hidden,
+.site-header .opponent-nav-btn.hidden,
+.site-header .tg-group-nav.hidden,
+.site-header .site-menu-panel.hidden{display:none!important}
+</style>
 </head>
 <body>
 <header>
