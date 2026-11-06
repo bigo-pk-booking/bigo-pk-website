@@ -2650,8 +2650,8 @@ function isActiveOpponentBooking(b){
 }
 function exportRows(){const selectedMonth=$("bookingMonthFilter")?.value||dateToday().slice(0,7);return bookings.filter(b=>monthKey(b.date)===selectedMonth&&!isClosedExportBooking(b)).map(b=>({"DATE":b.date||"","TIME":b.time||"","BIGO NAME":b.name||"","BIGO ID":displayBigoId(b.bigoId||""),"HOST LEVEL":b.hostLevel||"","AGENCY NAME":b.agencyName||"","AGENCY TELEGRAM":b.agencyTelegram||"","OPK EVENT":b.opkEvent||"","VS":"VS","OPPONENT NAME":b.opponentName||"","OPPONENT BIGO ID":b.opponentBigoId||"","LEVEL":b.opponentLevel||"","OPPONENT AGENCY NAME":b.opponentAgencyName||"","OPPONENT AGENCY TELEGRAM":b.opponentAgencyTelegram||"","REMARKS (WIN/LOSE)":b.remarks||b.status||""})).sort((a,b)=>(a.DATE+a.TIME).localeCompare(b.DATE+b.TIME));}
 function downloadBlob(content,type,name){const blob=new Blob([content],{type});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
-$("exportExcelBtn").onclick=async()=>{if(!isAdmin)return;if(!window.ExcelJS){setStatus("exportMessage","Excel formatting library did not load. Check your internet connection, then try again.","err");return;}try{
- const ExcelJS=window.ExcelJS;const wb=new ExcelJS.Workbook();wb.creator="BADASS";wb.subject="BIGO OPK Match Schedule";wb.title="BADASS OPK Match Report";wb.created=new Date();
+function loadExcelJS(){if(window.ExcelJS)return Promise.resolve(window.ExcelJS);if(window.__badassExcelJSLoading)return window.__badassExcelJSLoading;window.__badassExcelJSLoading=new Promise(resolve=>{const script=document.createElement("script");script.src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js";script.onload=()=>resolve(window.ExcelJS||null);script.onerror=()=>{window.__badassExcelJSLoading=null;resolve(null);};document.head.appendChild(script);});return window.__badassExcelJSLoading;}
+$("exportExcelBtn").onclick=async()=>{if(!isAdmin)return;try{const ExcelJS=await loadExcelJS();if(!ExcelJS){setStatus("exportMessage","Excel formatting library did not load. Check your internet connection, then try again.","err");return;}const wb=new ExcelJS.Workbook();wb.creator="BADASS";wb.subject="BIGO OPK Match Schedule";wb.title="BADASS OPK Match Report";wb.created=new Date();
  const now=new Date();const seenKey="badass_admin_slot_months_seen_v1";let seenMonths=[];try{const saved=JSON.parse(localStorage.getItem(seenKey)||"[]");if(Array.isArray(saved))seenMonths=saved.filter(m=>/^\d{4}-(0[1-9]|1[0-2])$/.test(m));}catch(e){console.warn("Could not read saved admin slot months",e);}const monthSet=new Set([now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0"),...seenMonths,...bookings.map(b=>monthKey(b.date)).filter(m=>/^\d{4}-(0[1-9]|1[0-2])$/.test(m))]);const months=Array.from(monthSet).sort();
  const headers=["DATE","TIME","BIGO NAME","BIGO ID","HOST LEVEL","AGENCY NAME","AGENCY TELEGRAM","OPK EVENT","VS","OPPONENT NAME","OPPONENT BIGO ID","LEVEL","OPPONENT AGENCY NAME","OPPONENT AGENCY TELEGRAM","REMARKS (WIN/LOSE)"];
  const widths=[19,13,20,18,12,20,22,18,6,21,21,12,23,25,20];
@@ -2680,7 +2680,7 @@ window.__publicCalendarStarted = true;
 loadPublicSiteAnnouncement();
 startApp();
 </script>
-<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<!-- ExcelJS loads only when an admin requests an Excel export. -->
 
 <script>
 (function(){
