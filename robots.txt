@@ -1,7 +1,4 @@
 User-agent: *
 Allow: /
 
-# Keep administrator-only page out of search results
-Disallow: /admin.html
-
 Sitemap: https://bigo-pk-booking.github.io/bigo-pk-website/sitemap.xml
