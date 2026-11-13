@@ -2197,10 +2197,19 @@ async function openBookingReview(initial){
   '<label style="display:block;margin:12px 0 5px;font-weight:700">Name</label><input id="reviewName" value="'+escapeHtml(initial.name)+'" style="box-sizing:border-box;width:100%;padding:12px;border:1px solid #bbb;border-radius:8px;font-size:16px">'+
   '<label style="display:block;margin:12px 0 5px;font-weight:700">Date</label><select id="reviewDate" style="box-sizing:border-box;width:100%;padding:12px;border:1px solid #bbb;border-radius:8px;font-size:16px">'+dateOptions+'</select>'+
   '<label style="display:block;margin:12px 0 5px;font-weight:700">Time</label><select id="reviewTime" style="box-sizing:border-box;width:100%;padding:12px;border:1px solid #bbb;border-radius:8px;font-size:16px">'+timeOptions+'</select>'+
+  '<div id="bookingReviewAd" aria-label="Advertisement" style="width:100%;margin:16px auto 8px;text-align:center;overflow:hidden;"><div style="font-size:10px;letter-spacing:.08em;color:#777;margin-bottom:4px;">ADVERTISEMENT</div><div id="bookingReviewAdFrame" style="display:flex;justify-content:center;align-items:center;min-height:60px;max-width:100%;overflow:hidden;"></div></div>'+
   '<div id="bookingReviewMessage" role="status" style="margin-top:12px;color:#b00020"></div>'+
   '<div style="display:flex;gap:10px;margin-top:16px"><button type="button" id="bookingReviewCancel" style="flex:1;padding:13px;border:1px solid #bd9b9b;border-radius:8px;background:white;color:#8b0000;font-weight:700">Go Back</button><button type="button" id="bookingReviewConfirm" style="flex:1;padding:13px;border:0;border-radius:8px;background:#c90012;color:white;font-weight:700">Confirm & Submit</button></div>'+
   '</div>';
  overlay.style.display="flex";
+ // Load the existing first Adsterra 468x60 banner inside the booking review popup.
+ const adFrame=document.getElementById("bookingReviewAdFrame");
+ if(adFrame){
+  window.atOptions={key:"5ae55a31af61a4c514e249f42c77a280",format:"iframe",height:60,width:468,params:{}};
+  const adScript=document.createElement("script");
+  adScript.src="https://bauval.org/22/5ae55a31af61a4c514e249f42c77a280";
+  adFrame.appendChild(adScript);
+ }
  const close=()=>{overlay.style.display="none";};
  document.getElementById("bookingReviewCancel").onclick=close;
  document.getElementById("reviewDate").onchange=()=>{
