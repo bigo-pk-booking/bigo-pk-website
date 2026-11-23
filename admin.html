@@ -1544,19 +1544,32 @@ async function loadSuperadminAdmins(){
   const result=await cloudflareAdminRequest("/api/superadmin/admins");
   const rows=result.admins||[];
   if(!rows.length){box.innerHTML='<div class="notice">No Admin accounts found.</div>';return;}
-  box.innerHTML='<div class="table-wrap"><table style="min-width:560px"><thead><tr><th>Email</th><th>UID</th><th>Status</th><th>Action</th></tr></thead><tbody>'+
-   rows.map(a=>'<tr><td>'+escapeHtml(a.email||"")+'</td><td style="max-width:180px;overflow-wrap:anywhere">'+escapeHtml(a.firebase_uid||a.uid||"")+'</td><td>'+(Number(a.enabled)===1||a.enabled===true?'Enabled':'Disabled')+'</td><td>'+(a.role==="superadmin"?'Protected Superadmin':'<button class="small secondary" type="button" data-admin-toggle="'+escapeHtml(a.uid||"")+'" data-enabled="'+(Number(a.enabled)===1||a.enabled===true?'1':'0')+'">'+(Number(a.enabled)===1||a.enabled===true?'Disable':'Enable')+'</button> <button class="small danger" type="button" data-admin-delete="'+escapeHtml(a.uid||"")+'">Delete</button>')+'</td></tr>').join("")+
-   '</tbody></table></div>';
+  box.innerHTML='<div class="superadmin-account-list">'+rows.map(a=>{
+   const accountUid=String(a.firebase_uid||a.uid||"");
+   const enabled=Number(a.enabled)===1||a.enabled===true;
+   const protectedAccount=String(a.role||"").toLowerCase()==="superadmin";
+   return '<article class="superadmin-account-card" style="border:1px solid #754047;border-radius:12px;padding:14px;margin:10px 0;background:#241010;color:#fff">'+
+    '<div style="font-weight:800;overflow-wrap:anywhere">'+escapeHtml(a.email||"Admin account")+'</div>'+
+    '<div style="font-size:12px;opacity:.85;overflow-wrap:anywhere;margin:7px 0">UID: '+escapeHtml(accountUid||"Unavailable")+'</div>'+
+    '<div style="margin:7px 0;font-weight:700">Status: '+(enabled?'Enabled':'Disabled')+'</div>'+
+    (protectedAccount?'<div style="color:#ffd37a;font-weight:800;margin-top:10px">🛡 Protected Superadmin</div>':
+     '<div class="superadmin-actions" style="display:flex;gap:9px;flex-wrap:wrap;margin-top:12px">'+
+      '<button class="small secondary" type="button" data-admin-toggle="'+escapeHtml(accountUid)+'" data-enabled="'+(enabled?'1':'0')+'" '+(!accountUid?'disabled':'')+'>'+ (enabled?'Disable':'Enable')+'</button>'+
+      '<button class="small danger" type="button" data-admin-delete="'+escapeHtml(accountUid)+'" '+(!accountUid?'disabled':'')+'>Delete</button>'+
+     '</div>')+'</article>';
+  }).join("")+'</div>';
   box.querySelectorAll("[data-admin-toggle]").forEach(btn=>btn.onclick=async()=>{
    const enabled=btn.dataset.enabled!=="1";
    if(!confirm((enabled?"Enable":"Disable")+" this Admin account?"))return;
+   btn.disabled=true;
    try{await cloudflareAdminRequest("/api/superadmin/admins/"+encodeURIComponent(btn.dataset.adminToggle),{method:"PATCH",body:JSON.stringify({enabled})});await loadSuperadminAdmins();}
-   catch(e){msg.textContent="Could not update account: "+e.message;}
+   catch(e){msg.textContent="Could not update account: "+e.message;btn.disabled=false;}
   });
   box.querySelectorAll("[data-admin-delete]").forEach(btn=>btn.onclick=async()=>{
-   if(!confirm("Delete this Admin record from Cloudflare D1? Firebase Authentication account will remain."))return;
+   if(!confirm("Delete this Admin access record? This will not delete the Firebase Authentication user."))return;
+   btn.disabled=true;
    try{await cloudflareAdminRequest("/api/superadmin/admins/"+encodeURIComponent(btn.dataset.adminDelete),{method:"DELETE"});await loadSuperadminAdmins();}
-   catch(e){msg.textContent="Could not delete account: "+e.message;}
+   catch(e){msg.textContent="Could not delete account: "+e.message;btn.disabled=false;}
   });
  }catch(e){box.innerHTML='<div class="notice err">'+escapeHtml(e.message||"Could not load Admin accounts.")+'</div>';}
 }
