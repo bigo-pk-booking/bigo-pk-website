@@ -551,6 +551,19 @@ body.admin-panel-open .tg-group-nav{display:none!important}
  .header-links a{font-size:12px!important}
  .head>.menu-panel{left:10px!important}
 }
+
+/* SUPERADMIN MOBILE ACCOUNT LIST: keep IDs readable and action buttons visible */
+#superadminAdminsList .table-wrap{overflow-x:auto!important;overflow-y:visible!important;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+#superadminAdminsList table{min-width:620px!important}
+#superadminAdminsList th,#superadminAdminsList td{white-space:normal!important;vertical-align:middle!important}
+#superadminAdminsList td:last-child{min-width:190px!important;white-space:nowrap!important}
+#superadminAdminsList td:last-child button{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-width:72px!important;min-height:40px!important;padding:8px 12px!important;margin:3px!important;border:1px solid #ffb7bd!important;border-radius:9px!important;background:#b90012!important;color:#fff!important;-webkit-text-fill-color:#fff!important;font-weight:800!important;opacity:1!important;visibility:visible!important}
+#superadminAdminsList td:last-child button.secondary{background:#5b242a!important}
+@media(max-width:700px){
+ #superadminAdminsList .table-wrap{margin-left:0!important;margin-right:0!important;max-width:100%!important}
+ #superadminAdminsList table{min-width:620px!important}
+ #superadminAdminsList td:last-child{min-width:190px!important}
+}
 </style>
 <style id="slot-management-reference-layout">
 #slotManagementPanel{padding:14px!important;background:rgba(10,5,7,.88)!important;border:1px solid #9f101b!important;border-radius:14px!important}
